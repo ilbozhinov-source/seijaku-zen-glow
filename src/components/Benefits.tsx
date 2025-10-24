@@ -24,7 +24,7 @@ const Benefits = () => {
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-            За модерната жена
+            За теб
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground">
             SEIJAKU е повече от напитка – това е момент само за теб. Момент на спокойствие, баланс и грижа за себе си.
@@ -62,7 +62,7 @@ const Benefits = () => {
               Без захар • Без калории • Без изкуствени добавки • Без ГМО
             </p>
             <p className="text-base text-muted-foreground max-w-2xl mx-auto pt-4">
-              Само чиста, органична японска матча от най-високо качество. Всеки глътка е инвестиция във твоето здраве, красота и благополучие.
+              Само чиста, органична матча от най-високо качество. Всеки глътка е инвестиция във твоето здраве, красота и благополучие.
             </p>
           </div>
         </div>

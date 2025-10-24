@@ -37,7 +37,7 @@ const Hero = () => {
           </p>
 
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Церемониална японска матча за модерната жена
+            Церемониална матча от Япония
           </p>
 
           {/* CTA Buttons */}
@@ -62,7 +62,7 @@ const Hero = () => {
           <div className="pt-12 flex flex-wrap justify-center gap-8 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <span className="text-primary text-lg">✓</span>
-              <span>100% японска</span>
+              <span>100% от Япония</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-primary text-lg">✓</span>

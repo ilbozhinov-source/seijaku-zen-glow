@@ -34,10 +34,10 @@ const Reviews = () => {
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-            Какво казват нашите клиентки
+            Какво казват нашите клиенти
           </h2>
           <p className="text-lg text-muted-foreground">
-            Истински истории от жени, които откриха баланса с SEIJAKU
+            Истински истории от хора, които откриха баланса с SEIJAKU
           </p>
         </div>
 
@@ -82,7 +82,7 @@ const Reviews = () => {
             <div className="h-12 w-px bg-border"></div>
             <div className="text-center">
               <div className="text-3xl font-bold text-primary mb-1">500+</div>
-              <p className="text-sm text-muted-foreground">Доволни клиентки</p>
+              <p className="text-sm text-muted-foreground">Доволни клиенти</p>
             </div>
             <div className="h-12 w-px bg-border"></div>
             <div className="text-center">
