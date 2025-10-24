@@ -1,21 +1,19 @@
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-matcha.jpg";
-
 const Hero = () => {
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({
+        behavior: 'smooth'
+      });
     }
   };
-
-  return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+  return <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${heroImage})` }}
-      >
+      <div className="absolute inset-0 bg-cover bg-center" style={{
+      backgroundImage: `url(${heroImage})`
+    }}>
         <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/90 to-background"></div>
       </div>
 
@@ -36,24 +34,14 @@ const Hero = () => {
             Енергия от Дзен. Красота отвътре.
           </p>
 
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Церемониална матча от Япония
-          </p>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">Церемониална матча</p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
-            <Button 
-              variant="hero" 
-              size="lg"
-              onClick={() => scrollToSection('products')}
-            >
+            <Button variant="hero" size="lg" onClick={() => scrollToSection('products')}>
               Купи сега
             </Button>
-            <Button 
-              variant="outline" 
-              size="lg"
-              onClick={() => scrollToSection('benefits')}
-            >
+            <Button variant="outline" size="lg" onClick={() => scrollToSection('benefits')}>
               Научи повече
             </Button>
           </div>
@@ -62,7 +50,7 @@ const Hero = () => {
           <div className="pt-12 flex flex-wrap justify-center gap-8 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <span className="text-primary text-lg">✓</span>
-              <span>100% от Япония</span>
+              <span>100% органична</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-primary text-lg">✓</span>
@@ -82,8 +70,6 @@ const Hero = () => {
           <div className="w-1.5 h-3 bg-primary rounded-full"></div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Hero;
