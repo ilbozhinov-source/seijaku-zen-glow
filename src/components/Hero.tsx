@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-matcha.jpg";
+import { CartDrawer } from "@/components/CartDrawer";
 const Hero = () => {
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -10,6 +11,11 @@ const Hero = () => {
     }
   };
   return <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Cart Drawer */}
+      <div className="fixed top-4 right-4 z-50">
+        <CartDrawer />
+      </div>
+
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 bg-cover bg-center" style={{
       backgroundImage: `url(${heroImage})`

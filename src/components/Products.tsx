@@ -1,115 +1,126 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import productImage from "@/assets/product-matcha.jpg";
-import { Check } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ShoppingCart } from "lucide-react";
+import { getProducts, ShopifyProduct } from "@/lib/shopify";
+import { useCartStore } from "@/stores/cartStore";
+import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 const Products = () => {
-  const features = [
-    "30g церемониална матча (достатъчна за 15+ порции)",
-    "100% произход от Uji, Киото",
-    "Organic & ceremonial grade",
-    "Ръчно смляна с каменни мелници",
-    "Богата на антиоксиданти и L-теанин",
-    "Включена рецепта за приготвяне"
-  ];
+  const [products, setProducts] = useState<ShopifyProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const addItem = useCartStore(state => state.addItem);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await getProducts();
+        setProducts(data);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const handleAddToCart = (product: ShopifyProduct) => {
+    const firstVariant = product.node.variants.edges[0].node;
+    
+    const cartItem = {
+      product,
+      variantId: firstVariant.id,
+      variantTitle: firstVariant.title,
+      price: firstVariant.price,
+      quantity: 1,
+      selectedOptions: firstVariant.selectedOptions
+    };
+    
+    addItem(cartItem);
+    toast.success('Добавено в количката!', {
+      position: 'top-center'
+    });
+  };
 
   return (
     <section id="products" className="py-20 md:py-32 bg-gradient-soft">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-            Открий силата на SEIJAKU
+            Нашите Продукти
           </h2>
           <p className="text-lg text-muted-foreground">
             Премиум матча, създадена с почит към традицията и любов към детайла
           </p>
         </div>
 
-        <div className="max-w-5xl mx-auto">
-          <Card className="overflow-hidden shadow-zen border-primary/20">
-            <div className="grid md:grid-cols-2 gap-0">
-              {/* Product Image */}
-              <div className="relative h-[400px] md:h-auto bg-gradient-to-br from-accent to-background">
-                <img 
-                  src={productImage} 
-                  alt="SEIJAKU Ceremonial Matcha"
-                  className="w-full h-full object-contain p-8 md:p-12"
-                />
-              </div>
-
-              {/* Product Details */}
-              <div className="flex flex-col">
-                <CardHeader className="space-y-4 pb-6">
-                  <div className="space-y-2">
-                    <div className="inline-block px-4 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full">
-                      Ceremonial Grade
-                    </div>
-                    <h3 className="text-3xl font-bold text-foreground">
-                      SEIJAKU Ceremonial Matcha
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Традиционна церемониална матча от Киото
-                    </p>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="flex-1 space-y-6">
-                  <div className="space-y-3">
-                    {features.map((feature, index) => (
-                      <div key={index} className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-foreground">{feature}</span>
+        {loading ? (
+          <div className="text-center py-20">
+            <p className="text-muted-foreground">Зареждане на продукти...</p>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-muted-foreground mb-4">Все още няма добавени продукти</p>
+            <p className="text-sm text-muted-foreground">
+              Създайте продукт като ми кажете какъв продукт искате и каква цена
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            {products.map((product) => (
+              <Card key={product.node.id} className="overflow-hidden shadow-zen border-primary/20 hover:shadow-xl transition-shadow">
+                <Link to={`/product/${product.node.handle}`}>
+                  <div className="relative h-64 bg-gradient-to-br from-accent to-background cursor-pointer">
+                    {product.node.images.edges[0]?.node ? (
+                      <img 
+                        src={product.node.images.edges[0].node.url}
+                        alt={product.node.title}
+                        className="w-full h-full object-contain p-8 hover:scale-105 transition-transform"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        Няма изображение
                       </div>
-                    ))}
+                    )}
                   </div>
+                </Link>
 
-                  <div className="pt-4 border-t border-border">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-bold text-primary">39.90 лв</span>
-                      <span className="text-muted-foreground">/ 30g</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Около 2.66 лв на порция
+                <CardContent className="p-6 space-y-4">
+                  <Link to={`/product/${product.node.handle}`}>
+                    <h3 className="text-xl font-bold text-foreground hover:text-primary transition-colors cursor-pointer">
+                      {product.node.title}
+                    </h3>
+                  </Link>
+                  
+                  {product.node.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {product.node.description}
                     </p>
-                  </div>
-                </CardContent>
+                  )}
 
-                <CardFooter className="flex flex-col gap-3 pt-6">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-primary">
+                      {parseFloat(product.node.priceRange.minVariantPrice.amount).toFixed(2)} {product.node.priceRange.minVariantPrice.currencyCode}
+                    </span>
+                  </div>
+
                   <Button 
                     variant="hero" 
                     size="lg" 
                     className="w-full"
-                    onClick={() => alert('Поръчката ще бъде налична скоро!')}
+                    onClick={() => handleAddToCart(product)}
                   >
-                    Поръчай сега
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="lg" 
-                    className="w-full"
-                    onClick={() => alert('Добавено в количката!')}
-                  >
+                    <ShoppingCart className="w-4 h-4 mr-2" />
                     Добави в количката
                   </Button>
-                  <p className="text-xs text-center text-muted-foreground">
-                    Безплатна доставка при поръчка над 50 лв
-                  </p>
-                </CardFooter>
-              </div>
-            </div>
-          </Card>
-
-          {/* Money Back Guarantee */}
-          <div className="mt-12 text-center p-8 bg-card rounded-xl shadow-soft border border-border">
-            <h4 className="text-xl font-bold text-foreground mb-3">
-              100% Гаранция за удовлетворение
-            </h4>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Ако не си доволен/доволна от SEIJAKU в рамките на 30 дни, 
-              ще ти върнем парите без въпроси. Вярваме в качеството на нашата матча.
-            </p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </div>
+        )}
       </div>
     </section>
   );
