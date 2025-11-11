@@ -1,30 +1,33 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Star } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 const Reviews = () => {
+  const { t } = useTranslation();
+  
   const reviews = [
     {
-      name: "Мария Петрова",
-      age: 32,
-      occupation: "Дигитален маркетинг мениджър",
+      name: t('reviews.review1Name'),
+      age: t('reviews.review1Age'),
+      occupation: t('reviews.review1Occupation'),
       rating: 5,
-      text: "Пия SEIJAKU всяка сутрин вече 3 месеца и се чувствам фокусирана и спокойна през целия ден. Кожата ми буквално светва! Никога не съм се чувствала толкова балансирана.",
+      text: t('reviews.review1Text'),
       image: "👩🏻‍💼"
     },
     {
-      name: "Елена Димитрова",
-      age: 28,
-      occupation: "Фитнес инструктор",
+      name: t('reviews.review2Name'),
+      age: t('reviews.review2Age'),
+      occupation: t('reviews.review2Occupation'),
       rating: 5,
-      text: "Като човек, който обича здравословния начин на живот, SEIJAKU е перфектната допълнение към моята рутина. Енергията е чиста, без нервност. Заменям сутрешното кафе с матча и се чувствам страхотно!",
+      text: t('reviews.review2Text'),
       image: "💪🏻"
     },
     {
-      name: "Силвия Георгиева",
-      age: 45,
-      occupation: "Собственик на бутик",
+      name: t('reviews.review3Name'),
+      age: t('reviews.review3Age'),
+      occupation: t('reviews.review3Occupation'),
       rating: 5,
-      text: "Открих SEIJAKU, когато търсех естествен начин да подобря концентрацията си. Не само това, но забелязах, че кожата ми изглежда по-жизнена. Това е истински ритуал за грижа за себе си!",
+      text: t('reviews.review3Text'),
       image: "👩🏼‍💼"
     }
   ];
@@ -34,10 +37,10 @@ const Reviews = () => {
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-            Какво казват нашите клиенти
+            {t('reviews.title')}
           </h2>
           <p className="text-lg text-muted-foreground">
-            Истински истории от хора, които откриха баланса с SEIJAKU
+            {t('reviews.subtitle')}
           </p>
         </div>
 
@@ -63,7 +66,7 @@ const Reviews = () => {
                   <div>
                     <p className="font-bold text-foreground">{review.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {review.age} г., {review.occupation}
+                      {review.age} {t('reviews.yearsShort')}, {review.occupation}
                     </p>
                   </div>
                 </div>
@@ -77,17 +80,17 @@ const Reviews = () => {
           <div className="inline-flex flex-wrap justify-center gap-8 items-center p-8 bg-card rounded-2xl shadow-soft border border-border">
             <div className="text-center">
               <div className="text-3xl font-bold text-primary mb-1">4.9/5</div>
-              <p className="text-sm text-muted-foreground">Средна оценка</p>
+              <p className="text-sm text-muted-foreground">{t('reviews.averageRating')}</p>
             </div>
             <div className="h-12 w-px bg-border"></div>
             <div className="text-center">
               <div className="text-3xl font-bold text-primary mb-1">500+</div>
-              <p className="text-sm text-muted-foreground">Доволни клиенти</p>
+              <p className="text-sm text-muted-foreground">{t('reviews.satisfiedClients')}</p>
             </div>
             <div className="h-12 w-px bg-border"></div>
             <div className="text-center">
               <div className="text-3xl font-bold text-primary mb-1">98%</div>
-              <p className="text-sm text-muted-foreground">Препоръчват SEIJAKU</p>
+              <p className="text-sm text-muted-foreground">{t('reviews.recommend')}</p>
             </div>
           </div>
         </div>

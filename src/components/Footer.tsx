@@ -1,5 +1,9 @@
 import { Instagram, Facebook } from "lucide-react";
+import { useTranslation } from 'react-i18next';
+
 const Footer = () => {
+  const { t } = useTranslation();
+  
   return <footer className="bg-zen-dark text-zen-cream py-16">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8 mb-12">
@@ -9,8 +13,7 @@ const Footer = () => {
               <h3 className="text-3xl font-bold">SEIJAKU</h3>
               <p className="text-2xl font-light">静寂</p>
             </div>
-            <p className="text-zen-silver max-w-md">Церемониална матча за модерният човек.
-Енергия от дзен, красота отвътре.</p>
+            <p className="text-zen-silver max-w-md">{t('footer.tagline')}</p>
             
             {/* Social Links */}
             <div className="flex gap-4 pt-4">
@@ -25,21 +28,21 @@ const Footer = () => {
 
           {/* Links */}
           <div>
-            <h4 className="font-bold text-zen-cream mb-4">За SEIJAKU</h4>
+            <h4 className="font-bold text-zen-cream mb-4">{t('footer.aboutTitle')}</h4>
             <ul className="space-y-2">
               <li>
                 <a href="#" className="text-zen-silver hover:text-primary zen-transition">
-                  Нашата история
+                  {t('footer.ourStory')}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-zen-silver hover:text-primary zen-transition">
-                  Качество и произход
+                  {t('footer.quality')}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-zen-silver hover:text-primary zen-transition">
-                  Блог
+                  {t('footer.blog')}
                 </a>
               </li>
             </ul>
@@ -47,26 +50,26 @@ const Footer = () => {
 
           {/* Support */}
           <div>
-            <h4 className="font-bold text-zen-cream mb-4">Поддръжка</h4>
+            <h4 className="font-bold text-zen-cream mb-4">{t('footer.supportTitle')}</h4>
             <ul className="space-y-2">
               <li>
                 <a href="#" className="text-zen-silver hover:text-primary zen-transition">
-                  Свържи се с нас
+                  {t('footer.contact')}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-zen-silver hover:text-primary zen-transition">
-                  Доставка
+                  {t('footer.shipping')}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-zen-silver hover:text-primary zen-transition">
-                  Политика за връщане
+                  {t('footer.returns')}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-zen-silver hover:text-primary zen-transition">
-                  Често задавани въпроси
+                  {t('footer.faq')}
                 </a>
               </li>
             </ul>
@@ -76,13 +79,13 @@ const Footer = () => {
         {/* Bottom */}
         <div className="pt-8 border-t border-zen-silver/20">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-zen-silver">
-            <p>© 2025 SEIJAKU. Всички права запазени.</p>
+            <p>{t('footer.rights')}</p>
             <div className="flex gap-6">
               <a href="#" className="hover:text-primary zen-transition">
-                Политика за поверителност
+                {t('footer.privacy')}
               </a>
               <a href="#" className="hover:text-primary zen-transition">
-                Условия за ползване
+                {t('footer.terms')}
               </a>
             </div>
           </div>

@@ -1,21 +1,24 @@
 import { Zap, Target, Sparkles } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 const WhySeijaku = () => {
+  const { t } = useTranslation();
+  
   const benefits = [
     {
       icon: Zap,
-      title: "Енергия",
-      description: "Чиста енергия без срив. Природен кофеин и L-теанин за дълготраен фокус."
+      title: t('whySeijaku.energy'),
+      description: t('whySeijaku.energyDesc')
     },
     {
       icon: Target,
-      title: "Фокус",
-      description: "Подобрява концентрацията и умствената яснота за максимална продуктивност."
+      title: t('whySeijaku.focus'),
+      description: t('whySeijaku.focusDesc')
     },
     {
       icon: Sparkles,
-      title: "Красота",
-      description: "Богата на антиоксиданти за сияйна кожа и вътрешен баланс."
+      title: t('whySeijaku.beauty'),
+      description: t('whySeijaku.beautyDesc')
     }
   ];
 
@@ -24,11 +27,10 @@ const WhySeijaku = () => {
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-            Защо SEIJAKU?
+            {t('whySeijaku.title')}
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground">
-            100% церемониална матча, ръчно смляна с любов и внимание към всеки детайл.
-            Създадена за тези, които търсят баланс между динамичния живот и вътрешното спокойствие.
+            {t('whySeijaku.subtitle')}
           </p>
         </div>
 
@@ -56,35 +58,35 @@ const WhySeijaku = () => {
         <div className="mt-16 max-w-4xl mx-auto">
           <div className="bg-card rounded-2xl p-8 md:p-12 shadow-soft border border-border">
             <h3 className="text-2xl md:text-3xl font-bold text-center mb-8 text-foreground">
-              Какво прави SEIJAKU специална
+              {t('whySeijaku.whatMakesSpecial')}
             </h3>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="flex items-start gap-4">
                 <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                 <div>
-                  <p className="text-foreground font-medium">Без захар и калории</p>
-                  <p className="text-sm text-muted-foreground">Естествена сладост без вина</p>
+                  <p className="text-foreground font-medium">{t('whySeijaku.noSugar')}</p>
+                  <p className="text-sm text-muted-foreground">{t('whySeijaku.noSugarDesc')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
                 <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                 <div>
-                  <p className="text-foreground font-medium">Без кофеинов срив</p>
-                  <p className="text-sm text-muted-foreground">Балансирана енергия през целия ден</p>
+                  <p className="text-foreground font-medium">{t('whySeijaku.noCrash')}</p>
+                  <p className="text-sm text-muted-foreground">{t('whySeijaku.noCrashDesc')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
                 <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                 <div>
-                  <p className="text-foreground font-medium">137x повече антиоксиданти</p>
-                  <p className="text-sm text-muted-foreground">В сравнение с обикновен зелен чай</p>
+                  <p className="text-foreground font-medium">{t('whySeijaku.antioxidants')}</p>
+                  <p className="text-sm text-muted-foreground">{t('whySeijaku.antioxidantsDesc')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
                 <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
                 <div>
-                  <p className="text-foreground font-medium">Подпомага метаболизма</p>
-                  <p className="text-sm text-muted-foreground">Естествено ускорява изгарянето на калории</p>
+                  <p className="text-foreground font-medium">{t('whySeijaku.metabolism')}</p>
+                  <p className="text-sm text-muted-foreground">{t('whySeijaku.metabolismDesc')}</p>
                 </div>
               </div>
             </div>

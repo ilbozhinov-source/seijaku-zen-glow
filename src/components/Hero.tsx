@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-matcha.jpg";
 import { CartDrawer } from "@/components/CartDrawer";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { useTranslation } from 'react-i18next';
 const Hero = () => {
+  const { t } = useTranslation();
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -11,6 +14,11 @@ const Hero = () => {
     }
   };
   return <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Language Selector */}
+      <div className="fixed top-4 left-4 z-50">
+        <LanguageSelector />
+      </div>
+      
       {/* Cart Drawer */}
       <div className="fixed top-4 right-4 z-50">
         <CartDrawer />
@@ -37,18 +45,18 @@ const Hero = () => {
           </h1>
 
           <p className="text-xl md:text-2xl text-primary font-medium">
-            Енергия от Дзен. Красота отвътре.
+            {t('hero.tagline')}
           </p>
 
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">Церемониална матча</p>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">{t('hero.subtitle')}</p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
             <Button variant="hero" size="lg" onClick={() => scrollToSection('products')}>
-              Купи сега
+              {t('hero.buyNow')}
             </Button>
             <Button variant="outline" size="lg" onClick={() => scrollToSection('benefits')}>
-              Научи повече
+              {t('hero.learnMore')}
             </Button>
           </div>
 
@@ -56,15 +64,15 @@ const Hero = () => {
           <div className="pt-12 flex flex-wrap justify-center gap-8 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <span className="text-primary text-lg">✓</span>
-              <span>100% органична</span>
+              <span>{t('hero.organic')}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-primary text-lg">✓</span>
-              <span>Ceremonial grade</span>
+              <span>{t('hero.ceremonialGrade')}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-primary text-lg">✓</span>
-              <span>Ръчно смляна</span>
+              <span>{t('hero.handGround')}</span>
             </div>
           </div>
         </div>

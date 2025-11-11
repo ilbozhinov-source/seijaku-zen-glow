@@ -1,21 +1,24 @@
 import { Sun, Moon, Heart } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 const Benefits = () => {
+  const { t } = useTranslation();
+  
   const lifestyleBenefits = [
     {
       icon: Sun,
-      title: "Сутрешен ритуал",
-      description: "Започни деня с чиста енергия и фокус. SEIJAKU замества кафето с по-здравословна алтернатива, която не води до срив."
+      title: t('benefits.morningRitual'),
+      description: t('benefits.morningRitualDesc')
     },
     {
       icon: Moon,
-      title: "Следобеден детокс",
-      description: "Идеална за следобедна пауза. Подмладява без да наруши съня, благодарение на балансираното съдържание на кофеин."
+      title: t('benefits.afternoonDetox'),
+      description: t('benefits.afternoonDetoxDesc')
     },
     {
       icon: Heart,
-      title: "Грижа за тялото",
-      description: "Богата на EGCG антиоксиданти, които подпомагат метаболизма, имунната система и здравето на кожата."
+      title: t('benefits.bodyCare'),
+      description: t('benefits.bodyCareDesc')
     }
   ];
 
@@ -24,10 +27,10 @@ const Benefits = () => {
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-            За теб
+            {t('benefits.title')}
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground">
-            SEIJAKU е повече от напитка – това е момент само за теб. Момент на спокойствие, баланс и грижа за себе си.
+            {t('benefits.subtitle')}
           </p>
         </div>
 
@@ -56,13 +59,13 @@ const Benefits = () => {
         <div className="max-w-4xl mx-auto bg-accent/50 rounded-2xl p-8 md:p-12 border border-primary/20">
           <div className="text-center space-y-4">
             <h3 className="text-2xl md:text-3xl font-bold text-foreground">
-              Без компромиси за твоето здраве
+              {t('benefits.noCompromise')}
             </h3>
             <p className="text-lg text-muted-foreground">
-              Без захар • Без калории • Без изкуствени добавки • Без ГМО
+              {t('benefits.features')}
             </p>
             <p className="text-base text-muted-foreground max-w-2xl mx-auto pt-4">
-              Само чиста, органична матча от най-високо качество. Всеки глътка е инвестиция във твоето здраве, красота и благополучие.
+              {t('benefits.investment')}
             </p>
           </div>
         </div>

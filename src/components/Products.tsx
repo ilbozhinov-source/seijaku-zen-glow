@@ -6,8 +6,10 @@ import { getProducts, ShopifyProduct } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 
 const Products = () => {
+  const { t } = useTranslation();
   const [products, setProducts] = useState<ShopifyProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const addItem = useCartStore(state => state.addItem);
@@ -40,7 +42,7 @@ const Products = () => {
     };
     
     addItem(cartItem);
-    toast.success('Добавено в количката!', {
+    toast.success(t('products.addedToCart'), {
       position: 'top-center'
     });
   };
@@ -50,22 +52,22 @@ const Products = () => {
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-            Нашите Продукти
+            {t('products.title')}
           </h2>
           <p className="text-lg text-muted-foreground">
-            Премиум матча, създадена с почит към традицията и любов към детайла
+            {t('products.subtitle')}
           </p>
         </div>
 
         {loading ? (
           <div className="text-center py-20">
-            <p className="text-muted-foreground">Зареждане на продукти...</p>
+            <p className="text-muted-foreground">{t('products.loading')}</p>
           </div>
         ) : products.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-muted-foreground mb-4">Все още няма добавени продукти</p>
+            <p className="text-muted-foreground mb-4">{t('products.noProducts')}</p>
             <p className="text-sm text-muted-foreground">
-              Създайте продукт като ми кажете какъв продукт искате и каква цена
+              {t('products.noProductsDesc')}
             </p>
           </div>
         ) : (
@@ -82,7 +84,7 @@ const Products = () => {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                        Няма изображение
+                        {t('products.noImage')}
                       </div>
                     )}
                   </div>
@@ -114,7 +116,7 @@ const Products = () => {
                     onClick={() => handleAddToCart(product)}
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    Добави в количката
+                    {t('products.addToCart')}
                   </Button>
                 </CardContent>
               </Card>

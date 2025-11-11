@@ -1,21 +1,24 @@
 import ritualImage from "@/assets/ritual-preparation.jpg";
+import { useTranslation } from 'react-i18next';
 
 const Ritual = () => {
+  const { t } = useTranslation();
+  
   const steps = [
     {
       number: "01",
-      title: "Просей матчата",
-      description: "Сложи 1-2 чаени лъжички SEIJAKU матча в купичка. За най-добър резултат, просей я за премахване на бучки."
+      title: t('ritual.step1Title'),
+      description: t('ritual.step1Desc')
     },
     {
       number: "02",
-      title: "Добави водата",
-      description: "Налей 60-80ml гореща вода (75-80°C). Не трябва да е вряла вода, за да запазиш хранителните вещества."
+      title: t('ritual.step2Title'),
+      description: t('ritual.step2Desc')
     },
     {
       number: "03",
-      title: "Разбий с chasen",
-      description: "Използвай бамбукова метличка (chasen) и разбий в W-образни движения, докато се образува кремообразна пяна."
+      title: t('ritual.step3Title'),
+      description: t('ritual.step3Desc')
     }
   ];
 
@@ -24,11 +27,10 @@ const Ritual = () => {
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-            Ритуал на приготвяне
+            {t('ritual.title')}
           </h2>
           <p className="text-lg text-muted-foreground">
-            Превърни всяка сутрин в дзен момент. Традиционната церемония е проста, 
-            но изпълнена с грижа и внимание.
+            {t('ritual.subtitle')}
           </p>
         </div>
 
@@ -55,11 +57,9 @@ const Ritual = () => {
               ))}
 
               <div className="mt-8 p-6 bg-accent/50 rounded-xl border border-primary/20">
-                <h4 className="font-bold text-foreground mb-2">Pro съвет:</h4>
+                <h4 className="font-bold text-foreground mb-2">{t('ritual.proTip')}</h4>
                 <p className="text-sm text-muted-foreground">
-                  За по-кремообразна текстура, първо добави малко студена вода към матчата, 
-                  разбърквай до паста, след това долей горещата вода. 
-                  Можеш да добавиш и растително мляко за матча лате.
+                  {t('ritual.proTipDesc')}
                 </p>
               </div>
             </div>
@@ -69,7 +69,7 @@ const Ritual = () => {
               <div className="relative rounded-2xl overflow-hidden shadow-zen">
                 <img 
                   src={ritualImage} 
-                  alt="Приготвяне на матча с chasen"
+                  alt={t('ritual.imageAlt')}
                   className="w-full h-auto"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent"></div>
@@ -81,23 +81,23 @@ const Ritual = () => {
           <div className="mt-16 grid md:grid-cols-3 gap-6">
             <div className="text-center p-6 bg-card rounded-xl shadow-soft border border-border">
               <div className="text-3xl mb-3">🍵</div>
-              <h4 className="font-bold text-foreground mb-2">Chasen метличка</h4>
+              <h4 className="font-bold text-foreground mb-2">{t('ritual.chasenTitle')}</h4>
               <p className="text-sm text-muted-foreground">
-                Използвай традиционна бамбукова метличка за най-добра пяна
+                {t('ritual.chasenDesc')}
               </p>
             </div>
             <div className="text-center p-6 bg-card rounded-xl shadow-soft border border-border">
               <div className="text-3xl mb-3">🌡️</div>
-              <h4 className="font-bold text-foreground mb-2">Температура</h4>
+              <h4 className="font-bold text-foreground mb-2">{t('ritual.temperatureTitle')}</h4>
               <p className="text-sm text-muted-foreground">
-                75-80°C е идеална за запазване на вкуса и ползите
+                {t('ritual.temperatureDesc')}
               </p>
             </div>
             <div className="text-center p-6 bg-card rounded-xl shadow-soft border border-border">
               <div className="text-3xl mb-3">💚</div>
-              <h4 className="font-bold text-foreground mb-2">Съхранение</h4>
+              <h4 className="font-bold text-foreground mb-2">{t('ritual.storageTitle')}</h4>
               <p className="text-sm text-muted-foreground">
-                Пази SEIJAKU на хладно, тъмно място за максимална свежест
+                {t('ritual.storageDesc')}
               </p>
             </div>
           </div>
