@@ -6,6 +6,8 @@ import { ArrowLeft, ShoppingCart } from "lucide-react";
 import { getProductByHandle, ShopifyProduct } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
+import { ProductSchema } from "@/components/ProductSchema";
+import { useSEO } from "@/hooks/useSEO";
 
 const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
@@ -13,6 +15,8 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const addItem = useCartStore(state => state.addItem);
+  
+  useSEO();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -77,6 +81,7 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-gradient-soft">
+      <ProductSchema product={product} selectedVariant={selectedVariant} />
       <div className="container mx-auto px-4 py-8">
         <Link to="/">
           <Button variant="ghost" className="mb-6">
