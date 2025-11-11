@@ -1,5 +1,6 @@
 import { Instagram, Facebook } from "lucide-react";
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -68,9 +69,9 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="#" className="text-zen-silver hover:text-primary zen-transition">
+                <Link to="/faq" className="text-zen-silver hover:text-primary zen-transition">
                   {t('footer.faq')}
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
