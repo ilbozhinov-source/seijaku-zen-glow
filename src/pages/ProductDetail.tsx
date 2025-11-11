@@ -7,6 +7,7 @@ import { getProductByHandle, ShopifyProduct } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import { ProductSchema } from "@/components/ProductSchema";
+import { BreadcrumbSchema } from "@/components/BreadcrumbSchema";
 import { useSEO } from "@/hooks/useSEO";
 
 const ProductDetail = () => {
@@ -82,6 +83,10 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-gradient-soft">
       <ProductSchema product={product} selectedVariant={selectedVariant} />
+      <BreadcrumbSchema 
+        productName={product.title}
+        productUrl={window.location.href}
+      />
       <div className="container mx-auto px-4 py-8">
         <Link to="/">
           <Button variant="ghost" className="mb-6">
