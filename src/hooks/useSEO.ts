@@ -72,5 +72,14 @@ export const useSEO = () => {
     defaultLink.hreflang = 'x-default';
     defaultLink.href = `${baseUrl}?lang=en`;
     document.head.appendChild(defaultLink);
+
+    // Update canonical tag
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', `${baseUrl}?lang=${i18n.language}`);
   }, [i18n.language, t]);
 };
