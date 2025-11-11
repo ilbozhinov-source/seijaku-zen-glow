@@ -1,8 +1,6 @@
 import { Instagram, Facebook } from "lucide-react";
-
 const Footer = () => {
-  return (
-    <footer className="bg-zen-dark text-zen-cream py-16">
+  return <footer className="bg-zen-dark text-zen-cream py-16">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8 mb-12">
           {/* Brand */}
@@ -11,27 +9,15 @@ const Footer = () => {
               <h3 className="text-3xl font-bold">SEIJAKU</h3>
               <p className="text-2xl font-light">静寂</p>
             </div>
-            <p className="text-zen-silver max-w-md">
-              Церемониална японска матча за модерната жена. 
-              Енергия от дзен, красота отвътре.
-            </p>
+            <p className="text-zen-silver max-w-md">Церемониална матча за модерният човек.
+Енергия от дзен, красота отвътре.</p>
             
             {/* Social Links */}
             <div className="flex gap-4 pt-4">
-              <a 
-                href="https://instagram.com/seijaku" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-primary/20 hover:bg-primary flex items-center justify-center zen-transition"
-              >
+              <a href="https://instagram.com/seijaku" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary/20 hover:bg-primary flex items-center justify-center zen-transition">
                 <Instagram className="w-5 h-5" />
               </a>
-              <a 
-                href="https://facebook.com/seijaku" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-primary/20 hover:bg-primary flex items-center justify-center zen-transition"
-              >
+              <a href="https://facebook.com/seijaku" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary/20 hover:bg-primary flex items-center justify-center zen-transition">
                 <Facebook className="w-5 h-5" />
               </a>
             </div>
@@ -102,8 +88,6 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
