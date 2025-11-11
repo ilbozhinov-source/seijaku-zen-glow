@@ -104,6 +104,44 @@
     "privacy": "Politica de Confidențialitate",
     "terms": "Termeni de Utilizare"
   },
+  "faqSection": {
+    "title": "Întrebări Frecvente",
+    "subtitle": "Tot ce trebuie să știi despre SEIJAKU matcha",
+    "questions": [
+      {
+        "question": "Ce face SEIJAKU matcha diferită de matcha obișnuită?",
+        "answer": "SEIJAKU este 100% matcha de grad ceremonial, cea mai înaltă calitate disponibilă. Este măcinată manual din frunze de ceai cultivate la umbră, rezultând o culoare verde vibrantă, un gust neted și beneficii nutriționale maxime. Spre deosebire de matcha culinară, matcha ceremonială este destinată să fie savurată singură doar cu apă."
+      },
+      {
+        "question": "Cât cofeină conține matcha?",
+        "answer": "O porție de SEIJAKU matcha conține aproximativ 70mg de cofeină, similar cu o ceașcă de cafea. Cu toate acestea, cofeina din matcha este echilibrată de L-teanină, un aminoacid care promovează vigilența calmă fără tremurături sau prăbușiri. Aceasta creează o energie susținută, concentrată care durează 4-6 ore."
+      },
+      {
+        "question": "Care este cel mai bun moment pentru a bea matcha?",
+        "answer": "Matcha este versatilă și poate fi savurată la orice oră a zilei. Mulți oameni o beau dimineața ca înlocuitor al cafelei, sau după-amiaza pentru un impuls energetic. Recomandăm să evitați matcha cu 4-6 ore înainte de culcare din cauza conținutului de cofeină."
+      },
+      {
+        "question": "Cum ar trebui să îmi depozitez SEIJAKU matcha?",
+        "answer": "Depozitați matcha într-un loc răcoros, întunecos, departe de lumina directă a soarelui, căldură și umiditate. Păstrați-l ermetic închis în containerul său original. Pentru cea mai bună prospețime și aromă, consumați în termen de 3 luni de la deschidere. Refrigerarea este opțională, dar poate ajuta la extinderea prospeții."
+      },
+      {
+        "question": "Pot bea matcha în fiecare zi?",
+        "answer": "Da! Consumul zilnic de matcha este sigur și benefic. Majoritatea oamenilor se bucură de 1-2 porții pe zi. Matcha este bogată în antioxidanți, susține metabolismul și oferă energie curată. Ca și în cazul oricărei băuturi cu cofeină, ascultați-vă corpul și ajustați consumul în consecință."
+      },
+      {
+        "question": "SEIJAKU matcha este organică?",
+        "answer": "Da, SEIJAKU matcha este 100% organică și provine de la ferme de ceai certificate organic din Japonia. Nu conține pesticide, erbicide sau aditivi artificiali. Suntem dedicați să oferim cea mai pură matcha de cea mai înaltă calitate."
+      },
+      {
+        "question": "Cum să pregătesc cana perfectă de matcha?",
+        "answer": "Cerneti 1-2 lingurite de matcha într-un bol. Adăugați 60-80ml de apă fierbinte (75-80°C, nu clocotită). Bateți vigorously într-o mișcare W sau zigzag cu un tel din bambus (chasen) până când se formează o consistență netedă, spumoasă. Savurați imediat pentru cel mai bun gust și textură."
+      },
+      {
+        "question": "Care sunt beneficiile pentru sănătate ale matcha?",
+        "answer": "Matcha este încărcată cu antioxidanți (de 137 de ori mai mult decât ceaiul verde obișnuit), susține metabolismul și arderea grăsimilor, îmbunătățește concentrarea și focusul, stimulează funcția imunitară, promovează pielea sănătoasă și oferă energie calmă, susținută. Este, de asemenea, bogată în clorofilă, care susține detoxifierea naturală."
+      }
+    ]
+  },
   "seo": {
     "title": "SEIJAKU 静寂 — Energie Zen. Frumusețe din Interior.",
     "description": "Matcha ceremonială japoneză pentru femeia modernă. Energie curată, piele radiantă, echilibru interior. 100% matcha japoneză organică de grad ceremonial."

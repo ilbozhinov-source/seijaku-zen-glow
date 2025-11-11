@@ -104,6 +104,44 @@
     "privacy": "Privacy Policy",
     "terms": "Terms of Use"
   },
+  "faqSection": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Everything you need to know about SEIJAKU matcha",
+    "questions": [
+      {
+        "question": "What makes SEIJAKU matcha different from regular matcha?",
+        "answer": "SEIJAKU is 100% ceremonial grade matcha, the highest quality available. It's hand-ground from shade-grown tea leaves, resulting in a vibrant green color, smooth taste, and maximum nutritional benefits. Unlike culinary grade matcha, ceremonial matcha is meant to be enjoyed on its own with just water."
+      },
+      {
+        "question": "How much caffeine does matcha contain?",
+        "answer": "One serving of SEIJAKU matcha contains approximately 70mg of caffeine, similar to a cup of coffee. However, the caffeine in matcha is balanced by L-theanine, an amino acid that promotes calm alertness without jitters or crashes. This creates a sustained, focused energy that lasts 4-6 hours."
+      },
+      {
+        "question": "When is the best time to drink matcha?",
+        "answer": "Matcha is versatile and can be enjoyed any time of day. Many people drink it in the morning as a coffee replacement, or in the afternoon for an energy boost. We recommend avoiding matcha 4-6 hours before bedtime due to its caffeine content."
+      },
+      {
+        "question": "How should I store my SEIJAKU matcha?",
+        "answer": "Store your matcha in a cool, dark place away from direct sunlight, heat, and moisture. Keep it tightly sealed in its original container. For best freshness and flavor, consume within 3 months of opening. Refrigeration is optional but can help extend freshness."
+      },
+      {
+        "question": "Can I drink matcha every day?",
+        "answer": "Yes! Drinking matcha daily is safe and beneficial. Most people enjoy 1-2 servings per day. Matcha is rich in antioxidants, supports metabolism, and provides clean energy. As with any caffeinated beverage, listen to your body and adjust your intake accordingly."
+      },
+      {
+        "question": "Is SEIJAKU matcha organic?",
+        "answer": "Yes, SEIJAKU matcha is 100% organic and sourced from certified organic tea farms in Japan. It contains no pesticides, herbicides, or artificial additives. We are committed to providing the purest, highest quality matcha."
+      },
+      {
+        "question": "How do I prepare the perfect cup of matcha?",
+        "answer": "Sift 1-2 teaspoons of matcha into a bowl. Add 60-80ml of hot water (75-80°C, not boiling). Whisk vigorously in a W or zigzag motion with a bamboo whisk (chasen) until a smooth, frothy consistency forms. Enjoy immediately for the best taste and texture."
+      },
+      {
+        "question": "What are the health benefits of matcha?",
+        "answer": "Matcha is packed with antioxidants (137x more than regular green tea), supports metabolism and fat burning, enhances focus and concentration, boosts immune function, promotes healthy skin, and provides calm, sustained energy. It's also rich in chlorophyll, which supports natural detoxification."
+      }
+    ]
+  },
   "seo": {
     "title": "SEIJAKU 静寂 — Zen Energy. Beauty from Within.",
     "description": "Ceremonial Japanese matcha for the modern woman. Clean energy, radiant skin, inner balance. 100% organic Japanese ceremonial grade matcha."
