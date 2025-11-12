@@ -1,22 +1,18 @@
-import FAQ from "@/components/FAQ";
+import Reviews from "@/components/Reviews";
 import Footer from "@/components/Footer";
-import { FAQSchema } from "@/components/FAQSchema";
 import { useSEO } from "@/hooks/useSEO";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
-const FAQPage = () => {
+const ReviewsPage = () => {
   const { t } = useTranslation();
   
   useSEO();
 
   return (
     <main className="min-h-screen">
-      <FAQSchema />
-      
-      {/* Header with back button */}
       <div className="container mx-auto px-4 py-8">
         <Link to="/">
           <Button variant="ghost" className="mb-6">
@@ -26,10 +22,10 @@ const FAQPage = () => {
         </Link>
       </div>
       
-      <FAQ />
+      <Reviews />
       <Footer />
     </main>
   );
 };
 
-export default FAQPage;
+export default ReviewsPage;

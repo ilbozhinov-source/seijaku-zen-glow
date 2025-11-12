@@ -148,5 +148,17 @@
   },
   "navigation": {
     "back": "Înapoi"
+  },
+  "story": {
+    "title": "Povestea Noastră",
+    "subtitle": "Călătoria SEIJAKU",
+    "content": "SEIJAKU a fost creată cu misiunea de a aduce tradiția japoneză antică a matcha ceremonială în lumea modernă. Fiecare pachet conține matcha 100% organică, măcinată manual de cea mai înaltă calitate, selectată cu dragoste și grijă. Credem că adevărata frumusețe și energie vin din interior, și că fiecare moment poate fi transformat într-un ritual de auto-descoperire și echilibru."
+  },
+  "contact": {
+    "title": "Contactează-ne",
+    "subtitle": "Ne-ar plăcea să auzim de la tine",
+    "email": "Email",
+    "phone": "Telefon",
+    "location": "Locație"
   }
 }
