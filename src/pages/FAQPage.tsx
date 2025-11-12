@@ -21,7 +21,7 @@ const FAQPage = () => {
         <Link to="/">
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            {t('hero.cta')}
+            {t('navigation.back')}
           </Button>
         </Link>
       </div>
