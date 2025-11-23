@@ -43,19 +43,19 @@ const Footer = () => {
             <h4 className="font-bold text-zen-cream mb-4">{t("footer.aboutTitle")}</h4>
             <ul className="space-y-2">
               <li>
-                <a Link to="/story" className="text-zen-silver hover:text-primary zen-transition">
-                  {t("footer.ourStory")}
-                </a>
+                <Link to="/story" className="text-sm text-zen-silver hover:text-primary zen-transition">
+                  {t("footer.about")}
+                </Link>
               </li>
               <li>
-                <a Link to="/quality" className="text-zen-silver hover:text-primary zen-transition">
+                <Link to="/quality" className="text-sm text-zen-silver hover:text-primary zen-transition">
                   {t("footer.quality")}
-                </a>
+                </Link>
               </li>
               <li>
-                <a Link to="/blog" className="text-zen-silver hover:text-primary zen-transition">
+                <Link to="/blog" className="text-sm text-zen-silver hover:text-primary zen-transition">
                   {t("footer.blog")}
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -65,22 +65,22 @@ const Footer = () => {
             <h4 className="font-bold text-zen-cream mb-4">{t("footer.supportTitle")}</h4>
             <ul className="space-y-2">
               <li>
-                <a Link to="/contact" className="text-zen-silver hover:text-primary zen-transition">
+                <Link to="/contact" className="text-sm text-zen-silver hover:text-primary zen-transition">
                   {t("footer.contact")}
-                </a>
+                </Link>
               </li>
               <li>
-                <a Link to="/delivery" className="text-zen-silver hover:text-primary zen-transition">
-                  {t("footer.shipping")}
-                </a>
+                <Link to="/delivery" className="text-sm text-zen-silver hover:text-primary zen-transition">
+                  {t("footer.delivery")}
+                </Link>
               </li>
               <li>
-                <a Link to="/returns" className="text-zen-silver hover:text-primary zen-transition">
+                <Link to="/returns" className="text-sm text-zen-silver hover:text-primary zen-transition">
                   {t("footer.returns")}
-                </a>
+                </Link>
               </li>
               <li>
-                <Link to="/faq" className="text-zen-silver hover:text-primary zen-transition">
+                <Link to="/faq" className="text-sm text-zen-silver hover:text-primary zen-transition">
                   {t("footer.faq")}
                 </Link>
               </li>
