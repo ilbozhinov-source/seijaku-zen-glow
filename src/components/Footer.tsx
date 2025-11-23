@@ -1,11 +1,12 @@
 import { Instagram, Facebook } from "lucide-react";
-import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   const { t } = useTranslation();
-  
-  return <footer className="bg-zen-dark text-zen-cream py-16">
+
+  return (
+    <footer className="bg-zen-dark text-zen-cream py-16">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8 mb-12">
           {/* Brand */}
@@ -14,14 +15,24 @@ const Footer = () => {
               <h3 className="text-3xl font-bold">SEIJAKU</h3>
               <p className="text-2xl font-light">静寂</p>
             </div>
-            <p className="text-zen-silver max-w-md">{t('footer.tagline')}</p>
-            
+            <p className="text-zen-silver max-w-md">{t("footer.tagline")}</p>
+
             {/* Social Links */}
             <div className="flex gap-4 pt-4">
-              <a href="https://instagram.com/seijaku" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary/20 hover:bg-primary flex items-center justify-center zen-transition">
+              <a
+                href="https://instagram.com/seijaku"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-primary/20 hover:bg-primary flex items-center justify-center zen-transition"
+              >
                 <Instagram className="w-5 h-5" />
               </a>
-              <a href="https://facebook.com/seijaku" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary/20 hover:bg-primary flex items-center justify-center zen-transition">
+              <a
+                href="https://facebook.com/seijaku"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-primary/20 hover:bg-primary flex items-center justify-center zen-transition"
+              >
                 <Facebook className="w-5 h-5" />
               </a>
             </div>
@@ -29,21 +40,21 @@ const Footer = () => {
 
           {/* Links */}
           <div>
-            <h4 className="font-bold text-zen-cream mb-4">{t('footer.aboutTitle')}</h4>
+            <h4 className="font-bold text-zen-cream mb-4">{t("footer.aboutTitle")}</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-zen-silver hover:text-primary zen-transition">
-                  {t('footer.ourStory')}
+                <a Link to="/story" className="text-zen-silver hover:text-primary zen-transition">
+                  {t("footer.ourStory")}
                 </a>
               </li>
               <li>
-                <a href="#" className="text-zen-silver hover:text-primary zen-transition">
-                  {t('footer.quality')}
+                <a Link to="/quality" className="text-zen-silver hover:text-primary zen-transition">
+                  {t("footer.quality")}
                 </a>
               </li>
               <li>
-                <a href="#" className="text-zen-silver hover:text-primary zen-transition">
-                  {t('footer.blog')}
+                <a Link to="/blog" className="text-zen-silver hover:text-primary zen-transition">
+                  {t("footer.blog")}
                 </a>
               </li>
             </ul>
@@ -51,26 +62,26 @@ const Footer = () => {
 
           {/* Support */}
           <div>
-            <h4 className="font-bold text-zen-cream mb-4">{t('footer.supportTitle')}</h4>
+            <h4 className="font-bold text-zen-cream mb-4">{t("footer.supportTitle")}</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-zen-silver hover:text-primary zen-transition">
-                  {t('footer.contact')}
+                <a Link to="/contact" className="text-zen-silver hover:text-primary zen-transition">
+                  {t("footer.contact")}
                 </a>
               </li>
               <li>
-                <a href="#" className="text-zen-silver hover:text-primary zen-transition">
-                  {t('footer.shipping')}
+                <a Link to="/delivery" className="text-zen-silver hover:text-primary zen-transition">
+                  {t("footer.shipping")}
                 </a>
               </li>
               <li>
-                <a href="#" className="text-zen-silver hover:text-primary zen-transition">
-                  {t('footer.returns')}
+                <a Link to="/returns" className="text-zen-silver hover:text-primary zen-transition">
+                  {t("footer.returns")}
                 </a>
               </li>
               <li>
                 <Link to="/faq" className="text-zen-silver hover:text-primary zen-transition">
-                  {t('footer.faq')}
+                  {t("footer.faq")}
                 </Link>
               </li>
             </ul>
@@ -80,18 +91,19 @@ const Footer = () => {
         {/* Bottom */}
         <div className="pt-8 border-t border-zen-silver/20">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-zen-silver">
-            <p>{t('footer.rights')}</p>
+            <p>{t("footer.rights")}</p>
             <div className="flex gap-6">
               <a href="#" className="hover:text-primary zen-transition">
-                {t('footer.privacy')}
+                {t("footer.privacy")}
               </a>
               <a href="#" className="hover:text-primary zen-transition">
-                {t('footer.terms')}
+                {t("footer.terms")}
               </a>
             </div>
           </div>
         </div>
       </div>
-    </footer>;
+    </footer>
+  );
 };
 export default Footer;
