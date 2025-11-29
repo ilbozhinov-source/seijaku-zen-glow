@@ -211,5 +211,21 @@
     "noteTitle": "Informații Importante",
     "noteDesc": "Pentru produsele deschise, putem oferi o rambursare parțială sau înlocuire dacă calitatea nu corespunde așteptărilor tale. Costurile de transport pentru retur sunt responsabilitatea clientului, cu excepția cazului în care produsul este defect.",
     "questionsText": "Ai întrebări despre returnări?"
+  },
+  "delivery": {
+    "title": "Livrare și Plată",
+    "subtitle": "Livrare Sigură și Rapidă",
+    "paymentTitle": "Plată",
+    "paymentDesc": "Ramburs în numerar la livrare sau cu cardul.",
+    "timeTitle": "Timp de Livrare",
+    "timeDesc": "Livrările se efectuează prin serviciile de curierat Speedy și Econt. Pentru comenzile primite până la ora 13:30 într-o zi lucrătoare, livrarea se face în 2 zile lucrătoare.",
+    "pricesTitle": "Prețuri de Livrare",
+    "under70": "De la 0€ la 35,79€:",
+    "speedyOffice": "La oficiul Speedy - 3,06€",
+    "ekontOffice": "La oficiul Econt - 3,32€",
+    "homeAddress": "La adresa personală - 3,57€",
+    "over70": "Peste 35,79€:",
+    "freeOffice": "GRATUIT la oficiu",
+    "freeAddress": "GRATUIT la adresă"
   }
 }
