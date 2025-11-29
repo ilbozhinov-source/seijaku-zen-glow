@@ -160,5 +160,24 @@
     "email": "Email",
     "phone": "Telefon",
     "location": "Locație"
+  },
+  "returns": {
+    "title": "Politica de Retur",
+    "subtitle": "Satisfacția ta este prioritatea noastră",
+    "guaranteeTitle": "Garanție de Satisfacție 100%",
+    "guaranteeDesc": "Dacă nu ești complet mulțumit de achiziția ta, îți vom returna banii sau vom înlocui produsul, fără întrebări.",
+    "step1Title": "Contactează-ne",
+    "step1Desc": "Trimite-ne un email la hello@seijaku.bg sau sună-ne în termen de 14 zile de la primirea comenzii.",
+    "step2Title": "Trimite Produsul",
+    "step2Desc": "După ce confirmăm solicitarea ta, trimite produsul înapoi în ambalajul original la adresa furnizată.",
+    "step3Title": "Primește Rambursarea",
+    "step3Desc": "După primirea și inspecția produsului, vom procesa rambursarea în termen de 5-7 zile lucrătoare folosind aceeași metodă de plată.",
+    "timeframeTitle": "Perioada de Retur",
+    "timeframeDesc": "Ai 14 zile de la data livrării pentru a solicita returnarea produsului.",
+    "conditionTitle": "Starea Produsului",
+    "conditionDesc": "Produsul trebuie să fie nedeschis și în ambalajul original pentru o rambursare completă.",
+    "noteTitle": "Informații Importante",
+    "noteDesc": "Pentru produsele deschise, putem oferi o rambursare parțială sau înlocuire dacă calitatea nu corespunde așteptărilor tale. Costurile de transport pentru retur sunt responsabilitatea clientului, cu excepția cazului în care produsul este defect.",
+    "questionsText": "Ai întrebări despre returnări?"
   }
 }
