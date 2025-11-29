@@ -168,9 +168,26 @@
     "back": "Înapoi"
   },
   "story": {
-    "title": "Povestea Noastră",
+    "title": "Calitate și Origine",
     "subtitle": "Călătoria SEIJAKU",
-    "content": "SEIJAKU a fost creată cu misiunea de a aduce tradiția japoneză antică a matcha ceremonială în lumea modernă. Fiecare pachet conține matcha 100% organică, măcinată manual de cea mai înaltă calitate, selectată cu dragoste și grijă. Credem că adevărata frumusețe și energie vin din interior, și că fiecare moment poate fi transformat într-un ritual de auto-descoperire și echilibru."
+    "intro": "Matcha noastră provine de la ferme bio certificate, unde fiecare frunză este crescută cu respect pentru natură și tradiția seculară. Fiecare pachet SEIJAKU reprezintă o garanție de puritate, origine și calitate autentică – un gust care aduce liniște, energie și precizie.",
+    "shading": {
+      "title": "Umbrire",
+      "description": "Cu 3–4 săptămâni înainte de recoltare, plantele sunt acoperite pentru a crește clorofila, a îmbunătăți gustul și a mări conținutul de L-teanină."
+    },
+    "harvest": {
+      "title": "Recoltare",
+      "description": "Se folosesc doar cele mai tinere frunze de la vârful plantei."
+    },
+    "grinding": {
+      "title": "Mori de Piatră",
+      "description": "Frunzele sunt măcinate lent pe pietre de granit până la pudră fină, fără încălzire."
+    },
+    "purity": {
+      "title": "Compoziție Pură",
+      "description": "100% Matcha de Grad Ceremonial – fără aditivi, îndulcitori sau coloranți. Lucrăm doar cu ferme care folosesc metode tradiționale."
+    },
+    "conclusion": "Astfel asigurăm o culoare verde proaspătă, aromă bogată, textură cremoasă și amăreală echilibrată. SEIJAKU este mai mult decât o băutură – este un ritual inspirat de estetica japoneză a liniștii și purității."
   },
   "contact": {
     "title": "Contactează-ne",
