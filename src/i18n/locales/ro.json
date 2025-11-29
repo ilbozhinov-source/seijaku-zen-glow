@@ -121,6 +121,7 @@
     "rights": "© 2025 SEIJAKU. Toate drepturile rezervate.",
     "privacy": "Politica de Confidențialitate",
     "terms": "Termeni de Utilizare",
+    "cookies": "Cookie-uri",
     "ors": "SOL"
   },
   "faqSection": {
@@ -404,5 +405,40 @@
     "orsLink": "Platforma SOL a UE",
     "contactTitle": "Contactați-ne",
     "contactDesc": "Dacă aveți întrebări despre protecția datelor personale, vă rugăm să ne contactați:"
+  },
+  "cookies": {
+    "back": "Înapoi la Pagina Principală",
+    "title": "Politica de Cookie-uri",
+    "subtitle": "Aflați cum folosim cookie-urile pe site-ul nostru",
+    "intro": "Această politică se aplică cookie-urilor și site-urilor web întreținute de IT LAB OOD, cu sediul social: Sofia, str. Promishlena 33, inclusiv site-ul https://www.gomatcha.bg.",
+    "whatTitle": "Ce sunt cookie-urile?",
+    "whatDesc": "Cookie-urile sunt fișiere care conțin informații, inclusiv conținut text nelimitat, care sunt stocate pe computerele/dispozitivele utilizatorului pentru a îmbunătăți funcționarea site-ului respectiv. Aceste fișiere permit recunoașterea utilizatorului și adaptarea site-ului web la preferințele sale.",
+    "whyTitle": "Pentru ce se folosesc cookie-urile?",
+    "whyDesc": "Cookie-urile sunt folosite pentru a adapta conținutul site-ului web la preferințele utilizatorului individual și pentru a optimiza funcționarea acestuia. Sunt folosite și pentru compilarea statisticilor generale anonime care ne ajută să înțelegem cum interacționează utilizatorul cu site-ul.",
+    "typesTitle": "Ce tipuri de cookie-uri folosim?",
+    "essentialTitle": "1. Cookie-uri esențiale",
+    "essentialDesc": "Sunt necesare pentru ca platforma noastră să-și îndeplinească funcțiile de bază. Cu alte cuvinte, platforma noastră nu ar putea funcționa fără ele.",
+    "essentialWarning": "Dacă dezactivați aceste cookie-uri, nu veți putea să vă conectați la contul dvs., să faceți achiziții și aproape nicio altă acțiune.",
+    "performanceTitle": "2. Cookie-uri de performanță și funcționalitate",
+    "performanceDesc": "Aceste cookie-uri sunt folosite pentru alte funcții importante, cum ar fi:",
+    "performanceItem1": "Pentru a vă putea recunoaște când reveniți pe platforma noastră",
+    "performanceItem2": "Pentru a reține preferințele utilizatorului (de exemplu, ce setări ați ales)",
+    "performanceItem3": "Pentru a vă putea recomanda produse care se potrivesc preferințelor dvs.",
+    "performanceItem4": "Pentru a colecta informații despre modul în care vizitatorii folosesc platforma noastră",
+    "performanceItem5": "Pentru stocarea temporară a informațiilor anonime pentru oferte relevante",
+    "performanceItem6": "Pentru alte funcții auxiliare",
+    "analyticsTitle": "3. Cookie-uri terțe părți - pentru numărarea traficului",
+    "analyticsDesc": "Folosim mai multe servicii externe care pot crea, de asemenea, cookie-uri în browser-ul dvs. Aceste cookie-uri sunt gestionate de serviciile respective și nu sunt controlate de noi. Informațiile din ele sunt anonimizate.",
+    "advertisingTitle": "4. Cookie-uri terțe părți - în scopuri publicitare",
+    "advertisingDesc": "Folosim mai multe servicii externe - rețele de publicitate, care pot crea, de asemenea, cookie-uri în browser-ul dvs. Aceste cookie-uri sunt gestionate de serviciile respective și nu sunt controlate de noi.",
+    "functionalityTitle": "5. Cookie-uri terțe părți - pentru funcționalitate",
+    "functionalityDesc": "Unele cookie-uri apar și în legătură cu instrumente terțe pe care le-am integrat în platforma noastră. Aceste servicii pot crea cookie-uri pentru a putea funcționa.",
+    "functionalityNote": "Ne străduim să ne asigurăm că părțile terțe cu care avem relații de parteneriat sunt verificate corespunzător și au autoritate și profesionalism dovedite.",
+    "personalTitle": "Conțin cookie-urile informații personale?",
+    "personalDesc": "Informațiile personale acumulate prin cookie-uri pot fi utilizate numai pentru efectuarea anumitor operațiuni pentru utilizator. Astfel de informații sunt criptate într-un mod care face imposibil accesul persoanelor neautorizate.",
+    "deleteTitle": "Ștergerea cookie-urilor",
+    "deleteDesc1": "În mod implicit, aplicațiile utilizate pentru navigarea pe site-uri (browsere web) permit salvarea cookie-urilor. Această setare poate fi modificată astfel încât stocarea automată a cookie-urilor să fie blocată.",
+    "deleteDesc2": "Informații detaliate despre diferitele moduri de lucru cu cookie-uri pot fi găsite în setările aplicației - de exemplu, în secțiunile Privacy, Security sau Cookies.",
+    "deleteWarning": "Limitarea sau ștergerea cookie-urilor poate afecta unele funcționalități ale site-ului și poate duce la funcționarea incorectă a anumitor servicii."
   }
 }
