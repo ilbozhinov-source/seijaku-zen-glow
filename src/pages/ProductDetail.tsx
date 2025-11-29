@@ -117,9 +117,14 @@ const ProductDetail = () => {
                   <h1 className="text-3xl font-bold text-foreground mb-2">
                     {product.title}
                   </h1>
-                  <p className="text-2xl font-bold text-primary">
-                    {parseFloat(selectedVariant.price.amount).toFixed(2)} {selectedVariant.price.currencyCode}
-                  </p>
+                  <div>
+                    <p className="text-2xl font-bold text-primary">
+                      {parseFloat(selectedVariant.price.amount).toFixed(2)} лв.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      ({(parseFloat(selectedVariant.price.amount) / 1.96).toFixed(2)} €)
+                    </p>
+                  </div>
                 </div>
 
                 {product.description && (
