@@ -93,7 +93,7 @@ export const CartDrawer = () => {
                           {item.selectedOptions.map(option => option.value).join(' • ')}
                         </p>
                         <p className="font-semibold">
-                          {parseFloat(item.price.amount).toFixed(2)} {item.price.currencyCode}
+                          {parseFloat(item.price.amount).toFixed(2)} лв.
                         </p>
                       </div>
                       
@@ -135,9 +135,14 @@ export const CartDrawer = () => {
               <div className="flex-shrink-0 space-y-4 pt-4 border-t bg-background">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold">Общо</span>
-                  <span className="text-xl font-bold">
-                    {totalPrice.toFixed(2)} {items[0]?.price.currencyCode || 'USD'}
-                  </span>
+                  <div className="text-right">
+                    <span className="text-xl font-bold block">
+                      {totalPrice.toFixed(2)} лв.
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      ({(totalPrice / 1.96).toFixed(2)} €)
+                    </span>
+                  </div>
                 </div>
                 
                 <Button 
