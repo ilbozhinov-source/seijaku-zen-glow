@@ -168,9 +168,26 @@
     "back": "Go Back"
   },
   "story": {
-    "title": "Our Story",
+    "title": "Quality & Origin",
     "subtitle": "The Journey of SEIJAKU",
-    "content": "SEIJAKU was created with a mission to bring the ancient Japanese tradition of ceremonial matcha into the modern world. Each package contains 100% organic, hand-ground matcha of the highest quality, selected with love and care. We believe that true beauty and energy come from within, and that every moment can be transformed into a ritual of self-discovery and balance."
+    "intro": "Our matcha comes from certified organic farms, where every leaf is grown with respect for nature and centuries-old tradition. Each SEIJAKU package represents a guarantee of purity, origin, and authentic quality – a taste that brings tranquility, energy, and precision.",
+    "shading": {
+      "title": "Shading",
+      "description": "3–4 weeks before harvest, the plants are covered to increase chlorophyll, enhance flavor, and boost L-theanine content."
+    },
+    "harvest": {
+      "title": "Harvest",
+      "description": "Only the youngest leaves from the top of the plant are used."
+    },
+    "grinding": {
+      "title": "Stone Mills",
+      "description": "The leaves are slowly ground on granite stones into fine powder, without heating."
+    },
+    "purity": {
+      "title": "Pure Composition",
+      "description": "100% Ceremonial Grade matcha – no additives, sweeteners, or colorings. We only work with farms that use traditional methods."
+    },
+    "conclusion": "This ensures a fresh green color, rich aroma, creamy texture, and balanced bitterness. SEIJAKU is more than a drink – it's a ritual inspired by the Japanese aesthetics of tranquility and purity."
   },
   "contact": {
     "title": "Contact Us",

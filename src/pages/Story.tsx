@@ -32,9 +32,32 @@ const Story = () => {
             </p>
           </div>
 
-          <div className="prose prose-lg mx-auto">
-            <p className="text-muted-foreground leading-relaxed">
-              {t("story.content")}
+          <div className="text-center space-y-8">
+            <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl mx-auto">
+              {t("story.intro")}
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-6 text-left mt-12">
+              <div className="bg-card p-6 rounded-xl border border-border/50">
+                <h3 className="font-semibold text-foreground mb-2">{t("story.shading.title")}</h3>
+                <p className="text-muted-foreground text-sm">{t("story.shading.description")}</p>
+              </div>
+              <div className="bg-card p-6 rounded-xl border border-border/50">
+                <h3 className="font-semibold text-foreground mb-2">{t("story.harvest.title")}</h3>
+                <p className="text-muted-foreground text-sm">{t("story.harvest.description")}</p>
+              </div>
+              <div className="bg-card p-6 rounded-xl border border-border/50">
+                <h3 className="font-semibold text-foreground mb-2">{t("story.grinding.title")}</h3>
+                <p className="text-muted-foreground text-sm">{t("story.grinding.description")}</p>
+              </div>
+              <div className="bg-card p-6 rounded-xl border border-border/50">
+                <h3 className="font-semibold text-foreground mb-2">{t("story.purity.title")}</h3>
+                <p className="text-muted-foreground text-sm">{t("story.purity.description")}</p>
+              </div>
+            </div>
+
+            <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl mx-auto mt-12">
+              {t("story.conclusion")}
             </p>
           </div>
         </div>
