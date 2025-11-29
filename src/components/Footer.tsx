@@ -93,9 +93,9 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-zen-silver">
             <p>{t("footer.rights")}</p>
             <div className="flex gap-6">
-              <a href="#" className="hover:text-primary zen-transition">
+              <Link to="/privacy" className="hover:text-primary zen-transition">
                 {t("footer.privacy")}
-              </a>
+              </Link>
               <Link to="/terms" className="hover:text-primary zen-transition">
                 {t("footer.terms")}
               </Link>
