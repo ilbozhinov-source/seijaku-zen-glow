@@ -121,6 +121,7 @@
     "rights": "© 2025 SEIJAKU. All rights reserved.",
     "privacy": "Privacy Policy",
     "terms": "Terms of Use",
+    "cookies": "Cookies",
     "ors": "ODR"
   },
   "faqSection": {
@@ -404,5 +405,40 @@
     "orsLink": "EU ODR Platform",
     "contactTitle": "Contact Us",
     "contactDesc": "If you have questions about personal data protection, please contact us:"
+  },
+  "cookies": {
+    "back": "Back to Home",
+    "title": "Cookie Policy",
+    "subtitle": "Learn how we use cookies on our website",
+    "intro": "This policy applies to cookies and websites maintained by IT LAB OOD, UIC 208520407, with registered office and management address: Sofia, 33 Promishlena St., including the website https://www.gomatcha.bg.",
+    "whatTitle": "What are cookies?",
+    "whatDesc": "Cookies are files containing information, including unlimited text content, that are stored on the user's computers/devices to improve the operation of the respective website. These files allow the user to be recognized and the website to be adapted to their preferences. Cookies typically contain the name of the website to which they belong, the time they are stored on the user's device, and a unique number.",
+    "whyTitle": "What are cookies used for?",
+    "whyDesc": "Cookies are used to adapt the content of the website to the preferences of the individual user and to optimize its operation. They are also used to compile anonymous general statistics that help us understand how the user interacts with the website, which helps improve its structure and content, while not having access to personal user information.",
+    "typesTitle": "What types of cookies do we use?",
+    "essentialTitle": "1. Essential cookies",
+    "essentialDesc": "They are necessary for our platform to perform its basic functions. In other words, our platform could not function without them. Such cookies include, for example, those for user sessions and auxiliary functions related to them.",
+    "essentialWarning": "If you disable these cookies, you will not be able to log into your account on our site, you will not be able to make purchases, and almost no other actions.",
+    "performanceTitle": "2. Performance and functionality cookies",
+    "performanceDesc": "These cookies are used for other important functions, such as:",
+    "performanceItem1": "To be able to recognize you when you return to our platform or use our services",
+    "performanceItem2": "To remember user preferences (for example, what settings you have chosen)",
+    "performanceItem3": "To be able to recommend products and services that match your preferences",
+    "performanceItem4": "To collect information about how visitors use our platform",
+    "performanceItem5": "For temporary storage of anonymous information for relevant offers",
+    "performanceItem6": "For other auxiliary functions",
+    "analyticsTitle": "3. Third-party cookies - for traffic counting",
+    "analyticsDesc": "We use several external services that may also create cookies in your browser. These cookies are managed by the respective services and are not controlled by us. The information in them is anonymized. The purpose of these external services is to anonymously count statistical information about our site's traffic.",
+    "advertisingTitle": "4. Third-party cookies - for advertising purposes",
+    "advertisingDesc": "We use several external services - advertising networks, which may also create cookies in your browser. These cookies are managed by the respective services and are not controlled by us. The information in them is anonymized. The purpose of these external services is to provide opportunities for advertising campaigns.",
+    "functionalityTitle": "5. Third-party cookies - for functionality",
+    "functionalityDesc": "Some cookies also arise in connection with third-party tools that we have integrated into our platform. These services may create cookies to enable them to function. Cookies are managed by the respective services and are not controlled by us.",
+    "functionalityNote": "We strive to ensure that the third parties with whom we have partnership relationships are duly verified and have proven authority and professionalism.",
+    "personalTitle": "Do cookies contain personal information?",
+    "personalDesc": "Personal information accumulated through cookies can only be used to perform certain operations for the user. Such information is encrypted in a way that makes access to it by unauthorized persons impossible.",
+    "deleteTitle": "Deleting cookies",
+    "deleteDesc1": "By default, applications used for browsing websites (web browsers) allow cookies to be saved by default. This setting can be changed so that automatic cookie storage is blocked in the web browser or the user is informed each time before cookies are stored on the device.",
+    "deleteDesc2": "Detailed information about the different ways of working with cookies can be found in the application (web browser) settings - for example, in the Privacy, Security, or Cookies sections.",
+    "deleteWarning": "Limiting or deleting cookies may affect some functionalities of the website and lead to incorrect operation of certain services (e.g., logging into an account, completing an order, etc.)."
   }
 }

@@ -99,6 +99,9 @@ const Footer = () => {
               <Link to="/terms" className="hover:text-primary zen-transition">
                 {t("footer.terms")}
               </Link>
+              <Link to="/cookies" className="hover:text-primary zen-transition">
+                {t("footer.cookies")}
+              </Link>
               <a 
                 href="https://consumer-redress.ec.europa.eu/site-relocation_en" 
                 target="_blank" 
