@@ -82,16 +82,13 @@ export function useAuth() {
   };
 
   const signOut = async () => {
-    // Clear local state immediately regardless of server response
+    // Clear local state immediately
     setUser(null);
     setSession(null);
     setIsAdmin(false);
     
-    const { error } = await supabase.auth.signOut();
-    // Ignore "session_not_found" errors as the user is effectively logged out
-    if (error && error.message?.includes('session_not_found')) {
-      return { error: null };
-    }
+    // Use scope: 'local' to clear local session even if server session is invalid
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
     return { error };
   };
 
