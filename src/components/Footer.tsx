@@ -92,13 +92,21 @@ const Footer = () => {
         <div className="pt-8 border-t border-zen-silver/20">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-zen-silver">
             <p>{t("footer.rights")}</p>
-            <div className="flex gap-6">
+            <div className="flex flex-wrap justify-center md:justify-end gap-4 md:gap-6">
               <Link to="/privacy" className="hover:text-primary zen-transition">
                 {t("footer.privacy")}
               </Link>
               <Link to="/terms" className="hover:text-primary zen-transition">
                 {t("footer.terms")}
               </Link>
+              <a 
+                href="https://consumer-redress.ec.europa.eu/site-relocation_en" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-primary zen-transition"
+              >
+                {t("footer.ors")}
+              </a>
             </div>
           </div>
         </div>

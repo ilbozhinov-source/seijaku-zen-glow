@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Shield, Database, Lock, Mail, Eye, FileText, Users, Clock, Globe, AlertTriangle, Scale } from 'lucide-react';
+import { ArrowLeft, Shield, Database, Lock, Mail, Eye, FileText, Users, Clock, Globe, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Footer from '@/components/Footer';
@@ -267,24 +267,6 @@ const Privacy = () => {
               <h2 className="text-2xl font-bold text-foreground m-0">{t('privacy.finalTitle')}</h2>
             </div>
             <p className="text-muted-foreground">{t('privacy.finalDesc')}</p>
-          </section>
-
-          {/* ORS - Online Dispute Resolution */}
-          <section className="mb-12 bg-card rounded-2xl p-8 border border-border">
-            <div className="flex items-center gap-3 mb-6">
-              <Scale className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-bold text-foreground m-0">{t('privacy.orsTitle')}</h2>
-            </div>
-            <p className="text-muted-foreground mb-4">{t('privacy.orsDesc')}</p>
-            <a 
-              href="https://consumer-redress.ec.europa.eu/site-relocation_en" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-primary font-semibold hover:underline"
-            >
-              {t('privacy.orsLink')}
-              <Globe className="w-4 h-4" />
-            </a>
           </section>
 
           {/* Contact */}
