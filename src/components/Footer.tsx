@@ -53,8 +53,8 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/blog" className="text-sm text-zen-silver hover:text-primary zen-transition">
-                  {t("footer.blog")}
+                <Link to="/reviews" className="text-sm text-zen-silver hover:text-primary zen-transition">
+                  {t("footer.reviews")}
                 </Link>
               </li>
             </ul>
