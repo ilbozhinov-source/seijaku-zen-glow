@@ -160,5 +160,24 @@
     "email": "Email",
     "phone": "Phone",
     "location": "Location"
+  },
+  "returns": {
+    "title": "Return Policy",
+    "subtitle": "Your satisfaction is our priority",
+    "guaranteeTitle": "100% Satisfaction Guarantee",
+    "guaranteeDesc": "If you're not completely satisfied with your purchase, we'll refund your money or replace the product, no questions asked.",
+    "step1Title": "Contact Us",
+    "step1Desc": "Send us an email at hello@seijaku.bg or call us within 14 days of receiving your order.",
+    "step2Title": "Ship the Product",
+    "step2Desc": "Once we confirm your request, ship the product back in its original packaging to the provided address.",
+    "step3Title": "Receive Your Refund",
+    "step3Desc": "After receiving and inspecting the product, we'll process your refund within 5-7 business days using the same payment method.",
+    "timeframeTitle": "Return Window",
+    "timeframeDesc": "You have 14 days from the delivery date to request a product return.",
+    "conditionTitle": "Product Condition",
+    "conditionDesc": "The product must be unopened and in its original packaging for a full refund.",
+    "noteTitle": "Important Information",
+    "noteDesc": "For opened products, we can offer a partial refund or replacement if the quality doesn't meet your expectations. Return shipping costs are the customer's responsibility unless the product is defective.",
+    "questionsText": "Have questions about returns?"
   }
 }
