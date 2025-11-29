@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-matcha.jpg";
 import { CartDrawer } from "@/components/CartDrawer";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { UserMenu } from "@/components/UserMenu";
 import { useTranslation } from 'react-i18next';
 const Hero = () => {
   const { t } = useTranslation();
@@ -19,8 +20,9 @@ const Hero = () => {
         <LanguageSelector />
       </div>
       
-      {/* Cart Drawer */}
-      <div className="fixed top-4 right-4 z-50">
+      {/* User Menu & Cart Drawer */}
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <UserMenu />
         <CartDrawer />
       </div>
 
