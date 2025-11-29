@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import ProductDetail from "./pages/ProductDetail";
 import FAQPage from "./pages/FAQ";
 import Story from "./pages/Story";
+import Quality from "./pages/Quality";
 import ReviewsPage from "./pages/Reviews";
 import Contact from "./pages/Contact";
 import Returns from "./pages/Returns";
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/product/:handle" element={<ProductDetail />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/story" element={<Story />} />
+          <Route path="/quality" element={<Quality />} />
           <Route path="/reviews" element={<ReviewsPage />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/returns" element={<Returns />} />

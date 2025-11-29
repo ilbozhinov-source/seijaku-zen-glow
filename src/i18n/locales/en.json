@@ -179,6 +179,20 @@
     "phone": "Phone",
     "location": "Location"
   },
+  "quality": {
+    "title": "Quality & Origin",
+    "subtitle": "The Journey of SEIJAKU",
+    "intro": "Our matcha comes from certified organic farms, where every leaf is grown with respect for nature and centuries-old tradition. Every SEIJAKU package represents a guarantee of purity, origin and unadulterated quality - a taste that brings tranquility, energy and precision.",
+    "shadingTitle": "Shading",
+    "shadingDesc": "3-4 weeks before harvest, the plants are covered to increase chlorophyll, improve taste and increase L-theanine content.",
+    "harvestTitle": "Harvest",
+    "harvestDesc": "Only the youngest leaves from the top of the plant are used.",
+    "grindingTitle": "Grinding",
+    "grindingDesc": "The leaves are slowly ground on granite stones to a fine powder without heating.",
+    "purityTitle": "Pure Composition",
+    "purityDesc": "100% Ceremonial Grade matcha - no additives, sweeteners or colorants. We only work with farms that use traditional methods.",
+    "conclusion": "This guarantees fresh green color, rich aroma, creamy texture and mild bitterness. SEIJAKU is more than a drink - it's a ritual inspired by the aesthetics of tranquility and purity."
+  },
   "returns": {
     "title": "Return Policy",
     "subtitle": "Your satisfaction is our priority",
