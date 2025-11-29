@@ -44,7 +44,7 @@ const Footer = () => {
             <ul className="space-y-2">
               <li>
                 <Link to="/story" className="text-sm text-zen-silver hover:text-primary zen-transition">
-                  {t("footer.about")}
+                  {t("footer.ourStory")}
                 </Link>
               </li>
               <li>
@@ -71,7 +71,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link to="/delivery" className="text-sm text-zen-silver hover:text-primary zen-transition">
-                  {t("footer.delivery")}
+                  {t("footer.shipping")}
                 </Link>
               </li>
               <li>
