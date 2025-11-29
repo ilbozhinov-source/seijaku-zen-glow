@@ -65,9 +65,11 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
 
+    const fromEmail = "info@gomatcha.bg";
+    
     // Send email to the business
     await client.send({
-      from: smtpUser,
+      from: fromEmail,
       to: "info@gomatcha.bg",
       subject: `Ново запитване от ${name}`,
       content: `
@@ -122,7 +124,7 @@ ${message}
 
     // Send confirmation to the customer
     await client.send({
-      from: smtpUser,
+      from: fromEmail,
       to: email,
       subject: "Получихме вашето запитване - SEIJAKU",
       content: `
