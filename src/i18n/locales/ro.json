@@ -179,6 +179,20 @@
     "phone": "Telefon",
     "location": "Locație"
   },
+  "quality": {
+    "title": "Calitate și Origine",
+    "subtitle": "Călătoria SEIJAKU",
+    "intro": "Matcha noastră provine de la ferme bio certificate, unde fiecare frunză este cultivată cu respect pentru natură și tradiția seculară. Fiecare pachet SEIJAKU reprezintă o garanție a purității, originii și calității autentice - un gust care aduce liniște, energie și precizie.",
+    "shadingTitle": "Umbrire",
+    "shadingDesc": "Cu 3-4 săptămâni înainte de recoltare, plantele sunt acoperite pentru a crește clorofila, a îmbunătăți gustul și a crește conținutul de L-teanină.",
+    "harvestTitle": "Recoltare",
+    "harvestDesc": "Se folosesc doar cele mai tinere frunze din vârful plantei.",
+    "grindingTitle": "Măcinare",
+    "grindingDesc": "Frunzele sunt măcinate lent pe pietre de granit până la o pulbere fină, fără încălzire.",
+    "purityTitle": "Compoziție Pură",
+    "purityDesc": "100% Ceremonial Grade matcha - fără aditivi, îndulcitori sau coloranți. Lucrăm doar cu ferme care folosesc metode tradiționale.",
+    "conclusion": "Aceasta garantează o culoare verde proaspătă, aromă bogată, textură cremoasă și amăreală ușoară. SEIJAKU este mai mult decât o băutură - este un ritual inspirat de estetica liniștii și purității."
+  },
   "returns": {
     "title": "Politica de Retur",
     "subtitle": "Satisfacția ta este prioritatea noastră",
