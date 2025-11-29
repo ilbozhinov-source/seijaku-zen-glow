@@ -96,9 +96,9 @@ const Footer = () => {
               <a href="#" className="hover:text-primary zen-transition">
                 {t("footer.privacy")}
               </a>
-              <a href="#" className="hover:text-primary zen-transition">
+              <Link to="/terms" className="hover:text-primary zen-transition">
                 {t("footer.terms")}
-              </a>
+              </Link>
             </div>
           </div>
         </div>
