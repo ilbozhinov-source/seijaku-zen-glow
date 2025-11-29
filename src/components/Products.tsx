@@ -71,9 +71,9 @@ const Products = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+          <div className="flex flex-wrap justify-center gap-8 max-w-7xl mx-auto">
             {products.map((product) => (
-              <Card key={product.node.id} className="overflow-hidden shadow-zen border-primary/20 hover:shadow-xl transition-shadow">
+              <Card key={product.node.id} className="overflow-hidden shadow-zen border-primary/20 hover:shadow-xl transition-shadow w-full max-w-sm">
                 <Link to={`/product/${product.node.handle}`}>
                   <div className="relative h-64 bg-gradient-to-br from-accent to-background cursor-pointer">
                     {product.node.images.edges[0]?.node ? (
