@@ -211,5 +211,21 @@
     "noteTitle": "Important Information",
     "noteDesc": "For opened products, we can offer a partial refund or replacement if the quality doesn't meet your expectations. Return shipping costs are the customer's responsibility unless the product is defective.",
     "questionsText": "Have questions about returns?"
+  },
+  "delivery": {
+    "title": "Delivery & Payment",
+    "subtitle": "Safe and Fast Delivery",
+    "paymentTitle": "Payment",
+    "paymentDesc": "Cash on delivery or card payment.",
+    "timeTitle": "Delivery Time",
+    "timeDesc": "Deliveries are made through Speedy and Econt courier services. For orders received by 1:30 PM on a business day, delivery is within 2 business days.",
+    "pricesTitle": "Delivery Prices",
+    "under70": "From €0 to €35.79:",
+    "speedyOffice": "To Speedy office - €3.06",
+    "ekontOffice": "To Econt office - €3.32",
+    "homeAddress": "To personal address - €3.57",
+    "over70": "Over €35.79:",
+    "freeOffice": "FREE to office",
+    "freeAddress": "FREE to address"
   }
 }
