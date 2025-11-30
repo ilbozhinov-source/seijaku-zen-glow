@@ -105,7 +105,7 @@ const Products = () => {
 
                   <div className="flex flex-col gap-1 items-center text-center">
                     <span className="text-2xl font-bold text-primary">
-                      {parseFloat(product.node.priceRange.minVariantPrice.amount).toFixed(2)} лв.
+                      {Math.round(parseFloat(product.node.priceRange.minVariantPrice.amount))} лв.
                     </span>
                     <span className="text-sm text-muted-foreground">
                       ({(parseFloat(product.node.priceRange.minVariantPrice.amount) / 1.96).toFixed(2)} €)
