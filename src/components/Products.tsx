@@ -108,7 +108,7 @@ const Products = () => {
                       {Math.round(parseFloat(product.node.priceRange.minVariantPrice.amount))} лв.
                     </span>
                     <span className="text-sm text-muted-foreground">
-                      ({(parseFloat(product.node.priceRange.minVariantPrice.amount) / 1.96).toFixed(2)} €)
+                      ({(parseFloat(product.node.priceRange.minVariantPrice.amount) / 1.9553).toFixed(2)} €)
                     </span>
                   </div>
 
