@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, ShoppingCart } from "lucide-react";
-import { getProductByHandle, ShopifyProduct } from "@/lib/shopify";
+import { getProductByHandle, CartItem } from "@/lib/products";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import { ProductSchema } from "@/components/ProductSchema";
@@ -14,37 +14,20 @@ import { useTranslation } from 'react-i18next';
 const ProductDetail = () => {
   const { t } = useTranslation();
   const { handle } = useParams<{ handle: string }>();
-  const [product, setProduct] = useState<ShopifyProduct['node'] | null>(null);
-  const [loading, setLoading] = useState(true);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const addItem = useCartStore(state => state.addItem);
   
   useSEO();
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!handle) return;
-      
-      try {
-        const data = await getProductByHandle(handle);
-        setProduct(data);
-      } catch (error) {
-        console.error('Error fetching product:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProduct();
-  }, [handle]);
+  const product = handle ? getProductByHandle(handle) : null;
 
   const handleAddToCart = () => {
     if (!product) return;
     
-    const selectedVariant = product.variants.edges[selectedVariantIndex].node;
+    const selectedVariant = product.variants[selectedVariantIndex];
     
-    const cartItem = {
-      product: { node: product },
+    const cartItem: CartItem = {
+      product,
       variantId: selectedVariant.id,
       variantTitle: selectedVariant.title,
       price: selectedVariant.price,
@@ -55,14 +38,6 @@ const ProductDetail = () => {
     addItem(cartItem);
     toast.success(t('products.addedToCart'));
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">{t('products.loading')}</p>
-      </div>
-    );
-  }
 
   if (!product) {
     return (
@@ -80,7 +55,7 @@ const ProductDetail = () => {
     );
   }
 
-  const selectedVariant = product.variants.edges[selectedVariantIndex].node;
+  const selectedVariant = product.variants[selectedVariantIndex];
 
   return (
     <div className="min-h-screen bg-gradient-soft">
@@ -100,9 +75,9 @@ const ProductDetail = () => {
         <Card className="overflow-hidden">
           <div className="grid md:grid-cols-2 gap-8">
             <div className="relative aspect-square bg-gradient-to-br from-accent to-background p-8">
-              {product.images.edges[0]?.node ? (
+              {product.images[0] ? (
                 <img
-                  src={product.images.edges[0].node.url}
+                  src={product.images[0].url}
                   alt={product.title}
                   className="w-full h-full object-contain"
                 />
@@ -131,20 +106,20 @@ const ProductDetail = () => {
 
                 <div>
                   <h2 className="text-lg font-semibold mb-2">{t('products.description')}</h2>
-                  <p className="text-muted-foreground">{t('products.matchaDescription')}</p>
+                  <p className="text-muted-foreground">{product.description}</p>
                 </div>
 
-                {product.variants.edges.length > 1 && (
+                {product.variants.length > 1 && (
                   <div>
                     <h2 className="text-lg font-semibold mb-2">{t('products.variants')}</h2>
                     <div className="flex flex-wrap gap-2">
-                      {product.variants.edges.map((variant, index) => (
+                      {product.variants.map((variant, index) => (
                         <Button
-                          key={variant.node.id}
+                          key={variant.id}
                           variant={selectedVariantIndex === index ? "default" : "outline"}
                           onClick={() => setSelectedVariantIndex(index)}
                         >
-                          {variant.node.title}
+                          {variant.title}
                         </Button>
                       ))}
                     </div>

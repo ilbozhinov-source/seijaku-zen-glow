@@ -1,22 +1,10 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ShopifyProduct } from '@/lib/shopify';
+import { Product, ProductVariant } from '@/lib/products';
 
 interface ProductSchemaProps {
-  product: ShopifyProduct['node'];
-  selectedVariant: {
-    id: string;
-    title: string;
-    price: {
-      amount: string;
-      currencyCode: string;
-    };
-    availableForSale: boolean;
-    selectedOptions: Array<{
-      name: string;
-      value: string;
-    }>;
-  };
+  product: Product;
+  selectedVariant: ProductVariant;
 }
 
 export const ProductSchema = ({ product, selectedVariant }: ProductSchemaProps) => {
@@ -29,8 +17,8 @@ export const ProductSchema = ({ product, selectedVariant }: ProductSchemaProps) 
       "@language": i18n.language,
       name: product.title,
       description: product.description || '',
-      image: product.images.edges[0]?.node?.url || '',
-      sku: selectedVariant.id.split('/').pop() || '',
+      image: product.images[0]?.url || '',
+      sku: selectedVariant.id,
       brand: {
         "@type": "Brand",
         name: "SEIJAKU"

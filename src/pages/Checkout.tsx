@@ -16,7 +16,7 @@ import Footer from '@/components/Footer';
 const Checkout = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { items, clearCart } = useCartStore();
+  const { items, clearCart, getTotalPrice } = useCartStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -30,7 +30,7 @@ const Checkout = () => {
     paymentMethod: 'cod',
   });
 
-  const totalPrice = items.reduce((sum, item) => sum + (parseFloat(item.price.amount) * item.quantity), 0);
+  const totalPrice = getTotalPrice();
 
   const checkoutSchema = z.object({
     firstName: z.string().trim().min(2, t('checkout.firstNameRequired')),
@@ -65,6 +65,16 @@ const Checkout = () => {
     setIsSubmitting(true);
 
     try {
+      // For card payments, redirect to Stripe (when integrated)
+      if (formData.paymentMethod === 'card') {
+        // TODO: Integrate Stripe checkout session
+        // For now, show a message
+        toast.info(t('checkout.cardPaymentComingSoon') || 'Card payment coming soon!');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // For COD orders, send email
       const orderData = {
         customer: {
           firstName: formData.firstName,
@@ -79,7 +89,7 @@ const Checkout = () => {
         },
         paymentMethod: formData.paymentMethod,
         items: items.map(item => ({
-          title: item.product.node.title,
+          title: item.product.title,
           variant: item.selectedOptions.map(o => o.value).join(' • '),
           quantity: item.quantity,
           price: parseFloat(item.price.amount),
@@ -285,17 +295,17 @@ const Checkout = () => {
                 {items.map((item) => (
                   <div key={item.variantId} className="flex gap-4">
                     <div className="w-16 h-16 bg-secondary/20 rounded-md overflow-hidden flex-shrink-0">
-                      {item.product.node.images?.edges?.[0]?.node && (
+                      {item.product.images?.[0] && (
                         <img
-                          src={item.product.node.images.edges[0].node.url}
-                          alt={item.product.node.title}
+                          src={item.product.images[0].url}
+                          alt={item.product.title}
                           className="w-full h-full object-cover"
                         />
                       )}
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium truncate">{item.product.node.title}</h4>
+                      <h4 className="font-medium truncate">{item.product.title}</h4>
                       <p className="text-sm text-muted-foreground">
                         {item.selectedOptions.map(option => option.value).join(' • ')}
                       </p>

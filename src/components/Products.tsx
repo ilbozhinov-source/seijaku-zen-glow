@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShoppingCart } from "lucide-react";
-import { getProducts, ShopifyProduct } from "@/lib/shopify";
+import { getProducts, Product, CartItem } from "@/lib/products";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -10,29 +9,13 @@ import { useTranslation } from 'react-i18next';
 
 const Products = () => {
   const { t } = useTranslation();
-  const [products, setProducts] = useState<ShopifyProduct[]>([]);
-  const [loading, setLoading] = useState(true);
+  const products = getProducts();
   const addItem = useCartStore(state => state.addItem);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const data = await getProducts();
-        setProducts(data);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
-
-  const handleAddToCart = (product: ShopifyProduct) => {
-    const firstVariant = product.node.variants.edges[0].node;
+  const handleAddToCart = (product: Product) => {
+    const firstVariant = product.variants[0];
     
-    const cartItem = {
+    const cartItem: CartItem = {
       product,
       variantId: firstVariant.id,
       variantTitle: firstVariant.title,
@@ -59,11 +42,7 @@ const Products = () => {
           </p>
         </div>
 
-        {loading ? (
-          <div className="text-center py-20">
-            <p className="text-muted-foreground">{t('products.loading')}</p>
-          </div>
-        ) : products.length === 0 ? (
+        {products.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-muted-foreground mb-4">{t('products.noProducts')}</p>
             <p className="text-sm text-muted-foreground">
@@ -73,13 +52,13 @@ const Products = () => {
         ) : (
           <div className="flex flex-wrap justify-center gap-8 max-w-7xl mx-auto">
             {products.map((product) => (
-              <Card key={product.node.id} className="overflow-hidden shadow-zen border-primary/20 hover:shadow-xl transition-shadow w-full max-w-sm">
-                <Link to={`/product/${product.node.handle}`}>
+              <Card key={product.id} className="overflow-hidden shadow-zen border-primary/20 hover:shadow-xl transition-shadow w-full max-w-sm">
+                <Link to={`/product/${product.handle}`}>
                   <div className="relative h-64 bg-gradient-to-br from-accent to-background cursor-pointer">
-                    {product.node.images.edges[0]?.node ? (
+                    {product.images[0] ? (
                       <img 
-                        src={product.node.images.edges[0].node.url}
-                        alt={product.node.title}
+                        src={product.images[0].url}
+                        alt={product.title}
                         className="w-full h-full object-contain p-8 hover:scale-105 transition-transform"
                       />
                     ) : (
@@ -91,22 +70,22 @@ const Products = () => {
                 </Link>
 
                 <CardContent className="p-6 space-y-4">
-                  <Link to={`/product/${product.node.handle}`}>
+                  <Link to={`/product/${product.handle}`}>
                     <h3 className="text-xl font-bold text-foreground hover:text-primary transition-colors cursor-pointer">
-                      {product.node.title}
+                      {product.title}
                     </h3>
                   </Link>
                   
                   <p className="text-sm text-muted-foreground line-clamp-2">
-                    {t('products.matchaDescription')}
+                    {product.description}
                   </p>
 
                   <div className="flex flex-col gap-1 items-center text-center">
                     <span className="text-2xl font-bold text-primary">
-                      {t('products.priceBGN', { price: Math.round(parseFloat(product.node.priceRange.minVariantPrice.amount)) })}
+                      {t('products.priceBGN', { price: Math.round(parseFloat(product.priceRange.minVariantPrice.amount)) })}
                     </span>
                     <span className="text-sm text-muted-foreground">
-                      {t('products.priceEUR', { price: (parseFloat(product.node.priceRange.minVariantPrice.amount) / 1.9553).toFixed(2) })}
+                      {t('products.priceEUR', { price: (parseFloat(product.priceRange.minVariantPrice.amount) / 1.9553).toFixed(2) })}
                     </span>
                   </div>
 

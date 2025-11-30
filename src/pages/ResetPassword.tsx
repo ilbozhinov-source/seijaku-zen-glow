@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 const ResetPassword = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,14 +38,34 @@ const ResetPassword = () => {
       }
     });
 
-    // Check URL hash for recovery tokens and exchange them
+    // Check URL for recovery tokens
     const handleRecoveryToken = async () => {
+      // Check URL hash for Supabase recovery tokens (format: #access_token=...&type=recovery)
       const hash = window.location.hash;
       
       if (hash && hash.includes('type=recovery')) {
-        console.log('Recovery token detected in URL');
-        // Supabase client will automatically handle the token exchange
-        // Just wait for the auth state change event
+        console.log('Recovery token detected in URL hash');
+        // Supabase client automatically handles the token exchange
+        // The onAuthStateChange will fire with PASSWORD_RECOVERY event
+        return;
+      }
+      
+      // Also check query params for token (alternative format: ?token=...&type=recovery)
+      const token = searchParams.get('token');
+      const type = searchParams.get('type');
+      
+      if (type === 'recovery' && token) {
+        console.log('Recovery token detected in query params');
+        // Verify the token with Supabase
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: token,
+          type: 'recovery',
+        });
+        
+        if (!error) {
+          setIsValidSession(true);
+        }
+        setIsLoading(false);
         return;
       }
       
@@ -59,10 +80,11 @@ const ResetPassword = () => {
       setIsLoading(false);
     };
 
-    handleRecoveryToken();
+    // Small delay to allow onAuthStateChange to process hash tokens first
+    setTimeout(handleRecoveryToken, 100);
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [searchParams]);
 
   const passwordSchema = z.object({
     password: z.string().min(6, { message: t('auth.passwordMinLength') }),

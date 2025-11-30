@@ -29,8 +29,13 @@ const ForgotPassword = () => {
 
     setIsSubmitting(true);
     
+    // Use production domain for redirects
+    const redirectUrl = import.meta.env.PROD 
+      ? 'https://gomatcha.bg/reset-password'
+      : `${window.location.origin}/reset-password`;
+    
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: redirectUrl,
     });
 
     setIsSubmitting(false);
