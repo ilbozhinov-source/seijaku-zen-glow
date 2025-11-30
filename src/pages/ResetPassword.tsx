@@ -22,29 +22,44 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if we have a valid recovery session
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Check for recovery event in URL hash
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const type = hashParams.get('type');
-      
-      if (session || type === 'recovery') {
-        setIsValidSession(true);
-      }
-      setIsLoading(false);
-    };
-
-    // Listen for auth state changes (recovery link click)
+    // Listen for auth state changes FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth event:', event, 'Session:', !!session);
+      
       if (event === 'PASSWORD_RECOVERY') {
+        console.log('PASSWORD_RECOVERY event detected');
+        setIsValidSession(true);
+        setIsLoading(false);
+      } else if (event === 'SIGNED_IN' && session) {
+        // User signed in via recovery token
         setIsValidSession(true);
         setIsLoading(false);
       }
     });
 
-    checkSession();
+    // Check URL hash for recovery tokens and exchange them
+    const handleRecoveryToken = async () => {
+      const hash = window.location.hash;
+      
+      if (hash && hash.includes('type=recovery')) {
+        console.log('Recovery token detected in URL');
+        // Supabase client will automatically handle the token exchange
+        // Just wait for the auth state change event
+        return;
+      }
+      
+      // Check if we already have a valid session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        console.log('Existing session found');
+        setIsValidSession(true);
+      }
+      
+      setIsLoading(false);
+    };
+
+    handleRecoveryToken();
 
     return () => subscription.unsubscribe();
   }, []);
