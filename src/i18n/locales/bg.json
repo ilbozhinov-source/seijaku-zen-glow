@@ -86,7 +86,7 @@
     "itemsInCart": "{{count}} продукт в количката",
     "itemsInCart_plural": "{{count}} продукта в количката",
     "total": "Общо",
-    "checkout": "Към каса"
+    "checkout": "Преминаване към плащане"
   },
   "checkout": {
     "title": "Завършване на поръчка",
