@@ -48,7 +48,9 @@
     "noProductsDesc": "Create a product by telling me what product you want and what price",
     "noImage": "No image",
     "addToCart": "Add to Cart",
-    "addedToCart": "Added to cart!"
+    "addedToCart": "Added to cart!",
+    "priceBGN": "{{price}} лв.",
+    "priceEUR": "(€{{price}})"
   },
   "ritual": {
     "title": "Preparation Ritual",

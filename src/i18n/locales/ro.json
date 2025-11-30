@@ -48,7 +48,9 @@
     "noProductsDesc": "Creează un produs spunându-mi ce produs vrei și ce preț",
     "noImage": "Fără imagine",
     "addToCart": "Adaugă în Coș",
-    "addedToCart": "Adăugat în coș!"
+    "addedToCart": "Adăugat în coș!",
+    "priceBGN": "{{price}} лв.",
+    "priceEUR": "(€{{price}})"
   },
   "ritual": {
     "title": "Ritual de Preparare",
