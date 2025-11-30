@@ -69,8 +69,9 @@ export const UserMenu = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="outline" className="gap-2">
           <User className="h-5 w-5" />
+          {firstName && <span className="hidden sm:inline">{firstName}</span>}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
