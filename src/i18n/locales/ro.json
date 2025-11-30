@@ -59,6 +59,27 @@
     "variants": "Variante",
     "soldOut": "Epuizat"
   },
+  "auth": {
+    "login": "Autentificare",
+    "signup": "Înregistrare",
+    "loginOrSignup": "Conectați-vă la contul dvs. sau înregistrați-vă",
+    "email": "Email",
+    "password": "Parolă",
+    "confirmPassword": "Confirmă parola",
+    "firstName": "Prenume",
+    "lastName": "Nume",
+    "loginButton": "Autentificare",
+    "signupButton": "Înregistrare",
+    "backToHome": "Înapoi acasă",
+    "invalidEmail": "Adresă de email invalidă",
+    "passwordMinLength": "Parola trebuie să aibă cel puțin 6 caractere",
+    "firstNameMinLength": "Prenumele trebuie să aibă cel puțin 2 caractere",
+    "lastNameMinLength": "Numele trebuie să aibă cel puțin 2 caractere",
+    "invalidCredentials": "Email sau parolă greșită",
+    "userAlreadyRegistered": "Acest email este deja înregistrat",
+    "loginSuccess": "Autentificare reușită!",
+    "signupSuccess": "Înregistrare reușită!"
+  },
   "cart": {
     "title": "Coș de Cumpărături",
     "empty": "Coșul tău este gol",

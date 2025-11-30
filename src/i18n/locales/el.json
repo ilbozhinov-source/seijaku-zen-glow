@@ -59,6 +59,27 @@
     "variants": "Παραλλαγές",
     "soldOut": "Εξαντλήθηκε"
   },
+  "auth": {
+    "login": "Σύνδεση",
+    "signup": "Εγγραφή",
+    "loginOrSignup": "Συνδεθείτε στον λογαριασμό σας ή εγγραφείτε",
+    "email": "Email",
+    "password": "Κωδικός",
+    "confirmPassword": "Επιβεβαίωση κωδικού",
+    "firstName": "Όνομα",
+    "lastName": "Επώνυμο",
+    "loginButton": "Σύνδεση",
+    "signupButton": "Εγγραφή",
+    "backToHome": "Πίσω στην αρχική",
+    "invalidEmail": "Μη έγκυρη διεύθυνση email",
+    "passwordMinLength": "Ο κωδικός πρέπει να είναι τουλάχιστον 6 χαρακτήρες",
+    "firstNameMinLength": "Το όνομα πρέπει να είναι τουλάχιστον 2 χαρακτήρες",
+    "lastNameMinLength": "Το επώνυμο πρέπει να είναι τουλάχιστον 2 χαρακτήρες",
+    "invalidCredentials": "Λάθος email ή κωδικός",
+    "userAlreadyRegistered": "Αυτό το email είναι ήδη εγγεγραμμένο",
+    "loginSuccess": "Επιτυχής σύνδεση!",
+    "signupSuccess": "Επιτυχής εγγραφή!"
+  },
   "cart": {
     "title": "Καλάθι Αγορών",
     "empty": "Το καλάθι σας είναι άδειο",

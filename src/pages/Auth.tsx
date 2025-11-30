@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,25 +12,26 @@ import { z } from 'zod';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const loginSchema = z.object({
-  email: z.string().trim().email({ message: 'Невалиден email адрес' }),
-  password: z.string().min(6, { message: 'Паролата трябва да е поне 6 символа' })
-});
-
-const signupSchema = z.object({
-  firstName: z.string().trim().min(2, { message: 'Името трябва да е поне 2 символа' }),
-  lastName: z.string().trim().min(2, { message: 'Фамилията трябва да е поне 2 символа' }),
-  email: z.string().trim().email({ message: 'Невалиден email адрес' }),
-  password: z.string().min(6, { message: 'Паролата трябва да е поне 6 символа' })
-});
-
 const Auth = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, signIn, signUp, loading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [signupData, setSignupData] = useState({ firstName: '', lastName: '', email: '', password: '' });
+
+  const loginSchema = z.object({
+    email: z.string().trim().email({ message: t('auth.invalidEmail') }),
+    password: z.string().min(6, { message: t('auth.passwordMinLength') })
+  });
+
+  const signupSchema = z.object({
+    firstName: z.string().trim().min(2, { message: t('auth.firstNameMinLength') }),
+    lastName: z.string().trim().min(2, { message: t('auth.lastNameMinLength') }),
+    email: z.string().trim().email({ message: t('auth.invalidEmail') }),
+    password: z.string().min(6, { message: t('auth.passwordMinLength') })
+  });
 
   useEffect(() => {
     if (user && !loading) {
@@ -52,12 +54,12 @@ const Auth = () => {
 
     if (error) {
       if (error.message.includes('Invalid login credentials')) {
-        toast.error('Грешен email или парола');
+        toast.error(t('auth.invalidCredentials'));
       } else {
         toast.error(error.message);
       }
     } else {
-      toast.success('Успешен вход!');
+      toast.success(t('auth.loginSuccess'));
       navigate('/');
     }
   };
@@ -82,12 +84,12 @@ const Auth = () => {
 
     if (error) {
       if (error.message.includes('User already registered')) {
-        toast.error('Този email вече е регистриран');
+        toast.error(t('auth.userAlreadyRegistered'));
       } else {
         toast.error(error.message);
       }
     } else {
-      toast.success('Успешна регистрация!');
+      toast.success(t('auth.signupSuccess'));
       navigate('/');
     }
   };
@@ -105,26 +107,26 @@ const Auth = () => {
       <div className="w-full max-w-md">
         <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Към начало
+          {t('auth.backToHome')}
         </Link>
 
         <Card className="border-primary/20 shadow-zen">
           <CardHeader className="text-center">
             <div className="text-primary text-4xl mb-2">静寂</div>
             <CardTitle className="text-2xl">SEIJAKU</CardTitle>
-            <CardDescription>Влезте в профила си или се регистрирайте</CardDescription>
+            <CardDescription>{t('auth.loginOrSignup')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Вход</TabsTrigger>
-                <TabsTrigger value="signup">Регистрация</TabsTrigger>
+                <TabsTrigger value="login">{t('auth.login')}</TabsTrigger>
+                <TabsTrigger value="signup">{t('auth.signup')}</TabsTrigger>
               </TabsList>
               
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4 mt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
+                    <Label htmlFor="login-email">{t('auth.email')}</Label>
                     <Input
                       id="login-email"
                       type="email"
@@ -135,7 +137,7 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Парола</Label>
+                    <Label htmlFor="login-password">{t('auth.password')}</Label>
                     <Input
                       id="login-password"
                       type="password"
@@ -147,7 +149,7 @@ const Auth = () => {
                   </div>
                   <Button type="submit" className="w-full" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Вход
+                    {t('auth.loginButton')}
                   </Button>
                 </form>
               </TabsContent>
@@ -156,22 +158,20 @@ const Auth = () => {
                 <form onSubmit={handleSignup} className="space-y-4 mt-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-firstname">Име</Label>
+                      <Label htmlFor="signup-firstname">{t('auth.firstName')}</Label>
                       <Input
                         id="signup-firstname"
                         type="text"
-                        placeholder="Иван"
                         value={signupData.firstName}
                         onChange={(e) => setSignupData({ ...signupData, firstName: e.target.value })}
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-lastname">Фамилия</Label>
+                      <Label htmlFor="signup-lastname">{t('auth.lastName')}</Label>
                       <Input
                         id="signup-lastname"
                         type="text"
-                        placeholder="Иванов"
                         value={signupData.lastName}
                         onChange={(e) => setSignupData({ ...signupData, lastName: e.target.value })}
                         required
@@ -179,7 +179,7 @@ const Auth = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email">{t('auth.email')}</Label>
                     <Input
                       id="signup-email"
                       type="email"
@@ -190,7 +190,7 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Парола</Label>
+                    <Label htmlFor="signup-password">{t('auth.password')}</Label>
                     <Input
                       id="signup-password"
                       type="password"
@@ -202,7 +202,7 @@ const Auth = () => {
                   </div>
                   <Button type="submit" className="w-full" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Регистрация
+                    {t('auth.signupButton')}
                   </Button>
                 </form>
               </TabsContent>
