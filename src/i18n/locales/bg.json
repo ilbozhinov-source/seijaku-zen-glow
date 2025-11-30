@@ -95,7 +95,8 @@
     "redirectingToLogin": "Пренасочване към вход...",
     "invalidResetLink": "Невалиден или изтекъл линк",
     "invalidResetLinkDesc": "Този линк за възстановяване на парола е невалиден или е изтекъл. Моля, заявете нов.",
-    "requestNewLink": "Заяви нов линк"
+    "requestNewLink": "Заяви нов линк",
+    "orContinueWith": "или продължи с"
   },
   "cart": {
     "title": "Количка",
