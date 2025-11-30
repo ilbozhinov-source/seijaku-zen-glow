@@ -97,11 +97,9 @@ const Products = () => {
                     </h3>
                   </Link>
                   
-                  {product.node.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {product.node.description}
-                    </p>
-                  )}
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {t('products.matchaDescription')}
+                  </p>
 
                   <div className="flex flex-col gap-1 items-center text-center">
                     <span className="text-2xl font-bold text-primary">
