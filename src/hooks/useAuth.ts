@@ -84,42 +84,6 @@ export function useAuth() {
     return { error };
   };
 
-  const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: import.meta.env.PROD 
-          ? 'https://gomatcha.bg/'
-          : `${window.location.origin}/`
-      }
-    });
-    return { error };
-  };
-
-  const signInWithApple = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'apple',
-      options: {
-        redirectTo: import.meta.env.PROD 
-          ? 'https://gomatcha.bg/'
-          : `${window.location.origin}/`
-      }
-    });
-    return { error };
-  };
-
-  const signInWithFacebook = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'facebook',
-      options: {
-        redirectTo: import.meta.env.PROD 
-          ? 'https://gomatcha.bg/'
-          : `${window.location.origin}/`
-      }
-    });
-    return { error };
-  };
-
   const signOut = async () => {
     // Clear local state immediately
     setUser(null);
@@ -138,9 +102,6 @@ export function useAuth() {
     isAdmin,
     signUp,
     signIn,
-    signInWithGoogle,
-    signInWithApple,
-    signInWithFacebook,
     signOut
   };
 }

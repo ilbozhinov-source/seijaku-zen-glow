@@ -95,8 +95,7 @@
     "redirectingToLogin": "Redirecționare la autentificare...",
     "invalidResetLink": "Link invalid sau expirat",
     "invalidResetLinkDesc": "Acest link de resetare a parolei este invalid sau a expirat. Solicitați unul nou.",
-    "requestNewLink": "Solicită link nou",
-    "orContinueWith": "sau continuă cu"
+    "requestNewLink": "Solicită link nou"
   },
   "cart": {
     "title": "Coș de Cumpărături",

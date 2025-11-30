@@ -95,8 +95,7 @@
     "redirectingToLogin": "Redirecting you to login...",
     "invalidResetLink": "Invalid or expired link",
     "invalidResetLinkDesc": "This password reset link is invalid or has expired. Please request a new one.",
-    "requestNewLink": "Request New Link",
-    "orContinueWith": "or continue with"
+    "requestNewLink": "Request New Link"
   },
   "cart": {
     "title": "Shopping Cart",
