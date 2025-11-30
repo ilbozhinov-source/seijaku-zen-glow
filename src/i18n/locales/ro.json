@@ -59,6 +59,17 @@
     "variants": "Variante",
     "soldOut": "Epuizat"
   },
+  "cart": {
+    "title": "Coș de Cumpărături",
+    "empty": "Coșul tău este gol",
+    "itemsInCart": "{{count}} produs în coș",
+    "itemsInCart_plural": "{{count}} produse în coș",
+    "total": "Total",
+    "checkout": "Finalizare",
+    "loading": "Se încarcă...",
+    "checkoutError": "Eroare la finalizare",
+    "tryAgain": "Vă rugăm încercați din nou."
+  },
   "ritual": {
     "title": "Ritual de Preparare",
     "subtitle": "Transformă fiecare dimineață într-un moment zen. Ceremonia tradițională este simplă, dar plină de grijă și atenție.",
