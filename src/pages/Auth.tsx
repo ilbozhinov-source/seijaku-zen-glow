@@ -151,6 +151,11 @@ const Auth = () => {
                     {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     {t('auth.loginButton')}
                   </Button>
+                  <div className="text-center">
+                    <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                      {t('auth.forgotPassword')}
+                    </Link>
+                  </div>
                 </form>
               </TabsContent>
               
