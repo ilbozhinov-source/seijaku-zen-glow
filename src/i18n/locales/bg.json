@@ -59,6 +59,27 @@
     "variants": "Варианти",
     "soldOut": "Изчерпан"
   },
+  "auth": {
+    "login": "Вход",
+    "signup": "Регистрация",
+    "loginOrSignup": "Влезте в профила си или се регистрирайте",
+    "email": "Email",
+    "password": "Парола",
+    "confirmPassword": "Потвърди парола",
+    "firstName": "Име",
+    "lastName": "Фамилия",
+    "loginButton": "Вход",
+    "signupButton": "Регистрация",
+    "backToHome": "Към начало",
+    "invalidEmail": "Невалиден email адрес",
+    "passwordMinLength": "Паролата трябва да е поне 6 символа",
+    "firstNameMinLength": "Името трябва да е поне 2 символа",
+    "lastNameMinLength": "Фамилията трябва да е поне 2 символа",
+    "invalidCredentials": "Грешен email или парола",
+    "userAlreadyRegistered": "Този email вече е регистриран",
+    "loginSuccess": "Успешен вход!",
+    "signupSuccess": "Успешна регистрация!"
+  },
   "cart": {
     "title": "Количка",
     "empty": "Количката е празна",

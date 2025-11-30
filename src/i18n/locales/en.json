@@ -59,6 +59,27 @@
     "variants": "Variants",
     "soldOut": "Sold out"
   },
+  "auth": {
+    "login": "Login",
+    "signup": "Sign up",
+    "loginOrSignup": "Sign in to your account or register",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "loginButton": "Login",
+    "signupButton": "Sign up",
+    "backToHome": "Back to home",
+    "invalidEmail": "Invalid email address",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "firstNameMinLength": "First name must be at least 2 characters",
+    "lastNameMinLength": "Last name must be at least 2 characters",
+    "invalidCredentials": "Invalid email or password",
+    "userAlreadyRegistered": "This email is already registered",
+    "loginSuccess": "Login successful!",
+    "signupSuccess": "Registration successful!"
+  },
   "cart": {
     "title": "Shopping Cart",
     "empty": "Your cart is empty",
