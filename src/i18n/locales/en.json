@@ -51,7 +51,13 @@
     "addedToCart": "Added to cart!",
     "priceBGN": "{{price}} лв.",
     "priceEUR": "(€{{price}})",
-    "matchaDescription": "Premium ceremonial matcha of the highest quality. 30g package of fine Japanese powdered tea."
+    "matchaDescription": "Premium ceremonial matcha of the highest quality. 30g package of fine Japanese powdered tea.",
+    "backToProducts": "Back to products",
+    "backToHome": "Back to home",
+    "productNotFound": "Product not found",
+    "description": "Description",
+    "variants": "Variants",
+    "soldOut": "Sold out"
   },
   "ritual": {
     "title": "Preparation Ritual",
