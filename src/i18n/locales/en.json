@@ -59,6 +59,17 @@
     "variants": "Variants",
     "soldOut": "Sold out"
   },
+  "cart": {
+    "title": "Shopping Cart",
+    "empty": "Your cart is empty",
+    "itemsInCart": "{{count}} item in your cart",
+    "itemsInCart_plural": "{{count}} items in your cart",
+    "total": "Total",
+    "checkout": "Checkout",
+    "loading": "Loading...",
+    "checkoutError": "Checkout error",
+    "tryAgain": "Please try again."
+  },
   "ritual": {
     "title": "Preparation Ritual",
     "subtitle": "Turn every morning into a zen moment. The traditional ceremony is simple, yet filled with care and attention.",

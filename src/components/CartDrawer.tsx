@@ -12,8 +12,10 @@ import {
 import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2 } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
+import { useTranslation } from 'react-i18next';
 
 export const CartDrawer = () => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const { 
     items, 
@@ -36,8 +38,8 @@ export const CartDrawer = () => {
       }
     } catch (error) {
       console.error('Checkout failed:', error);
-      toast.error('Грешка при създаване на поръчка', {
-        description: 'Моля, опитайте отново.'
+      toast.error(t('cart.checkoutError'), {
+        description: t('cart.tryAgain')
       });
     }
   };
@@ -57,9 +59,9 @@ export const CartDrawer = () => {
       
       <SheetContent className="w-full sm:max-w-lg flex flex-col h-full">
         <SheetHeader className="flex-shrink-0">
-          <SheetTitle>Количка</SheetTitle>
+          <SheetTitle>{t('cart.title')}</SheetTitle>
           <SheetDescription>
-            {totalItems === 0 ? "Количката е празна" : `${totalItems} продукт${totalItems !== 1 ? 'а' : ''} в количката`}
+            {totalItems === 0 ? t('cart.empty') : t('cart.itemsInCart', { count: totalItems })}
           </SheetDescription>
         </SheetHeader>
         
@@ -68,7 +70,7 @@ export const CartDrawer = () => {
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
                 <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Количката е празна</p>
+                <p className="text-muted-foreground">{t('cart.empty')}</p>
               </div>
             </div>
           ) : (
@@ -93,7 +95,7 @@ export const CartDrawer = () => {
                           {item.selectedOptions.map(option => option.value).join(' • ')}
                         </p>
                         <p className="font-semibold">
-                          {Math.round(parseFloat(item.price.amount))} лв.
+                          {t('products.priceBGN', { price: Math.round(parseFloat(item.price.amount)) })}
                         </p>
                       </div>
                       
@@ -134,13 +136,13 @@ export const CartDrawer = () => {
               
               <div className="flex-shrink-0 space-y-4 pt-4 border-t bg-background">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold">Общо</span>
+                  <span className="text-lg font-semibold">{t('cart.total')}</span>
                   <div className="text-right">
                     <span className="text-xl font-bold block">
-                      {Math.round(totalPrice)} лв.
+                      {t('products.priceBGN', { price: Math.round(totalPrice) })}
                     </span>
                     <span className="text-sm text-muted-foreground">
-                      ({(totalPrice / 1.9553).toFixed(2)} €)
+                      {t('products.priceEUR', { price: (totalPrice / 1.9553).toFixed(2) })}
                     </span>
                   </div>
                 </div>
@@ -154,12 +156,12 @@ export const CartDrawer = () => {
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Зареждане...
+                      {t('cart.loading')}
                     </>
                   ) : (
                     <>
                       <ExternalLink className="w-4 h-4 mr-2" />
-                      Към каса
+                      {t('cart.checkout')}
                     </>
                   )}
                 </Button>
