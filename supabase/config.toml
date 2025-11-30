@@ -5,3 +5,15 @@ verify_jwt = false
 
 [functions.send-order-email]
 verify_jwt = false
+
+[functions.stripe-checkout]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.create-cod-order]
+verify_jwt = false
+
+[functions.sitemap]
+verify_jwt = false

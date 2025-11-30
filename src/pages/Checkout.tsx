@@ -65,51 +65,87 @@ const Checkout = () => {
     setIsSubmitting(true);
 
     try {
-      // For card payments, redirect to Stripe (when integrated)
-      if (formData.paymentMethod === 'card') {
-        // TODO: Integrate Stripe checkout session
-        // For now, show a message
-        toast.info(t('checkout.cardPaymentComingSoon') || 'Card payment coming soon!');
-        setIsSubmitting(false);
-        return;
-      }
-
-      // For COD orders, send email
-      const orderData = {
-        customer: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-        },
-        shipping: {
-          address: formData.address,
-          city: formData.city,
-          postalCode: formData.postalCode,
-        },
-        paymentMethod: formData.paymentMethod,
-        items: items.map(item => ({
-          title: item.product.title,
-          variant: item.selectedOptions.map(o => o.value).join(' • '),
-          quantity: item.quantity,
-          price: parseFloat(item.price.amount),
-        })),
-        total: totalPrice,
-        currency: 'BGN',
+      const customer = {
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
       };
 
-      const { error } = await supabase.functions.invoke('send-order-email', {
-        body: orderData,
-      });
+      const cartItems = items.map(item => ({
+        productId: item.product.id,
+        productTitle: item.product.title,
+        variantId: item.variantId,
+        variantTitle: item.selectedOptions.map(o => o.value).join(' • '),
+        quantity: item.quantity,
+        price: item.price,
+        selectedOptions: item.selectedOptions,
+      }));
 
-      if (error) throw error;
+      if (formData.paymentMethod === 'card') {
+        // Stripe checkout
+        const { data, error } = await supabase.functions.invoke('stripe-checkout', {
+          body: {
+            items: cartItems,
+            customer,
+            successUrl: `${window.location.origin}/checkout/success`,
+            cancelUrl: `${window.location.origin}/checkout/cancel`,
+          },
+        });
 
-      toast.success(t('checkout.orderSuccess'));
-      clearCart();
-      navigate('/');
-    } catch (error: any) {
+        if (error) throw error;
+
+        if (data?.url) {
+          // Redirect to Stripe checkout
+          window.location.href = data.url;
+        } else {
+          throw new Error('No checkout URL returned');
+        }
+      } else {
+        // Cash on delivery
+        const { data, error } = await supabase.functions.invoke('create-cod-order', {
+          body: {
+            items: cartItems,
+            customer,
+          },
+        });
+
+        if (error) throw error;
+
+        // Send order email
+        await supabase.functions.invoke('send-order-email', {
+          body: {
+            customer: {
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              email: formData.email,
+              phone: formData.phone,
+            },
+            shipping: {
+              address: formData.address,
+              city: formData.city,
+              postalCode: formData.postalCode,
+            },
+            paymentMethod: 'cod',
+            items: items.map(item => ({
+              title: item.product.title,
+              variant: item.selectedOptions.map(o => o.value).join(' • '),
+              quantity: item.quantity,
+              price: parseFloat(item.price.amount),
+            })),
+            total: totalPrice,
+            currency: 'BGN',
+          },
+        });
+
+        // Redirect to COD success page
+        navigate(`/checkout/cod-success?order_id=${data?.orderId}`);
+      }
+    } catch (error: unknown) {
       console.error('Order submission error:', error);
-      toast.error(t('checkout.orderError'));
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(t('checkout.orderError') + ': ' + message);
     } finally {
       setIsSubmitting(false);
     }
