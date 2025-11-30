@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,39 +10,22 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { ShoppingCart, Minus, Plus, Trash2, ExternalLink, Loader2 } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Trash2, ArrowRight } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
-import { toast } from "sonner";
 import { useTranslation } from 'react-i18next';
 
 export const CartDrawer = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const { 
-    items, 
-    isLoading, 
-    updateQuantity, 
-    removeItem, 
-    createCheckout 
-  } = useCartStore();
+  const { items, updateQuantity, removeItem } = useCartStore();
   
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce((sum, item) => sum + (parseFloat(item.price.amount) * item.quantity), 0);
 
-  const handleCheckout = async () => {
-    try {
-      await createCheckout();
-      const checkoutUrl = useCartStore.getState().checkoutUrl;
-      if (checkoutUrl) {
-        window.open(checkoutUrl, '_blank');
-        setIsOpen(false);
-      }
-    } catch (error) {
-      console.error('Checkout failed:', error);
-      toast.error(t('cart.checkoutError'), {
-        description: t('cart.tryAgain')
-      });
-    }
+  const handleCheckout = () => {
+    setIsOpen(false);
+    navigate('/checkout');
   };
 
   return (
@@ -151,19 +135,10 @@ export const CartDrawer = () => {
                   onClick={handleCheckout}
                   className="w-full" 
                   size="lg"
-                  disabled={items.length === 0 || isLoading}
+                  disabled={items.length === 0}
                 >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {t('cart.loading')}
-                    </>
-                  ) : (
-                    <>
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      {t('cart.checkout')}
-                    </>
-                  )}
+                  <ArrowRight className="w-4 h-4 mr-2" />
+                  {t('cart.checkout')}
                 </Button>
               </div>
             </>
