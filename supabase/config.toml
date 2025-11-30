@@ -2,3 +2,6 @@ project_id = "npbhvkcitvowjbfrctfi"
 
 [functions.send-contact-email]
 verify_jwt = false
+
+[functions.send-order-email]
+verify_jwt = false
