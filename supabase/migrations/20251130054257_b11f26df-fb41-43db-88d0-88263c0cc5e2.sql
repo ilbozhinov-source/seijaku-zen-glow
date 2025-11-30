@@ -1,0 +1,7 @@
+-- Create the trigger that was missing
+-- This will automatically create profile and user_role when a new user signs up
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW 
+  EXECUTE FUNCTION public.handle_new_user();
