@@ -50,7 +50,8 @@
     "addToCart": "Adaugă în Coș",
     "addedToCart": "Adăugat în coș!",
     "priceBGN": "{{price}} лв.",
-    "priceEUR": "(€{{price}})"
+    "priceEUR": "(€{{price}})",
+    "matchaDescription": "Matcha ceremonială premium de cea mai înaltă calitate. Pachet de 30g de ceai japonez fin pudrat."
   },
   "ritual": {
     "title": "Ritual de Preparare",
