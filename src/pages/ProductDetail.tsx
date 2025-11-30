@@ -9,8 +9,10 @@ import { toast } from "sonner";
 import { ProductSchema } from "@/components/ProductSchema";
 import { BreadcrumbSchema } from "@/components/BreadcrumbSchema";
 import { useSEO } from "@/hooks/useSEO";
+import { useTranslation } from 'react-i18next';
 
 const ProductDetail = () => {
+  const { t } = useTranslation();
   const { handle } = useParams<{ handle: string }>();
   const [product, setProduct] = useState<ShopifyProduct['node'] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,13 +53,13 @@ const ProductDetail = () => {
     };
     
     addItem(cartItem);
-    toast.success('Добавено в количката!');
+    toast.success(t('products.addedToCart'));
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Зареждане...</p>
+        <p className="text-muted-foreground">{t('products.loading')}</p>
       </div>
     );
   }
@@ -66,11 +68,11 @@ const ProductDetail = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-foreground mb-4">Продуктът не е намерен</p>
+          <p className="text-muted-foreground mb-4">{t('products.productNotFound')}</p>
           <Link to="/">
             <Button variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Към начало
+              {t('products.backToHome')}
             </Button>
           </Link>
         </div>
@@ -91,7 +93,7 @@ const ProductDetail = () => {
         <Link to="/">
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Назад към продуктите
+            {t('products.backToProducts')}
           </Button>
         </Link>
 
@@ -106,7 +108,7 @@ const ProductDetail = () => {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                  Няма изображение
+                  {t('products.noImage')}
                 </div>
               )}
             </div>
@@ -119,24 +121,22 @@ const ProductDetail = () => {
                   </h1>
                   <div>
                     <p className="text-2xl font-bold text-primary">
-                      {parseFloat(selectedVariant.price.amount).toFixed(2)} лв.
+                      {t('products.priceBGN', { price: Math.round(parseFloat(selectedVariant.price.amount)) })}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      ({(parseFloat(selectedVariant.price.amount) / 1.96).toFixed(2)} €)
+                      {t('products.priceEUR', { price: (parseFloat(selectedVariant.price.amount) / 1.9553).toFixed(2) })}
                     </p>
                   </div>
                 </div>
 
-                {product.description && (
-                  <div>
-                    <h2 className="text-lg font-semibold mb-2">Описание</h2>
-                    <p className="text-muted-foreground">{product.description}</p>
-                  </div>
-                )}
+                <div>
+                  <h2 className="text-lg font-semibold mb-2">{t('products.description')}</h2>
+                  <p className="text-muted-foreground">{t('products.matchaDescription')}</p>
+                </div>
 
                 {product.variants.edges.length > 1 && (
                   <div>
-                    <h2 className="text-lg font-semibold mb-2">Варианти</h2>
+                    <h2 className="text-lg font-semibold mb-2">{t('products.variants')}</h2>
                     <div className="flex flex-wrap gap-2">
                       {product.variants.edges.map((variant, index) => (
                         <Button
@@ -158,7 +158,7 @@ const ProductDetail = () => {
                   disabled={!selectedVariant.availableForSale}
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  {selectedVariant.availableForSale ? 'Добави в количката' : 'Изчерпан'}
+                  {selectedVariant.availableForSale ? t('products.addToCart') : t('products.soldOut')}
                 </Button>
               </div>
             </CardContent>
