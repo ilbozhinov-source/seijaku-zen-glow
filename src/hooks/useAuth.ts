@@ -57,7 +57,10 @@ export function useAuth() {
   };
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    // Use production domain for redirects
+    const redirectUrl = import.meta.env.PROD 
+      ? 'https://gomatcha.bg/'
+      : `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
       email,

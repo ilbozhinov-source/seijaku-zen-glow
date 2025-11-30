@@ -18,10 +18,10 @@ export const CartDrawer = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const { items, updateQuantity, removeItem } = useCartStore();
+  const { items, updateQuantity, removeItem, getTotalPrice, getTotalItems } = useCartStore();
   
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce((sum, item) => sum + (parseFloat(item.price.amount) * item.quantity), 0);
+  const totalItems = getTotalItems();
+  const totalPrice = getTotalPrice();
 
   const handleCheckout = () => {
     setIsOpen(false);
@@ -64,17 +64,17 @@ export const CartDrawer = () => {
                   {items.map((item) => (
                     <div key={item.variantId} className="flex gap-4 p-2">
                       <div className="w-16 h-16 bg-secondary/20 rounded-md overflow-hidden flex-shrink-0">
-                        {item.product.node.images?.edges?.[0]?.node && (
+                        {item.product.images?.[0] && (
                           <img
-                            src={item.product.node.images.edges[0].node.url}
-                            alt={item.product.node.title}
+                            src={item.product.images[0].url}
+                            alt={item.product.title}
                             className="w-full h-full object-cover"
                           />
                         )}
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium truncate">{item.product.node.title}</h4>
+                        <h4 className="font-medium truncate">{item.product.title}</h4>
                         <p className="text-sm text-muted-foreground">
                           {item.selectedOptions.map(option => option.value).join(' • ')}
                         </p>

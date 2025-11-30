@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { CartItem } from '@/lib/shopify';
+import { CartItem } from '@/lib/products';
 
 interface CartStore {
   items: CartItem[];
@@ -9,6 +9,8 @@ interface CartStore {
   updateQuantity: (variantId: string, quantity: number) => void;
   removeItem: (variantId: string) => void;
   clearCart: () => void;
+  getTotalPrice: () => number;
+  getTotalItems: () => number;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -54,6 +56,14 @@ export const useCartStore = create<CartStore>()(
 
       clearCart: () => {
         set({ items: [] });
+      },
+
+      getTotalPrice: () => {
+        return get().items.reduce((sum, item) => sum + (parseFloat(item.price.amount) * item.quantity), 0);
+      },
+
+      getTotalItems: () => {
+        return get().items.reduce((sum, item) => sum + item.quantity, 0);
       },
     }),
     {
