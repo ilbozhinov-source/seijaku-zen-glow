@@ -10,10 +10,33 @@ import {
 import { User, LogOut, Shield, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export const UserMenu = () => {
   const navigate = useNavigate();
   const { user, isAdmin, loading, signOut } = useAuth();
+  const [firstName, setFirstName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('first_name')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (data?.first_name) {
+          setFirstName(data.first_name);
+        }
+      } else {
+        setFirstName(null);
+      }
+    };
+    
+    fetchProfile();
+  }, [user]);
 
   const handleSignOut = async () => {
     const { error } = await signOut();
@@ -51,8 +74,8 @@ export const UserMenu = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <div className="px-2 py-1.5 text-sm text-muted-foreground">
-          {user.email}
+        <div className="px-2 py-1.5 text-sm font-medium">
+          {firstName || user.email}
         </div>
         <DropdownMenuSeparator />
         {isAdmin && (
