@@ -93,7 +93,7 @@ export const CartDrawer = () => {
                           {item.selectedOptions.map(option => option.value).join(' • ')}
                         </p>
                         <p className="font-semibold">
-                          {parseFloat(item.price.amount).toFixed(2)} лв.
+                          {Math.round(parseFloat(item.price.amount))} лв.
                         </p>
                       </div>
                       
@@ -137,10 +137,10 @@ export const CartDrawer = () => {
                   <span className="text-lg font-semibold">Общо</span>
                   <div className="text-right">
                     <span className="text-xl font-bold block">
-                      {totalPrice.toFixed(2)} лв.
+                      {Math.round(totalPrice)} лв.
                     </span>
                     <span className="text-sm text-muted-foreground">
-                      ({(totalPrice / 1.96).toFixed(2)} €)
+                      ({(totalPrice / 1.9553).toFixed(2)} €)
                     </span>
                   </div>
                 </div>
