@@ -1,47 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const SHOPIFY_STORE_DOMAIN = Deno.env.get('SHOPIFY_STORE_DOMAIN') || 'seijaku-matcha.myshopify.com';
-const SHOPIFY_STOREFRONT_TOKEN = Deno.env.get('SHOPIFY_STOREFRONT_ACCESS_TOKEN') || '';
-const SITE_URL = Deno.env.get('SITE_URL') || 'https://seijaku-matcha.lovable.app';
+const SITE_URL = Deno.env.get('SITE_URL') || 'https://gomatcha.bg';
 
 const LANGUAGES = ['bg', 'en', 'el', 'ro'];
 
-interface Product {
-  handle: string;
-  updatedAt: string;
-}
-
-const PRODUCTS_QUERY = `
-  query GetProducts {
-    products(first: 250) {
-      edges {
-        node {
-          handle
-          updatedAt
-        }
-      }
-    }
-  }
-`;
-
-async function fetchProducts(): Promise<Product[]> {
-  try {
-    const response = await fetch(`https://${SHOPIFY_STORE_DOMAIN}/api/2024-01/graphql.json`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': SHOPIFY_STOREFRONT_TOKEN,
-      },
-      body: JSON.stringify({ query: PRODUCTS_QUERY }),
-    });
-
-    const data = await response.json();
-    return data.data?.products?.edges?.map((edge: any) => edge.node) || [];
-  } catch (error) {
-    console.error('Error fetching products:', error);
-    return [];
-  }
-}
+// Local product data for sitemap
+const products = [
+  {
+    handle: 'seijaku-ceremonial-matcha',
+    updatedAt: new Date().toISOString(),
+  },
+];
 
 function generateAlternateLinks(path: string): string {
   return LANGUAGES.map(lang => 
@@ -66,7 +35,6 @@ serve(async (req) => {
   }
 
   try {
-    const products = await fetchProducts();
     const now = new Date().toISOString().split('T')[0];
 
     let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -82,6 +50,30 @@ serve(async (req) => {
       '1.0',
       '/'
     ) + '\n';
+
+    // Add static pages
+    const staticPages = [
+      { path: '/story', priority: '0.7' },
+      { path: '/quality', priority: '0.7' },
+      { path: '/reviews', priority: '0.6' },
+      { path: '/faq', priority: '0.6' },
+      { path: '/contact', priority: '0.6' },
+      { path: '/delivery', priority: '0.5' },
+      { path: '/returns', priority: '0.5' },
+      { path: '/privacy', priority: '0.3' },
+      { path: '/terms', priority: '0.3' },
+      { path: '/cookies', priority: '0.3' },
+    ];
+
+    staticPages.forEach(page => {
+      sitemap += generateUrlEntry(
+        `${SITE_URL}${page.path}`,
+        now,
+        'weekly',
+        page.priority,
+        page.path
+      ) + '\n';
+    });
 
     // Add product pages
     products.forEach(product => {
