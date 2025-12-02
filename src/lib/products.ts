@@ -1,4 +1,4 @@
-// Local product data - replaces Shopify integration
+// Local product data
 import productImage from '@/assets/seijaku-matcha-product.jpg';
 
 export interface ProductVariant {
