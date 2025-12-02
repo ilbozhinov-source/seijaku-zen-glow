@@ -72,12 +72,12 @@ const Products = () => {
                 <CardContent className="p-6 space-y-4">
                   <Link to={`/product/${product.handle}`}>
                     <h3 className="text-xl font-bold text-foreground hover:text-primary transition-colors cursor-pointer">
-                      {product.title}
+                      {t(product.title)}
                     </h3>
                   </Link>
                   
                   <p className="text-sm text-muted-foreground line-clamp-2">
-                    {product.description}
+                    {t(product.description)}
                   </p>
 
                   <div className="flex flex-col gap-1 items-center text-center">
