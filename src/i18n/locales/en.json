@@ -57,7 +57,9 @@
     "productNotFound": "Product not found",
     "description": "Description",
     "variants": "Variants",
-    "soldOut": "Sold out"
+    "soldOut": "Sold out",
+    "productTitle": "SEIJAKU Ceremonial Matcha",
+    "productDescription": "Premium ceremonial matcha of the highest quality. 30g package of fine powdered tea. 100% organic, hand-ground with care for every detail."
   },
   "auth": {
     "login": "Login",

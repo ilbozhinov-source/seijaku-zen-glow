@@ -56,8 +56,8 @@ export interface CartItem {
 export const products: Product[] = [
   {
     id: 'product-1',
-    title: 'SEIJAKU Церемониална Матча',
-    description: 'Премиум церемониална матча от най-високо качество. 30g опаковка на фин чай на прах. 100% органична, ръчно смляна с грижа за всеки детайл.',
+    title: 'products.productTitle',
+    description: 'products.productDescription',
     handle: 'seijaku-ceremonial-matcha',
     priceRange: {
       minVariantPrice: {
@@ -91,7 +91,7 @@ export const products: Product[] = [
           amount: '79.00',
           currencyCode: 'BGN',
         },
-        availableForSale: true,
+        availableForSale: false,
         selectedOptions: [
           { name: 'Размер', value: '50g' },
         ],
@@ -103,7 +103,7 @@ export const products: Product[] = [
           amount: '149.00',
           currencyCode: 'BGN',
         },
-        availableForSale: true,
+        availableForSale: false,
         selectedOptions: [
           { name: 'Размер', value: '100g' },
         ],

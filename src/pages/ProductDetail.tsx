@@ -92,7 +92,7 @@ const ProductDetail = () => {
               <div className="space-y-6">
                 <div>
                   <h1 className="text-3xl font-bold text-foreground mb-2">
-                    {product.title}
+                    {t(product.title)}
                   </h1>
                   <div>
                     <p className="text-2xl font-bold text-primary">
@@ -106,7 +106,7 @@ const ProductDetail = () => {
 
                 <div>
                   <h2 className="text-lg font-semibold mb-2">{t('products.description')}</h2>
-                  <p className="text-muted-foreground">{product.description}</p>
+                  <p className="text-muted-foreground">{t(product.description)}</p>
                 </div>
 
                 {product.variants.length > 1 && (
@@ -118,6 +118,8 @@ const ProductDetail = () => {
                           key={variant.id}
                           variant={selectedVariantIndex === index ? "default" : "outline"}
                           onClick={() => setSelectedVariantIndex(index)}
+                          disabled={!variant.availableForSale}
+                          className={!variant.availableForSale ? "line-through opacity-50 cursor-not-allowed" : ""}
                         >
                           {variant.title}
                         </Button>

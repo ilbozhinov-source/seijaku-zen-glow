@@ -57,7 +57,9 @@
     "productNotFound": "Produsul nu a fost găsit",
     "description": "Descriere",
     "variants": "Variante",
-    "soldOut": "Epuizat"
+    "soldOut": "Epuizat",
+    "productTitle": "SEIJAKU Matcha Ceremonială",
+    "productDescription": "Matcha ceremonială premium de cea mai înaltă calitate. Pachet de 30g de ceai fin pudrat. 100% organic, măcinat manual cu atenție la fiecare detaliu."
   },
   "auth": {
     "login": "Autentificare",
