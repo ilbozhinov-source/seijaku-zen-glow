@@ -7,6 +7,7 @@ export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(true);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -18,11 +19,13 @@ export function useAuth() {
 
         // Check admin role with setTimeout to avoid deadlock
         if (session?.user) {
+          setAdminLoading(true);
           setTimeout(() => {
             checkAdminRole(session.user.id);
           }, 0);
         } else {
           setIsAdmin(false);
+          setAdminLoading(false);
         }
       }
     );
@@ -35,6 +38,8 @@ export function useAuth() {
 
       if (session?.user) {
         checkAdminRole(session.user.id);
+      } else {
+        setAdminLoading(false);
       }
     });
 
@@ -42,17 +47,21 @@ export function useAuth() {
   }, []);
 
   const checkAdminRole = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .maybeSingle();
 
-    if (!error && data) {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false);
+      if (!error && data) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+    } finally {
+      setAdminLoading(false);
     }
   };
 
@@ -98,7 +107,7 @@ export function useAuth() {
   return {
     user,
     session,
-    loading,
+    loading: loading || adminLoading,
     isAdmin,
     signUp,
     signIn,
