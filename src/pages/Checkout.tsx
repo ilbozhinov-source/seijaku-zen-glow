@@ -7,10 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCartStore } from '@/stores/cartStore';
-import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag, MapPin, Building2, Check, ChevronsUpDown } from 'lucide-react';
+import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag, MapPin, Building2, Search, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
@@ -52,77 +51,118 @@ interface OfficeComboboxProps {
 }
 
 const OfficeCombobox = ({ offices, value, onChange, loading, error, t }: OfficeComboboxProps) => {
-  const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
   
   // Sort offices alphabetically by name
   const sortedOffices = useMemo(() => {
     return [...offices].sort((a, b) => a.name.localeCompare(b.name, 'bg'));
   }, [offices]);
   
+  // Filter offices based on search term
+  const filteredOffices = useMemo(() => {
+    if (!searchTerm.trim()) return sortedOffices;
+    const term = searchTerm.toLowerCase();
+    return sortedOffices.filter(office => 
+      office.name.toLowerCase().includes(term) ||
+      office.place.toLowerCase().includes(term) ||
+      office.address.toLowerCase().includes(term)
+    );
+  }, [sortedOffices, searchTerm]);
+  
   const selectedOffice = sortedOffices.find((office) => office.id === value);
+  
+  // Close dropdown when clicking outside
+  const handleBlur = (e: React.FocusEvent) => {
+    // Delay to allow click on option to register
+    setTimeout(() => {
+      if (!e.currentTarget.contains(document.activeElement)) {
+        setIsOpen(false);
+      }
+    }, 150);
+  };
   
   return (
     <div className="space-y-2">
       <Label>{t('checkout.selectOffice')} *</Label>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-full justify-between bg-background font-normal"
+      <div className="relative" onBlur={handleBlur}>
+        {/* Search input */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={loading ? t('checkout.loadingOffices') : t('checkout.searchOffice')}
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setIsOpen(true);
+            }}
+            onFocus={() => setIsOpen(true)}
             disabled={loading || sortedOffices.length === 0}
-          >
-            {loading ? (
-              <div className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>{t('checkout.loadingOffices')}</span>
-              </div>
-            ) : selectedOffice ? (
-              <span className="truncate text-left">
-                {selectedOffice.name} - {selectedOffice.place}
-              </span>
-            ) : (
-              <span className="text-muted-foreground">{t('checkout.selectOffice')}</span>
-            )}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-          <Command>
-            <CommandInput placeholder={t('checkout.searchOffice')} />
-            <CommandList className="max-h-[300px]">
-              <CommandEmpty>{t('checkout.noOfficesFound')}</CommandEmpty>
-              <CommandGroup>
-                {sortedOffices.map((office) => (
-                  <CommandItem
+            className="pl-10 bg-background"
+          />
+          {loading && (
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />
+          )}
+        </div>
+        
+        {/* Selected office display */}
+        {selectedOffice && !isOpen && (
+          <div className="mt-2 p-3 border rounded-lg bg-muted/50 flex items-center gap-2">
+            <Check className="h-4 w-4 text-primary" />
+            <div className="flex-1 min-w-0">
+              <p className="font-medium truncate">{selectedOffice.name}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {selectedOffice.place}, {selectedOffice.address}
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {/* Dropdown list */}
+        {isOpen && !loading && filteredOffices.length > 0 && (
+          <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg">
+            <ScrollArea className="h-[300px]">
+              <div className="p-1">
+                {filteredOffices.map((office) => (
+                  <button
                     key={office.id}
-                    value={`${office.name} ${office.place} ${office.address}`}
-                    onSelect={() => {
+                    type="button"
+                    onClick={() => {
                       onChange(office.id);
-                      setOpen(false);
+                      setSearchTerm('');
+                      setIsOpen(false);
                     }}
-                    className="cursor-pointer"
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-md hover:bg-muted transition-colors flex items-start gap-2",
+                      value === office.id && "bg-muted"
+                    )}
                   >
                     <Check
                       className={cn(
-                        "mr-2 h-4 w-4",
-                        value === office.id ? "opacity-100" : "opacity-0"
+                        "h-4 w-4 mt-0.5 shrink-0",
+                        value === office.id ? "opacity-100 text-primary" : "opacity-0"
                       )}
                     />
-                    <div className="flex flex-col">
-                      <span className="font-medium">{office.name}</span>
-                      <span className="text-xs text-muted-foreground">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium">{office.name}</p>
+                      <p className="text-xs text-muted-foreground">
                         {office.place}, {office.address}
-                      </span>
+                      </p>
                     </div>
-                  </CommandItem>
+                  </button>
                 ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+              </div>
+            </ScrollArea>
+          </div>
+        )}
+        
+        {/* No results message */}
+        {isOpen && !loading && searchTerm && filteredOffices.length === 0 && (
+          <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg p-4 text-center text-muted-foreground">
+            {t('checkout.noOfficesFound')}
+          </div>
+        )}
+      </div>
       {error && !loading && (
         <p className="text-sm text-destructive">{error}</p>
       )}
