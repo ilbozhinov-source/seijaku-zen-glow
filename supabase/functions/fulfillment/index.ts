@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const NEXTLEVEL_API_BASE = 'https://api.nextlevel.delivery/v1/fulfillment';
+
 interface OrderItem {
   productTitle: string;
   variantTitle: string;
@@ -20,9 +22,92 @@ interface FulfillmentOrder {
   customerPhone: string;
   shippingAddress: string;
   shippingCity: string;
+  shippingCountry: string;
+  shippingOfficeId?: string;
   items: OrderItem[];
   totalAmount: number;
+  shippingPrice: number;
+  totalWithShipping: number;
   currency: string;
+}
+
+// Fetch countries from NextLevel API
+async function fetchCountries(): Promise<{ success: boolean; data?: any; error?: string }> {
+  const appId = Deno.env.get('FULFILLMENT_APP_ID');
+  const appSecret = Deno.env.get('FULFILLMENT_APP_SECRET');
+
+  if (!appId || !appSecret) {
+    console.error('NextLevel credentials not configured');
+    return { success: false, error: 'Fulfillment credentials not configured' };
+  }
+
+  try {
+    console.log('Fetching countries from NextLevel API...');
+    
+    const response = await fetch(`${NEXTLEVEL_API_BASE}/countries`, {
+      method: 'GET',
+      headers: {
+        'app-id': appId,
+        'app-secret': appSecret,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('NextLevel API error:', response.status, errorText);
+      return { success: false, error: `API error: ${response.status} - ${errorText}` };
+    }
+
+    const data = await response.json();
+    console.log('Countries fetched successfully:', data);
+    
+    return { success: true, data };
+  } catch (error: unknown) {
+    console.error('NextLevel API request failed:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return { success: false, error: message };
+  }
+}
+
+// Fetch offices for a country from NextLevel API (placeholder for future implementation)
+async function fetchOffices(countryCode: string): Promise<{ success: boolean; data?: any; error?: string }> {
+  const appId = Deno.env.get('FULFILLMENT_APP_ID');
+  const appSecret = Deno.env.get('FULFILLMENT_APP_SECRET');
+
+  if (!appId || !appSecret) {
+    console.error('NextLevel credentials not configured');
+    return { success: false, error: 'Fulfillment credentials not configured' };
+  }
+
+  try {
+    console.log('Fetching offices for country:', countryCode);
+    
+    // TODO: Replace with actual NextLevel offices endpoint when available
+    // const response = await fetch(`${NEXTLEVEL_API_BASE}/offices?country=${countryCode}`, {
+    //   method: 'GET',
+    //   headers: {
+    //     'app-id': appId,
+    //     'app-secret': appSecret,
+    //     'Content-Type': 'application/json',
+    //   },
+    // });
+
+    // Mock response for now
+    const mockOffices = [
+      { id: 'office_1', name: 'Офис Център', address: 'бул. Витоша 100', city: 'София' },
+      { id: 'office_2', name: 'Офис Младост', address: 'бул. Александър Малинов 51', city: 'София' },
+      { id: 'office_3', name: 'Офис Пловдив', address: 'ул. Княз Борис I 108', city: 'Пловдив' },
+    ];
+
+    console.log('Offices fetched (mock):', mockOffices.length);
+    
+    return { success: true, data: mockOffices };
+  } catch (error: unknown) {
+    console.error('NextLevel offices API request failed:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return { success: false, error: message };
+  }
 }
 
 async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{ success: boolean; trackingNumber?: string; error?: string }> {
@@ -45,6 +130,8 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{ succes
       phone: order.customerPhone,
       address: order.shippingAddress,
       city: order.shippingCity,
+      country: order.shippingCountry,
+      office_id: order.shippingOfficeId,
     },
     items: order.items.map(item => ({
       name: item.productTitle,
@@ -54,49 +141,22 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{ succes
       currency: item.price.currencyCode,
     })),
     total_amount: order.totalAmount,
+    shipping_price: order.shippingPrice,
+    total_with_shipping: order.totalWithShipping,
     currency: order.currency,
   };
 
   try {
-    // Generate timestamp for request signing
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    
-    // Create signature (example: HMAC-like signing)
-    const signatureData = `${appId}:${timestamp}:${JSON.stringify(payload)}`;
-    const encoder = new TextEncoder();
-    const keyData = encoder.encode(appSecret);
-    const messageData = encoder.encode(signatureData);
-    
-    const cryptoKey = await crypto.subtle.importKey(
-      'raw',
-      keyData,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
-    
-    const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
-    const signatureHex = Array.from(new Uint8Array(signature))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+    console.log('Fulfillment payload prepared:', JSON.stringify(payload, null, 2));
 
-    // TODO: Replace with actual fulfillment API endpoint
-    const fulfillmentApiUrl = 'https://api.fulfillment-provider.com/v1/orders';
-    
-    console.log('Fulfillment request prepared with signature');
-    console.log('Headers: X-App-ID:', appId);
-    console.log('Headers: X-Timestamp:', timestamp);
-    console.log('Headers: X-Signature:', signatureHex.substring(0, 20) + '...');
-
-    // Uncomment when ready to connect to real API:
+    // TODO: Uncomment when ready to connect to real API:
     /*
-    const response = await fetch(fulfillmentApiUrl, {
+    const response = await fetch(`${NEXTLEVEL_API_BASE}/orders`, {
       method: 'POST',
       headers: {
+        'app-id': appId,
+        'app-secret': appSecret,
         'Content-Type': 'application/json',
-        'X-App-ID': appId,
-        'X-Timestamp': timestamp,
-        'X-Signature': signatureHex,
       },
       body: JSON.stringify(payload),
     });
@@ -117,7 +177,7 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{ succes
     */
 
     // Mock response for testing
-    const mockTrackingNumber = `TRK-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
+    const mockTrackingNumber = `NXL-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
     console.log('Mock tracking number generated:', mockTrackingNumber);
     
     return { 
@@ -141,6 +201,49 @@ serve(async (req) => {
     const url = new URL(req.url);
     const action = url.searchParams.get('action');
 
+    // Fetch countries from NextLevel API
+    if (action === 'countries') {
+      console.log('Fetching countries...');
+      const result = await fetchCountries();
+      
+      if (!result.success) {
+        return new Response(JSON.stringify({ error: result.error }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      return new Response(JSON.stringify(result.data), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Fetch offices for a country
+    if (action === 'offices') {
+      const countryCode = url.searchParams.get('country');
+      
+      if (!countryCode) {
+        return new Response(JSON.stringify({ error: 'Country code is required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      console.log('Fetching offices for country:', countryCode);
+      const result = await fetchOffices(countryCode);
+      
+      if (!result.success) {
+        return new Response(JSON.stringify({ error: result.error }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      return new Response(JSON.stringify(result.data), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Test endpoint
     if (action === 'test') {
       console.log('Testing fulfillment integration...');
@@ -155,6 +258,7 @@ serve(async (req) => {
         customerPhone: '+359888123456',
         shippingAddress: 'ул. Тестова 1',
         shippingCity: 'София',
+        shippingCountry: 'BG',
         items: [{
           productTitle: 'SEIJAKU Церемониална Матча',
           variantTitle: '30g',
@@ -162,6 +266,8 @@ serve(async (req) => {
           price: { amount: '28.00', currencyCode: 'BGN' }
         }],
         totalAmount: 28.00,
+        shippingPrice: 5.00,
+        totalWithShipping: 33.00,
         currency: 'BGN'
       };
 
@@ -217,15 +323,22 @@ serve(async (req) => {
         customerPhone: order.customer_phone || '',
         shippingAddress: order.shipping_address || '',
         shippingCity: order.shipping_city || '',
+        shippingCountry: order.shipping_country || 'BG',
         items: order.items as OrderItem[],
         totalAmount: order.total_amount,
+        shippingPrice: order.shipping_price || 0,
+        totalWithShipping: order.total_with_shipping || order.total_amount,
         currency: order.currency,
       };
 
       const result = await sendOrderToFulfillment(fulfillmentOrder);
 
       if (result.success && result.trackingNumber) {
-        // Update order with tracking number (you may need to add this column)
+        // Update order with tracking number
+        await supabase
+          .from('orders')
+          .update({ tracking_number: result.trackingNumber })
+          .eq('id', orderId);
         console.log('Order sent to fulfillment successfully. Tracking:', result.trackingNumber);
       }
 
