@@ -1,6 +1,7 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Loader2 } from "lucide-react";
 import { getProducts, Product, CartItem } from "@/lib/products";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
@@ -9,19 +10,30 @@ import { useTranslation } from 'react-i18next';
 
 const Products = () => {
   const { t } = useTranslation();
-  const products = getProducts();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const addItem = useCartStore(state => state.addItem);
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      const data = await getProducts();
+      setProducts(data);
+      setLoading(false);
+    };
+    fetchProducts();
+  }, []);
+
   const handleAddToCart = (product: Product) => {
-    const firstVariant = product.variants[0];
+    const firstAvailableVariant = product.variants.find(v => v.availableForSale) || product.variants[0];
     
     const cartItem: CartItem = {
       product,
-      variantId: firstVariant.id,
-      variantTitle: firstVariant.title,
-      price: firstVariant.price,
+      variantId: firstAvailableVariant.id,
+      variantTitle: firstAvailableVariant.title,
+      price: firstAvailableVariant.price,
       quantity: 1,
-      selectedOptions: firstVariant.selectedOptions
+      selectedOptions: firstAvailableVariant.selectedOptions
     };
     
     addItem(cartItem);
@@ -42,7 +54,11 @@ const Products = () => {
           </p>
         </div>
 
-        {products.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : products.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-muted-foreground mb-4">{t('products.noProducts')}</p>
             <p className="text-sm text-muted-foreground">

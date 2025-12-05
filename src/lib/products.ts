@@ -1,5 +1,6 @@
-// Local product data
-import productImage from '@/assets/seijaku-matcha-product.jpg';
+// Product types and database functions
+import { supabase } from '@/integrations/supabase/client';
+import productImageStatic from '@/assets/seijaku-matcha-product.jpg';
 
 export interface ProductVariant {
   id: string;
@@ -52,81 +53,151 @@ export interface CartItem {
   }>;
 }
 
-// Static product data
-export const products: Product[] = [
-  {
-    id: 'product-1',
-    title: 'products.productTitle',
-    description: 'products.productDescription',
-    handle: 'seijaku-ceremonial-matcha',
+// Database types
+export interface DbProduct {
+  id: string;
+  title: string;
+  description: string | null;
+  handle: string;
+  image_url: string | null;
+  image_alt: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DbProductVariant {
+  id: string;
+  product_id: string;
+  title: string;
+  price: number;
+  currency: string;
+  available_for_sale: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Transform database product to app product format
+function transformProduct(dbProduct: DbProduct, variants: DbProductVariant[]): Product {
+  const sortedVariants = [...variants].sort((a, b) => a.sort_order - b.sort_order);
+  const minPrice = Math.min(...sortedVariants.map(v => v.price));
+  const currency = sortedVariants[0]?.currency || 'BGN';
+
+  return {
+    id: dbProduct.id,
+    title: dbProduct.title,
+    description: dbProduct.description || '',
+    handle: dbProduct.handle,
     priceRange: {
       minVariantPrice: {
-        amount: '28.00',
-        currencyCode: 'BGN',
+        amount: minPrice.toFixed(2),
+        currencyCode: currency,
       },
     },
     images: [
       {
-        url: productImage,
-        altText: 'SEIJAKU Церемониална Матча',
+        url: productImageStatic, // Use static import for now
+        altText: dbProduct.image_alt,
       },
     ],
-    variants: [
-      {
-        id: 'variant-30g',
-        title: '30g',
-        price: {
-          amount: '28.00',
-          currencyCode: 'BGN',
-        },
-        availableForSale: true,
-        selectedOptions: [
-          { name: 'Размер', value: '30g' },
-        ],
+    variants: sortedVariants.map(v => ({
+      id: v.id,
+      title: v.title,
+      price: {
+        amount: v.price.toFixed(2),
+        currencyCode: v.currency,
       },
-      {
-        id: 'variant-50g',
-        title: '50g',
-        price: {
-          amount: '79.00',
-          currencyCode: 'BGN',
-        },
-        availableForSale: false,
-        selectedOptions: [
-          { name: 'Размер', value: '50g' },
-        ],
-      },
-      {
-        id: 'variant-100g',
-        title: '100g',
-        price: {
-          amount: '149.00',
-          currencyCode: 'BGN',
-        },
-        availableForSale: false,
-        selectedOptions: [
-          { name: 'Размер', value: '100g' },
-        ],
-      },
-    ],
+      availableForSale: v.available_for_sale,
+      selectedOptions: [
+        { name: 'Размер', value: v.title },
+      ],
+    })),
     options: [
       {
         name: 'Размер',
-        values: ['30g', '50g', '100g'],
+        values: sortedVariants.map(v => v.title),
       },
     ],
-  },
-];
-
-// Functions to get products (can be expanded to use Supabase later)
-export function getProducts(): Product[] {
-  return products;
+  };
 }
 
-export function getProductByHandle(handle: string): Product | null {
-  return products.find(p => p.handle === handle) || null;
+// Fetch all products from database
+export async function getProducts(): Promise<Product[]> {
+  const { data: products, error: productsError } = await supabase
+    .from('products')
+    .select('*');
+
+  if (productsError || !products) {
+    console.error('Error fetching products:', productsError);
+    return [];
+  }
+
+  const { data: variants, error: variantsError } = await supabase
+    .from('product_variants')
+    .select('*')
+    .order('sort_order');
+
+  if (variantsError || !variants) {
+    console.error('Error fetching variants:', variantsError);
+    return [];
+  }
+
+  return products.map(product => {
+    const productVariants = variants.filter(v => v.product_id === product.id);
+    return transformProduct(product, productVariants);
+  });
 }
 
-export function getProductById(id: string): Product | null {
-  return products.find(p => p.id === id) || null;
+// Fetch single product by handle
+export async function getProductByHandle(handle: string): Promise<Product | null> {
+  const { data: product, error: productError } = await supabase
+    .from('products')
+    .select('*')
+    .eq('handle', handle)
+    .maybeSingle();
+
+  if (productError || !product) {
+    console.error('Error fetching product:', productError);
+    return null;
+  }
+
+  const { data: variants, error: variantsError } = await supabase
+    .from('product_variants')
+    .select('*')
+    .eq('product_id', product.id)
+    .order('sort_order');
+
+  if (variantsError || !variants) {
+    console.error('Error fetching variants:', variantsError);
+    return null;
+  }
+
+  return transformProduct(product, variants);
+}
+
+// Fetch single product by ID
+export async function getProductById(id: string): Promise<Product | null> {
+  const { data: product, error: productError } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (productError || !product) {
+    console.error('Error fetching product:', productError);
+    return null;
+  }
+
+  const { data: variants, error: variantsError } = await supabase
+    .from('product_variants')
+    .select('*')
+    .eq('product_id', product.id)
+    .order('sort_order');
+
+  if (variantsError || !variants) {
+    console.error('Error fetching variants:', variantsError);
+    return null;
+  }
+
+  return transformProduct(product, variants);
 }
