@@ -8,6 +8,14 @@ const corsHeaders = {
 
 const NEXTLEVEL_API_BASE = 'https://api.nextlevel.delivery/v1/fulfillment';
 
+// Mapping from ISO country codes to NextLevel internal country IDs
+// These IDs need to be verified with NextLevel API documentation or by calling /countries endpoint
+const COUNTRY_CODE_TO_ID: Record<string, string> = {
+  'BG': '100',  // Bulgaria - adjust these IDs based on NextLevel's actual values
+  'GR': '300',  // Greece
+  'RO': '642',  // Romania
+};
+
 interface OrderItem {
   productTitle: string;
   variantTitle: string;
@@ -81,11 +89,18 @@ async function fetchOffices(countryCode: string, city?: string, postcode?: strin
   }
 
   try {
-    console.log('Fetching offices for country:', countryCode, 'city:', city, 'postcode:', postcode);
+    // Map ISO country code to NextLevel's internal country ID
+    const nextLevelCountryId = COUNTRY_CODE_TO_ID[countryCode];
+    if (!nextLevelCountryId) {
+      console.error('Unsupported country code:', countryCode);
+      return { success: false, error: `Unsupported country: ${countryCode}` };
+    }
+    
+    console.log('Fetching offices for country:', countryCode, '(ID:', nextLevelCountryId, ') city:', city, 'postcode:', postcode);
     
     // Build query parameters
     const params = new URLSearchParams();
-    params.append('country_id', countryCode);
+    params.append('country_id', nextLevelCountryId);
     if (city) params.append('city', city);
     if (postcode) params.append('postcode', postcode);
     
