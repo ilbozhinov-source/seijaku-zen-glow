@@ -8,14 +8,6 @@ const corsHeaders = {
 
 const NEXTLEVEL_API_BASE = 'https://api.nextlevel.delivery/v1/fulfillment';
 
-// Mapping from ISO country codes to NextLevel internal country IDs
-// These IDs need to be verified with NextLevel API documentation or by calling /countries endpoint
-const COUNTRY_CODE_TO_ID: Record<string, string> = {
-  'BG': '100',  // Bulgaria - adjust these IDs based on NextLevel's actual values
-  'GR': '300',  // Greece
-  'RO': '642',  // Romania
-};
-
 interface OrderItem {
   productTitle: string;
   variantTitle: string;
@@ -79,32 +71,30 @@ async function fetchCountries(): Promise<{ success: boolean; data?: any; error?:
 }
 
 // Fetch offices for a country from NextLevel API
-async function fetchOffices(countryCode: string, city?: string, postcode?: string): Promise<{ success: boolean; data?: any; error?: string }> {
+// API docs: GET https://api.nextlevel.delivery/v1/fulfillment/offices/
+// Params: country (BG/GR/RO), place (city), post_code
+async function fetchOffices(countryCode: string, place?: string, postCode?: string): Promise<{ success: boolean; offices: any[]; error?: string }> {
   const appId = Deno.env.get('FULFILLMENT_APP_ID');
   const appSecret = Deno.env.get('FULFILLMENT_APP_SECRET');
 
   if (!appId || !appSecret) {
     console.error('NextLevel credentials not configured');
-    return { success: false, error: 'Fulfillment credentials not configured' };
+    return { success: false, offices: [], error: 'Fulfillment credentials not configured' };
   }
 
   try {
-    // Map ISO country code to NextLevel's internal country ID
-    const nextLevelCountryId = COUNTRY_CODE_TO_ID[countryCode];
-    if (!nextLevelCountryId) {
-      console.error('Unsupported country code:', countryCode);
-      return { success: false, error: `Unsupported country: ${countryCode}` };
-    }
+    console.log('Fetching offices for country:', countryCode, 'place:', place, 'post_code:', postCode);
     
-    console.log('Fetching offices for country:', countryCode, '(ID:', nextLevelCountryId, ') city:', city, 'postcode:', postcode);
-    
-    // Build query parameters
+    // Build query parameters as per NextLevel API docs
     const params = new URLSearchParams();
-    params.append('country_id', nextLevelCountryId);
-    if (city) params.append('city', city);
-    if (postcode) params.append('postcode', postcode);
+    params.append('country', countryCode);
+    if (place) params.append('place', place);
+    if (postCode) params.append('post_code', postCode);
     
-    const response = await fetch(`${NEXTLEVEL_API_BASE}/offices?${params.toString()}`, {
+    const url = `${NEXTLEVEL_API_BASE}/offices/?${params.toString()}`;
+    console.log('Calling NextLevel API:', url);
+    
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'app-id': appId,
@@ -113,33 +103,59 @@ async function fetchOffices(countryCode: string, city?: string, postcode?: strin
       },
     });
 
+    const responseText = await response.text();
+    console.log('NextLevel API response status:', response.status);
+    
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('NextLevel offices API error:', response.status, errorText);
-      return { success: false, error: `API error: ${response.status} - ${errorText}` };
+      console.error('NextLevel offices API error:', response.status, responseText);
+      return { success: false, offices: [], error: `API error: ${response.status}` };
     }
 
-    const data = await response.json();
-    console.log('Offices fetched from NextLevel API:', Array.isArray(data) ? data.length : 0);
-    
-    // Map API response to our format
-    if (Array.isArray(data)) {
-      const mappedOffices = data.map((office: any) => ({
-        id: office.id?.toString() || office.office_id?.toString(),
-        name: office.name || office.office_name || `Office ${office.id}`,
-        address: office.address || office.street || '',
-        city: office.city || office.city_name || '',
-        postcode: office.postcode || office.zip || '',
-        countryCode: countryCode,
-      }));
-      return { success: true, data: mappedOffices };
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error('Failed to parse NextLevel response:', responseText);
+      return { success: false, offices: [], error: 'Invalid API response' };
     }
     
-    return { success: true, data: [] };
+    console.log('NextLevel raw response type:', typeof data, Array.isArray(data) ? `array of ${data.length}` : 'not array');
+    
+    // Map API response to our standardized format
+    // NextLevel returns array of offices with: id, name, place (city), post_code, address, country
+    if (Array.isArray(data)) {
+      const mappedOffices = data.map((office: any) => ({
+        id: office.id?.toString() || '',
+        name: office.name || '',
+        place: office.place || office.city || '',
+        post_code: office.post_code || office.postcode || '',
+        address: office.address || '',
+        country: office.country || countryCode,
+      }));
+      console.log('Mapped offices count:', mappedOffices.length);
+      return { success: true, offices: mappedOffices };
+    }
+    
+    // If response has a data array property
+    if (data?.data && Array.isArray(data.data)) {
+      const mappedOffices = data.data.map((office: any) => ({
+        id: office.id?.toString() || '',
+        name: office.name || '',
+        place: office.place || office.city || '',
+        post_code: office.post_code || office.postcode || '',
+        address: office.address || '',
+        country: office.country || countryCode,
+      }));
+      console.log('Mapped offices from data property, count:', mappedOffices.length);
+      return { success: true, offices: mappedOffices };
+    }
+    
+    console.log('Unexpected response format, returning empty offices');
+    return { success: true, offices: [] };
   } catch (error: unknown) {
     console.error('NextLevel offices API request failed:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return { success: false, error: message };
+    return { success: false, offices: [], error: message };
   }
 }
 
@@ -252,29 +268,29 @@ serve(async (req) => {
     }
 
     // Fetch offices for a country
+    // Params: country (BG/GR/RO), place (city), post_code
     if (action === 'offices') {
       const countryCode = url.searchParams.get('country');
-      const city = url.searchParams.get('city') || undefined;
-      const postcode = url.searchParams.get('postcode') || undefined;
+      const place = url.searchParams.get('place') || undefined;
+      const postCode = url.searchParams.get('post_code') || undefined;
       
       if (!countryCode) {
-        return new Response(JSON.stringify({ error: 'Country code is required' }), {
+        return new Response(JSON.stringify({ success: false, error: 'Country code is required', offices: [] }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       
-      console.log('Fetching offices for country:', countryCode, 'city:', city, 'postcode:', postcode);
-      const result = await fetchOffices(countryCode, city, postcode);
+      console.log('Fetching offices for country:', countryCode, 'place:', place, 'post_code:', postCode);
+      const result = await fetchOffices(countryCode, place, postCode);
       
-      if (!result.success) {
-        return new Response(JSON.stringify({ error: result.error, offices: [] }), {
-          status: 200, // Return 200 with empty array so frontend can handle gracefully
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      
-      return new Response(JSON.stringify(result.data), {
+      // Return standardized format: { success, offices, error? }
+      return new Response(JSON.stringify({
+        success: result.success,
+        offices: result.offices,
+        error: result.error || undefined,
+      }), {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

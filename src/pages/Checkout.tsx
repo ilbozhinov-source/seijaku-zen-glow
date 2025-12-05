@@ -33,9 +33,9 @@ interface Office {
   id: string;
   name: string;
   address: string;
-  city: string;
-  postcode?: string;
-  countryCode?: string;
+  place: string;      // city name from NextLevel API
+  post_code: string;  // postal code from NextLevel API
+  country: string;    // country code
 }
 
 const Checkout = () => {
@@ -73,7 +73,7 @@ const Checkout = () => {
 
   // Fetch offices when country changes and delivery type is office
   useEffect(() => {
-    const fetchOffices = async () => {
+    const fetchOfficesFromApi = async () => {
       if (!formData.shippingCountry || formData.deliveryType !== 'office') {
         setOffices([]);
         setOfficesError(null);
@@ -84,8 +84,15 @@ const Checkout = () => {
       setOfficesError(null);
       
       try {
+        // Build URL with correct params: country, place (optional), post_code (optional)
+        const params = new URLSearchParams({
+          action: 'offices',
+          country: formData.shippingCountry,
+        });
+        // Could add: place (city) and post_code filters if we have them in form
+        
         const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fulfillment?action=offices&country=${formData.shippingCountry}`,
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fulfillment?${params.toString()}`,
           {
             method: 'GET',
             headers: {
@@ -99,14 +106,15 @@ const Checkout = () => {
           throw new Error(`API error: ${response.status}`);
         }
 
-        const officesData = await response.json();
+        const result = await response.json();
         
-        if (officesData.error) {
-          console.error('Offices API error:', officesData.error);
-          setOfficesError(t('checkout.officesLoadError'));
+        // Response format: { success: boolean, offices: Office[], error?: string }
+        if (!result.success) {
+          console.error('Offices API error:', result.error);
+          setOfficesError(result.error || t('checkout.officesLoadError'));
           setOffices([]);
-        } else if (Array.isArray(officesData) && officesData.length > 0) {
-          setOffices(officesData);
+        } else if (Array.isArray(result.offices) && result.offices.length > 0) {
+          setOffices(result.offices);
           setOfficesError(null);
         } else {
           setOffices([]);
@@ -121,7 +129,7 @@ const Checkout = () => {
       }
     };
 
-    fetchOffices();
+    fetchOfficesFromApi();
   }, [formData.shippingCountry, formData.deliveryType, t]);
 
   const checkoutSchema = z.object({
@@ -179,10 +187,10 @@ const Checkout = () => {
           ? `${selectedOffice.name}, ${selectedOffice.address}`
           : formData.address,
         city: formData.deliveryType === 'office' && selectedOffice
-          ? selectedOffice.city
+          ? selectedOffice.place  // place = city from NextLevel API
           : formData.city,
         postalCode: formData.deliveryType === 'office' && selectedOffice
-          ? selectedOffice.postcode
+          ? selectedOffice.post_code
           : formData.postalCode,
         // Shipping country info
         shippingCountryCode: formData.shippingCountry,
@@ -196,7 +204,8 @@ const Checkout = () => {
         courierOfficeId: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.id : null,
         courierOfficeName: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.name : null,
         courierOfficeAddress: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.address : null,
-        courierOfficeCity: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.city : null,
+        courierOfficeCity: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.place : null,
+        courierOfficePostCode: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.post_code : null,
         courierOfficeCountryCode: formData.deliveryType === 'office' ? formData.shippingCountry : null,
       };
 
@@ -462,7 +471,7 @@ const Checkout = () => {
                         ) : (
                           offices.map((office) => (
                             <SelectItem key={office.id} value={office.id}>
-                              {office.name} - {office.city}, {office.address}
+                              {office.name} - {office.place}, {office.address}
                             </SelectItem>
                           ))
                         )}
