@@ -6,9 +6,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Loader2, Users, Shield, Package, LayoutDashboard, Settings, TrendingUp, ShoppingCart, UserCheck } from 'lucide-react';
+import { ArrowLeft, Loader2, Users, Shield, Package, LayoutDashboard, Settings, TrendingUp, ShoppingCart, UserCheck, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Profile {
@@ -64,6 +66,7 @@ const Admin = () => {
   const [loadingProfiles, setLoadingProfiles] = useState(true);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -250,6 +253,7 @@ const Admin = () => {
                           <TableHead>Сума</TableHead>
                           <TableHead>Статус</TableHead>
                           <TableHead>Дата</TableHead>
+                          <TableHead></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -264,6 +268,15 @@ const Admin = () => {
                             </TableCell>
                             <TableCell>
                               {new Date(order.created_at).toLocaleDateString('bg-BG')}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedOrder(order)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -332,22 +345,31 @@ const Admin = () => {
                               {new Date(order.created_at).toLocaleDateString('bg-BG')}
                             </TableCell>
                             <TableCell>
-                              <Select
-                                value={order.status}
-                                onValueChange={(value) => updateOrderStatus(order.id, value)}
-                              >
-                                <SelectTrigger className="w-[140px]">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="pending">Изчакваща</SelectItem>
-                                  <SelectItem value="paid">Платена</SelectItem>
-                                  <SelectItem value="cod_pending">Наложен платеж</SelectItem>
-                                  <SelectItem value="shipped">Изпратена</SelectItem>
-                                  <SelectItem value="delivered">Доставена</SelectItem>
-                                  <SelectItem value="cancelled">Отказана</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSelectedOrder(order)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Select
+                                  value={order.status}
+                                  onValueChange={(value) => updateOrderStatus(order.id, value)}
+                                >
+                                  <SelectTrigger className="w-[140px]">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">Изчакваща</SelectItem>
+                                    <SelectItem value="paid">Платена</SelectItem>
+                                    <SelectItem value="cod_pending">Наложен платеж</SelectItem>
+                                    <SelectItem value="shipped">Изпратена</SelectItem>
+                                    <SelectItem value="delivered">Доставена</SelectItem>
+                                    <SelectItem value="cancelled">Отказана</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -467,6 +489,106 @@ const Admin = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Order Detail Dialog */}
+        <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Детайли на поръчка
+              </DialogTitle>
+              <DialogDescription>
+                {selectedOrder && new Date(selectedOrder.created_at).toLocaleString('bg-BG')}
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedOrder && (
+              <div className="space-y-6">
+                {/* Customer Info */}
+                <div>
+                  <h4 className="font-semibold mb-2">Информация за клиента</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Име</p>
+                      <p className="font-medium">{selectedOrder.customer_name || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Email</p>
+                      <p className="font-medium">{selectedOrder.customer_email || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Телефон</p>
+                      <p className="font-medium">{selectedOrder.customer_phone || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Метод на плащане</p>
+                      <p className="font-medium">
+                        {selectedOrder.payment_method === 'cod' ? 'Наложен платеж' : 'Карта'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Shipping Address */}
+                <div>
+                  <h4 className="font-semibold mb-2">Адрес за доставка</h4>
+                  <div className="text-sm">
+                    <p>{selectedOrder.shipping_city}</p>
+                    <p>{selectedOrder.shipping_address}</p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Order Items */}
+                <div>
+                  <h4 className="font-semibold mb-2">Продукти</h4>
+                  <div className="space-y-3">
+                    {Array.isArray(selectedOrder.items) && selectedOrder.items.map((item: any, index: number) => (
+                      <div key={index} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          {item.image && (
+                            <img src={item.image} alt={item.title} className="w-12 h-12 object-cover rounded" />
+                          )}
+                          <div>
+                            <p className="font-medium">{item.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {item.variantTitle && `${item.variantTitle} • `}
+                              Количество: {item.quantity}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="font-medium">
+                          {(Number(item.price) * item.quantity).toFixed(2)} {selectedOrder.currency}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Order Summary */}
+                <div className="flex justify-between items-center">
+                  <div>
+                    <Badge variant="outline" className={statusColors[selectedOrder.status] || ''}>
+                      {statusLabels[selectedOrder.status] || selectedOrder.status}
+                    </Badge>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Обща сума</p>
+                    <p className="text-2xl font-bold">
+                      {Number(selectedOrder.total_amount).toFixed(2)} {selectedOrder.currency}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
