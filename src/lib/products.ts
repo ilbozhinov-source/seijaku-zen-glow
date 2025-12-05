@@ -61,7 +61,7 @@ export const products: Product[] = [
     handle: 'seijaku-ceremonial-matcha',
     priceRange: {
       minVariantPrice: {
-        amount: '25.00',
+        amount: '28.00',
         currencyCode: 'BGN',
       },
     },
@@ -76,7 +76,7 @@ export const products: Product[] = [
         id: 'variant-30g',
         title: '30g',
         price: {
-          amount: '25.00',
+          amount: '28.00',
           currencyCode: 'BGN',
         },
         availableForSale: true,
