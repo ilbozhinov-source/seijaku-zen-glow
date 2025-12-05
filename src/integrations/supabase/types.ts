@@ -29,6 +29,8 @@ export type Database = {
           id: string
           items: Json
           payment_method: string
+          phone_country_code: string | null
+          phone_number: string | null
           shipping_address: string | null
           shipping_city: string | null
           shipping_country: string | null
@@ -57,6 +59,8 @@ export type Database = {
           id?: string
           items: Json
           payment_method: string
+          phone_country_code?: string | null
+          phone_number?: string | null
           shipping_address?: string | null
           shipping_city?: string | null
           shipping_country?: string | null
@@ -85,6 +89,8 @@ export type Database = {
           id?: string
           items?: Json
           payment_method?: string
+          phone_country_code?: string | null
+          phone_number?: string | null
           shipping_address?: string | null
           shipping_city?: string | null
           shipping_country?: string | null

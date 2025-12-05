@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.fulfillment]
 verify_jwt = false
+
+[functions.geo-ip]
+verify_jwt = false

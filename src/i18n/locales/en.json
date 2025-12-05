@@ -157,6 +157,8 @@
     "lastNameRequired": "Last name is required",
     "invalidEmail": "Invalid email address",
     "phoneRequired": "Phone is required",
+    "phoneInvalid": "Please enter a valid phone number.",
+    "selectCountryFirst": "Please select a shipping country first",
     "addressRequired": "Address is required",
     "cityRequired": "City is required",
     "postalCodeRequired": "Postal code is required",

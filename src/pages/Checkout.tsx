@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCartStore } from '@/stores/cartStore';
-import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag, MapPin, Building2, Search, Check } from 'lucide-react';
+import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag, MapPin, Building2, Search, Check, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
@@ -22,6 +22,13 @@ const SUPPORTED_SHIPPING_COUNTRIES = [
   { code: 'GR', name: 'Greece' },
   { code: 'RO', name: 'Romania' },
 ] as const;
+
+// Phone country codes and validation rules
+const PHONE_CONFIG: Record<string, { code: string; minLength: number; maxLength: number; placeholder: string }> = {
+  BG: { code: '+359', minLength: 9, maxLength: 9, placeholder: '888123456' },
+  GR: { code: '+30', minLength: 10, maxLength: 10, placeholder: '6912345678' },
+  RO: { code: '+40', minLength: 9, maxLength: 10, placeholder: '712345678' },
+};
 
 // Shipping rates by country and delivery method (in local currency)
 // Easy to change these values later
@@ -171,10 +178,11 @@ const OfficeCombobox = ({ offices, value, onChange, loading, error, t }: OfficeC
 };
 
 const Checkout = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { items, getTotalPrice } = useCartStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [geoLoaded, setGeoLoaded] = useState(false);
   
   // Offices state
   const [offices, setOffices] = useState<Office[]>([]);
@@ -185,7 +193,7 @@ const Checkout = () => {
     firstName: '',
     lastName: '',
     email: '',
-    phone: '',
+    phoneNumber: '', // Just the number without country code
     address: '',
     city: '',
     postalCode: '',
@@ -194,6 +202,74 @@ const Checkout = () => {
     deliveryType: 'address', // 'address' or 'office'
     paymentMethod: 'cod',
   });
+
+  // Phone validation error
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  // Get phone config for current country
+  const phoneConfig = formData.shippingCountry ? PHONE_CONFIG[formData.shippingCountry] : null;
+  const phoneCountryCode = phoneConfig?.code || '+359';
+  const fullPhoneNumber = phoneConfig ? `${phoneConfig.code}${formData.phoneNumber}` : formData.phoneNumber;
+
+  // GeoIP detection on first load
+  useEffect(() => {
+    const detectLocation = async () => {
+      // Check if we already have stored preferences
+      const storedCountry = localStorage.getItem('shipping_country');
+      
+      if (storedCountry && SUPPORTED_SHIPPING_COUNTRIES.some(c => c.code === storedCountry)) {
+        setFormData(prev => ({ ...prev, shippingCountry: storedCountry }));
+        setGeoLoaded(true);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/geo-ip`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('GeoIP detection result:', data);
+          
+          if (data.success && data.isSupported) {
+            // Set shipping country based on detected location
+            setFormData(prev => ({ ...prev, shippingCountry: data.shippingCountry }));
+            localStorage.setItem('shipping_country', data.shippingCountry);
+            
+            // Change language if different from current
+            if (data.lang && data.lang !== i18n.language) {
+              i18n.changeLanguage(data.lang);
+              localStorage.setItem('lang', data.lang);
+            }
+          }
+        }
+      } catch (error) {
+        console.log('GeoIP detection failed, using defaults:', error);
+      }
+      
+      setGeoLoaded(true);
+    };
+
+    detectLocation();
+  }, [i18n]);
+
+  // Save shipping country to localStorage when changed
+  const handleCountryChange = useCallback((value: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      shippingCountry: value,
+      shippingOffice: '' // Reset office when country changes
+    }));
+    localStorage.setItem('shipping_country', value);
+  }, []);
 
   const productsTotal = getTotalPrice();
   const shippingRate = formData.shippingCountry ? SHIPPING_RATES[formData.shippingCountry] : null;
@@ -268,7 +344,9 @@ const Checkout = () => {
     firstName: z.string().trim().min(2, t('checkout.firstNameRequired')),
     lastName: z.string().trim().min(2, t('checkout.lastNameRequired')),
     email: z.string().trim().email(t('checkout.invalidEmail')),
-    phone: z.string().trim().min(6, t('checkout.phoneRequired')),
+    phoneNumber: phoneConfig 
+      ? z.string().trim().min(phoneConfig.minLength, t('checkout.phoneInvalid')).max(phoneConfig.maxLength, t('checkout.phoneInvalid'))
+      : z.string().trim().min(6, t('checkout.phoneRequired')),
     address: formData.deliveryType === 'address' 
       ? z.string().trim().min(5, t('checkout.addressRequired'))
       : z.string().optional(),
@@ -286,6 +364,29 @@ const Checkout = () => {
     paymentMethod: z.enum(['cod', 'card']),
   });
 
+  // Handle phone number input - only allow digits
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, ''); // Remove all non-digits
+    setFormData(prev => ({ ...prev, phoneNumber: value }));
+    setPhoneError(null);
+  };
+
+  // Validate phone number
+  const validatePhone = (): boolean => {
+    if (!phoneConfig) {
+      setPhoneError(t('checkout.selectCountryFirst'));
+      return false;
+    }
+    
+    if (formData.phoneNumber.length < phoneConfig.minLength || formData.phoneNumber.length > phoneConfig.maxLength) {
+      setPhoneError(t('checkout.phoneInvalid'));
+      return false;
+    }
+    
+    setPhoneError(null);
+    return true;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -296,6 +397,11 @@ const Checkout = () => {
     
     if (items.length === 0) {
       toast.error(t('checkout.emptyCart'));
+      return;
+    }
+
+    // Validate phone number
+    if (!validatePhone()) {
       return;
     }
 
@@ -314,7 +420,9 @@ const Checkout = () => {
       const customer = {
         name: `${formData.firstName} ${formData.lastName}`,
         email: formData.email,
-        phone: formData.phone,
+        phone: fullPhoneNumber, // Full phone with country code
+        phoneCountryCode: phoneCountryCode,
+        phoneNumber: formData.phoneNumber,
         address: formData.deliveryType === 'office' && selectedOffice
           ? `${selectedOffice.name}, ${selectedOffice.address}`
           : formData.address,
@@ -388,7 +496,7 @@ const Checkout = () => {
               firstName: formData.firstName,
               lastName: formData.lastName,
               email: formData.email,
-              phone: formData.phone,
+              phone: fullPhoneNumber,
             },
             shipping: {
               address: customer.address,
@@ -509,15 +617,34 @@ const Checkout = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">{t('checkout.phone')} *</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    required
-                  />
+                  <Label htmlFor="phoneNumber">{t('checkout.phone')} *</Label>
+                  <div className="flex">
+                    {/* Country code prefix - non-editable */}
+                    <div className="flex items-center px-3 border border-r-0 rounded-l-md bg-muted text-muted-foreground min-w-[70px] justify-center">
+                      <Phone className="h-4 w-4 mr-1" />
+                      <span className="font-medium">{phoneCountryCode}</span>
+                    </div>
+                    {/* Phone number input - only digits */}
+                    <Input
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      type="tel"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={formData.phoneNumber}
+                      onChange={handlePhoneChange}
+                      onBlur={validatePhone}
+                      placeholder={phoneConfig?.placeholder || ''}
+                      className="rounded-l-none"
+                      required
+                    />
+                  </div>
+                  {phoneError && (
+                    <p className="text-sm text-destructive">{phoneError}</p>
+                  )}
+                  {!formData.shippingCountry && (
+                    <p className="text-sm text-muted-foreground">{t('checkout.selectCountryFirst')}</p>
+                  )}
                 </div>
 
                 {/* Country Selection */}
@@ -525,11 +652,7 @@ const Checkout = () => {
                   <Label htmlFor="shippingCountry">{t('checkout.shippingCountry')} *</Label>
                   <Select
                     value={formData.shippingCountry}
-                    onValueChange={(value) => setFormData(prev => ({ 
-                      ...prev, 
-                      shippingCountry: value,
-                      shippingOffice: '' // Reset office when country changes
-                    }))}
+                    onValueChange={handleCountryChange}
                     disabled={false}
                   >
                     <SelectTrigger className="bg-background">

@@ -157,6 +157,8 @@
     "lastNameRequired": "Numele este obligatoriu",
     "invalidEmail": "Adresă de email invalidă",
     "phoneRequired": "Telefonul este obligatoriu",
+    "phoneInvalid": "Vă rugăm să introduceți un număr de telefon valid.",
+    "selectCountryFirst": "Selectează mai întâi o țară de livrare",
     "addressRequired": "Adresa este obligatorie",
     "cityRequired": "Orașul este obligatoriu",
     "postalCodeRequired": "Codul poștal este obligatoriu",
