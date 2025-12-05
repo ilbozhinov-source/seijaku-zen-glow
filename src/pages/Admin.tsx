@@ -41,6 +41,9 @@ interface Order {
   customer_phone: string | null;
   shipping_address: string | null;
   shipping_city: string | null;
+  shipping_country: string | null;
+  shipping_price: number | null;
+  total_with_shipping: number | null;
   tracking_number: string | null;
   created_at: string;
 }
@@ -162,8 +165,14 @@ const Admin = () => {
     }
   };
 
+  const countryLabels: Record<string, string> = {
+    BG: 'България',
+    GR: 'Гърция',
+    RO: 'Румъния',
+  };
+
   const exportOrdersToCSV = () => {
-    const headers = ['ID', 'Клиент', 'Email', 'Телефон', 'Град', 'Адрес', 'Сума', 'Валута', 'Плащане', 'Статус', 'Дата'];
+    const headers = ['ID', 'Клиент', 'Email', 'Телефон', 'Държава', 'Град', 'Адрес', 'Продукти', 'Доставка', 'Общо', 'Валута', 'Плащане', 'Статус', 'Дата'];
     
     const csvContent = [
       headers.join(','),
@@ -172,9 +181,12 @@ const Admin = () => {
         `"${order.customer_name || ''}"`,
         `"${order.customer_email || ''}"`,
         `"${order.customer_phone || ''}"`,
+        `"${countryLabels[order.shipping_country || ''] || order.shipping_country || ''}"`,
         `"${order.shipping_city || ''}"`,
         `"${order.shipping_address || ''}"`,
         Number(order.total_amount).toFixed(2),
+        Number(order.shipping_price || 0).toFixed(2),
+        Number(order.total_with_shipping || order.total_amount).toFixed(2),
         order.currency,
         order.payment_method === 'cod' ? 'Наложен платеж' : 'Карта',
         statusLabels[order.status] || order.status,
@@ -512,8 +524,11 @@ const Admin = () => {
                           <TableHead>Клиент</TableHead>
                           <TableHead>Email</TableHead>
                           <TableHead>Телефон</TableHead>
+                          <TableHead>Държава</TableHead>
                           <TableHead>Адрес</TableHead>
-                          <TableHead>Сума</TableHead>
+                          <TableHead>Продукти</TableHead>
+                          <TableHead>Доставка</TableHead>
+                          <TableHead>Общо</TableHead>
                           <TableHead>Плащане</TableHead>
                           <TableHead>Tracking</TableHead>
                           <TableHead>Статус</TableHead>
@@ -527,13 +542,22 @@ const Admin = () => {
                             <TableCell className="font-medium">{order.customer_name || '-'}</TableCell>
                             <TableCell>{order.customer_email || '-'}</TableCell>
                             <TableCell>{order.customer_phone || '-'}</TableCell>
-                            <TableCell className="max-w-[200px] truncate">
+                            <TableCell>
+                              <Badge variant="outline">
+                                {countryLabels[order.shipping_country || ''] || order.shipping_country || '-'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="max-w-[150px] truncate">
                               {order.shipping_city}, {order.shipping_address}
                             </TableCell>
-                            <TableCell>{Number(order.total_amount).toFixed(2)} {order.currency}</TableCell>
+                            <TableCell>{Number(order.total_amount).toFixed(2)} лв.</TableCell>
+                            <TableCell>{Number(order.shipping_price || 0).toFixed(2)}</TableCell>
+                            <TableCell className="font-semibold">
+                              {Number(order.total_with_shipping || order.total_amount).toFixed(2)} лв.
+                            </TableCell>
                             <TableCell>
                               <Badge variant="secondary">
-                                {order.payment_method === 'cod' ? 'Наложен платеж' : 'Карта'}
+                                {order.payment_method === 'cod' ? 'НП' : 'Карта'}
                               </Badge>
                             </TableCell>
                             <TableCell>
@@ -745,9 +769,21 @@ const Admin = () => {
                 {/* Shipping Address */}
                 <div>
                   <h4 className="font-semibold mb-2">Адрес за доставка</h4>
-                  <div className="text-sm">
-                    <p>{selectedOrder.shipping_city}</p>
-                    <p>{selectedOrder.shipping_address}</p>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Държава</p>
+                      <p className="font-medium">
+                        {countryLabels[selectedOrder.shipping_country || ''] || selectedOrder.shipping_country || '-'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Град</p>
+                      <p className="font-medium">{selectedOrder.shipping_city || '-'}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-muted-foreground">Адрес</p>
+                      <p className="font-medium">{selectedOrder.shipping_address || '-'}</p>
+                    </div>
                   </div>
                 </div>
 
@@ -802,11 +838,21 @@ const Admin = () => {
                       {statusLabels[selectedOrder.status] || selectedOrder.status}
                     </Badge>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Обща сума</p>
-                    <p className="text-2xl font-bold">
-                      {Number(selectedOrder.total_amount).toFixed(2)} {selectedOrder.currency}
-                    </p>
+                  <div className="text-right space-y-1">
+                    <div className="flex justify-between gap-8 text-sm">
+                      <span className="text-muted-foreground">Продукти:</span>
+                      <span>{Number(selectedOrder.total_amount).toFixed(2)} лв.</span>
+                    </div>
+                    <div className="flex justify-between gap-8 text-sm">
+                      <span className="text-muted-foreground">Доставка:</span>
+                      <span>{Number(selectedOrder.shipping_price || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between gap-8 pt-1 border-t">
+                      <span className="font-medium">Общо:</span>
+                      <span className="text-xl font-bold">
+                        {Number(selectedOrder.total_with_shipping || selectedOrder.total_amount).toFixed(2)} лв.
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
