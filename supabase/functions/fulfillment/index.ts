@@ -70,8 +70,8 @@ async function fetchCountries(): Promise<{ success: boolean; data?: any; error?:
   }
 }
 
-// Fetch offices for a country from NextLevel API (placeholder for future implementation)
-async function fetchOffices(countryCode: string): Promise<{ success: boolean; data?: any; error?: string }> {
+// Fetch offices for a country from NextLevel API
+async function fetchOffices(countryCode: string, city?: string, postcode?: string): Promise<{ success: boolean; data?: any; error?: string }> {
   const appId = Deno.env.get('FULFILLMENT_APP_ID');
   const appSecret = Deno.env.get('FULFILLMENT_APP_SECRET');
 
@@ -81,28 +81,45 @@ async function fetchOffices(countryCode: string): Promise<{ success: boolean; da
   }
 
   try {
-    console.log('Fetching offices for country:', countryCode);
+    console.log('Fetching offices for country:', countryCode, 'city:', city, 'postcode:', postcode);
     
-    // TODO: Replace with actual NextLevel offices endpoint when available
-    // const response = await fetch(`${NEXTLEVEL_API_BASE}/offices?country=${countryCode}`, {
-    //   method: 'GET',
-    //   headers: {
-    //     'app-id': appId,
-    //     'app-secret': appSecret,
-    //     'Content-Type': 'application/json',
-    //   },
-    // });
-
-    // Mock response for now
-    const mockOffices = [
-      { id: 'office_1', name: 'Офис Център', address: 'бул. Витоша 100', city: 'София' },
-      { id: 'office_2', name: 'Офис Младост', address: 'бул. Александър Малинов 51', city: 'София' },
-      { id: 'office_3', name: 'Офис Пловдив', address: 'ул. Княз Борис I 108', city: 'Пловдив' },
-    ];
-
-    console.log('Offices fetched (mock):', mockOffices.length);
+    // Build query parameters
+    const params = new URLSearchParams();
+    params.append('country_id', countryCode);
+    if (city) params.append('city', city);
+    if (postcode) params.append('postcode', postcode);
     
-    return { success: true, data: mockOffices };
+    const response = await fetch(`${NEXTLEVEL_API_BASE}/offices?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'app-id': appId,
+        'app-secret': appSecret,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('NextLevel offices API error:', response.status, errorText);
+      return { success: false, error: `API error: ${response.status} - ${errorText}` };
+    }
+
+    const data = await response.json();
+    console.log('Offices fetched from NextLevel API:', Array.isArray(data) ? data.length : 0);
+    
+    // Map API response to our format
+    if (Array.isArray(data)) {
+      const mappedOffices = data.map((office: any) => ({
+        id: office.id?.toString() || office.office_id?.toString(),
+        name: office.name || office.office_name || `Office ${office.id}`,
+        address: office.address || office.street || '',
+        city: office.city || office.city_name || '',
+        postcode: office.postcode || office.zip || '',
+      }));
+      return { success: true, data: mappedOffices };
+    }
+    
+    return { success: true, data: [] };
   } catch (error: unknown) {
     console.error('NextLevel offices API request failed:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -221,6 +238,8 @@ serve(async (req) => {
     // Fetch offices for a country
     if (action === 'offices') {
       const countryCode = url.searchParams.get('country');
+      const city = url.searchParams.get('city') || undefined;
+      const postcode = url.searchParams.get('postcode') || undefined;
       
       if (!countryCode) {
         return new Response(JSON.stringify({ error: 'Country code is required' }), {
@@ -229,12 +248,12 @@ serve(async (req) => {
         });
       }
       
-      console.log('Fetching offices for country:', countryCode);
-      const result = await fetchOffices(countryCode);
+      console.log('Fetching offices for country:', countryCode, 'city:', city, 'postcode:', postcode);
+      const result = await fetchOffices(countryCode, city, postcode);
       
       if (!result.success) {
-        return new Response(JSON.stringify({ error: result.error }), {
-          status: 500,
+        return new Response(JSON.stringify({ error: result.error, offices: [] }), {
+          status: 200, // Return 200 with empty array so frontend can handle gracefully
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }

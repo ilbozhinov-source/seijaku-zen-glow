@@ -57,6 +57,9 @@ serve(async (req) => {
         shipping_country: customer?.shippingCountry,
         shipping_price: customer?.shippingPrice || 0,
         total_with_shipping: customer?.totalWithShipping || totalAmount,
+        courier_office_id: customer?.courierOfficeId || null,
+        courier_office_name: customer?.courierOfficeName || null,
+        courier_office_address: customer?.courierOfficeAddress || null,
       })
       .select()
       .single();

@@ -38,6 +38,7 @@ interface Office {
   name: string;
   address: string;
   city: string;
+  postcode?: string;
 }
 
 const Checkout = () => {
@@ -52,6 +53,7 @@ const Checkout = () => {
   const [loadingCountries, setLoadingCountries] = useState(true);
   const [loadingOffices, setLoadingOffices] = useState(false);
   const [countriesError, setCountriesError] = useState<string | null>(null);
+  const [officesError, setOfficesError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -128,15 +130,17 @@ const Checkout = () => {
     fetchCountries();
   }, [t]);
 
-  // Fetch offices when country changes
+  // Fetch offices when country changes and delivery type is office
   useEffect(() => {
     const fetchOffices = async () => {
       if (!formData.shippingCountry || formData.deliveryType !== 'office') {
         setOffices([]);
+        setOfficesError(null);
         return;
       }
 
       setLoadingOffices(true);
+      setOfficesError(null);
       
       try {
         const response = await fetch(
@@ -156,13 +160,20 @@ const Checkout = () => {
 
         const officesData = await response.json();
         
-        if (Array.isArray(officesData)) {
+        if (officesData.error) {
+          console.error('Offices API error:', officesData.error);
+          setOfficesError(t('checkout.officesLoadError'));
+          setOffices([]);
+        } else if (Array.isArray(officesData) && officesData.length > 0) {
           setOffices(officesData);
+          setOfficesError(null);
         } else {
           setOffices([]);
+          setOfficesError(t('checkout.noOfficesAvailable'));
         }
       } catch (error) {
         console.error('Error fetching offices:', error);
+        setOfficesError(t('checkout.officesLoadError'));
         setOffices([]);
       } finally {
         setLoadingOffices(false);
@@ -170,7 +181,7 @@ const Checkout = () => {
     };
 
     fetchOffices();
-  }, [formData.shippingCountry, formData.deliveryType]);
+  }, [formData.shippingCountry, formData.deliveryType, t]);
 
   const checkoutSchema = z.object({
     firstName: z.string().trim().min(2, t('checkout.firstNameRequired')),
@@ -228,12 +239,20 @@ const Checkout = () => {
         city: formData.deliveryType === 'office' && selectedOffice
           ? selectedOffice.city
           : formData.city,
-        postalCode: formData.postalCode,
+        postalCode: formData.deliveryType === 'office' && selectedOffice
+          ? selectedOffice.postcode
+          : formData.postalCode,
         shippingCountry: formData.shippingCountry,
         shippingOfficeId: formData.deliveryType === 'office' ? formData.shippingOffice : null,
         deliveryType: formData.deliveryType,
         shippingPrice: shippingPrice,
         totalWithShipping: totalWithShipping,
+        // Courier office details for order storage
+        courierOfficeId: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.id : null,
+        courierOfficeName: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.name : null,
+        courierOfficeAddress: formData.deliveryType === 'office' && selectedOffice 
+          ? `${selectedOffice.address}, ${selectedOffice.city}${selectedOffice.postcode ? `, ${selectedOffice.postcode}` : ''}`
+          : null,
       };
 
       const cartItems = items.map(item => ({
@@ -488,7 +507,7 @@ const Checkout = () => {
                     <Select
                       value={formData.shippingOffice}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, shippingOffice: value }))}
-                      disabled={loadingOffices}
+                      disabled={loadingOffices || offices.length === 0}
                     >
                       <SelectTrigger className="bg-background">
                         {loadingOffices ? (
@@ -500,7 +519,7 @@ const Checkout = () => {
                           <SelectValue placeholder={t('checkout.selectOffice')} />
                         )}
                       </SelectTrigger>
-                      <SelectContent className="bg-background">
+                      <SelectContent className="bg-background max-h-[300px]">
                         {offices.length === 0 ? (
                           <SelectItem value="_none" disabled>
                             {t('checkout.noOfficesAvailable')}
@@ -514,6 +533,9 @@ const Checkout = () => {
                         )}
                       </SelectContent>
                     </Select>
+                    {officesError && !loadingOffices && (
+                      <p className="text-sm text-destructive">{officesError}</p>
+                    )}
                   </div>
                 )}
 
@@ -584,7 +606,11 @@ const Checkout = () => {
                   type="submit" 
                   className="w-full" 
                   size="lg"
-                  disabled={isSubmitting || !formData.shippingCountry || (formData.deliveryType === 'office' && !formData.shippingOffice)}
+                  disabled={
+                    isSubmitting || 
+                    !formData.shippingCountry || 
+                    (formData.deliveryType === 'office' && (!formData.shippingOffice || offices.length === 0 || loadingOffices))
+                  }
                 >
                   {isSubmitting ? (
                     <>
