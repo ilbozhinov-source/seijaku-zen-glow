@@ -6,6 +6,73 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function sendToFulfillment(order: any, supabase: any): Promise<string | null> {
+  try {
+    const appId = Deno.env.get('FULFILLMENT_APP_ID');
+    const appSecret = Deno.env.get('FULFILLMENT_APP_SECRET');
+
+    if (!appId || !appSecret) {
+      console.log('Fulfillment credentials not configured, skipping');
+      return null;
+    }
+
+    const fulfillmentPayload = {
+      customerName: order.customer_name,
+      phone: order.customer_phone,
+      email: order.customer_email,
+      address: order.shipping_address,
+      city: order.shipping_city,
+      country: 'Bulgaria',
+      items: Array.isArray(order.items) ? order.items.map((item: any) => ({
+        productId: item.productId || item.id,
+        title: item.productTitle || item.title,
+        quantity: item.quantity,
+        weight: item.weight || 30,
+      })) : [],
+      totalPrice: order.total_amount,
+      currency: order.currency,
+      shippingMethod: 'standard',
+      orderId: order.id,
+    };
+
+    console.log('Sending order to fulfillment:', order.id);
+
+    // Create signature
+    const timestamp = Date.now().toString();
+    const encoder = new TextEncoder();
+    const data = encoder.encode(timestamp + JSON.stringify(fulfillmentPayload));
+    const key = encoder.encode(appSecret);
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+    );
+    const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, data);
+    const signature = Array.from(new Uint8Array(signatureBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    // For now, generate mock tracking number since we don't have real API endpoint
+    // TODO: Replace with actual fulfillment API call when endpoint is provided
+    const mockTrackingNumber = `TRK${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    
+    console.log('Generated tracking number:', mockTrackingNumber);
+
+    // Update order with tracking number
+    const { error: updateError } = await supabase
+      .from('orders')
+      .update({ tracking_number: mockTrackingNumber })
+      .eq('id', order.id);
+
+    if (updateError) {
+      console.error('Failed to update order with tracking:', updateError);
+    }
+
+    return mockTrackingNumber;
+  } catch (error) {
+    console.error('Fulfillment error:', error);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -55,9 +122,13 @@ serve(async (req) => {
 
     console.log('COD Order created:', order.id);
 
+    // Send to fulfillment and get tracking number
+    const trackingNumber = await sendToFulfillment(order, supabase);
+
     return new Response(JSON.stringify({ 
       orderId: order.id,
-      status: 'cod_pending'
+      status: 'cod_pending',
+      trackingNumber: trackingNumber,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
