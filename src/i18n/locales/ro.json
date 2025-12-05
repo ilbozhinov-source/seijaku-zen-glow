@@ -134,6 +134,8 @@
     "noOfficesAvailable": "Nu sunt birouri disponibile pentru această țară",
     "officesLoadError": "Eroare la încărcarea birourilor. Vă rugăm să încercați din nou.",
     "officeRequired": "Selectează un birou de livrare",
+    "searchOffice": "Caută birou după nume sau adresă...",
+    "noOfficesFound": "Nu s-au găsit birouri",
     "paymentMethod": "Metodă de Plată",
     "cashOnDelivery": "Plată la Livrare",
     "cardPayment": "Plată cu Card",
