@@ -120,7 +120,9 @@ serve(async (req) => {
         status: 'cod_pending',
         customer_name: customer?.name,
         customer_email: customer?.email,
-        customer_phone: customer?.phone,
+        customer_phone: customer?.phone, // Full phone with country code
+        phone_country_code: customer?.phoneCountryCode || null,
+        phone_number: customer?.phoneNumber || null,
         shipping_address: customer?.address,
         shipping_city: customer?.city,
         // Shipping country info

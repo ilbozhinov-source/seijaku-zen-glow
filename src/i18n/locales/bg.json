@@ -157,6 +157,8 @@
     "lastNameRequired": "Фамилията е задължителна",
     "invalidEmail": "Невалиден email адрес",
     "phoneRequired": "Телефонът е задължителен",
+    "phoneInvalid": "Моля, въведете валиден телефонен номер.",
+    "selectCountryFirst": "Първо изберете държава за доставка",
     "addressRequired": "Адресът е задължителен",
     "cityRequired": "Градът е задължителен",
     "postalCodeRequired": "Пощенският код е задължителен",
