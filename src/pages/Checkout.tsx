@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -7,11 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useCartStore } from '@/stores/cartStore';
-import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag, MapPin, Building2 } from 'lucide-react';
+import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag, MapPin, Building2, Check, ChevronsUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
+import { cn } from '@/lib/utils';
 import Footer from '@/components/Footer';
 
 // Supported shipping countries - only these three
@@ -37,6 +40,95 @@ interface Office {
   post_code: string;  // postal code from NextLevel API
   country: string;    // country code
 }
+
+// Searchable Office Combobox component
+interface OfficeComboboxProps {
+  offices: Office[];
+  value: string;
+  onChange: (value: string) => void;
+  loading: boolean;
+  error: string | null;
+  t: (key: string) => string;
+}
+
+const OfficeCombobox = ({ offices, value, onChange, loading, error, t }: OfficeComboboxProps) => {
+  const [open, setOpen] = useState(false);
+  
+  // Sort offices alphabetically by name
+  const sortedOffices = useMemo(() => {
+    return [...offices].sort((a, b) => a.name.localeCompare(b.name, 'bg'));
+  }, [offices]);
+  
+  const selectedOffice = sortedOffices.find((office) => office.id === value);
+  
+  return (
+    <div className="space-y-2">
+      <Label>{t('checkout.selectOffice')} *</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between bg-background font-normal"
+            disabled={loading || sortedOffices.length === 0}
+          >
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>{t('checkout.loadingOffices')}</span>
+              </div>
+            ) : selectedOffice ? (
+              <span className="truncate text-left">
+                {selectedOffice.name} - {selectedOffice.place}
+              </span>
+            ) : (
+              <span className="text-muted-foreground">{t('checkout.selectOffice')}</span>
+            )}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+          <Command>
+            <CommandInput placeholder={t('checkout.searchOffice')} />
+            <CommandList className="max-h-[300px]">
+              <CommandEmpty>{t('checkout.noOfficesFound')}</CommandEmpty>
+              <CommandGroup>
+                {sortedOffices.map((office) => (
+                  <CommandItem
+                    key={office.id}
+                    value={`${office.name} ${office.place} ${office.address}`}
+                    onSelect={() => {
+                      onChange(office.id);
+                      setOpen(false);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === office.id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    <div className="flex flex-col">
+                      <span className="font-medium">{office.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {office.place}, {office.address}
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      {error && !loading && (
+        <p className="text-sm text-destructive">{error}</p>
+      )}
+    </div>
+  );
+};
 
 const Checkout = () => {
   const { t } = useTranslation();
@@ -444,43 +536,16 @@ const Checkout = () => {
                   </div>
                 )}
 
-                {/* Office Selection (for office delivery) */}
+                {/* Office Selection (for office delivery) - Searchable Combobox */}
                 {formData.deliveryType === 'office' && formData.shippingCountry && (
-                  <div className="space-y-2">
-                    <Label htmlFor="shippingOffice">{t('checkout.selectOffice')} *</Label>
-                    <Select
-                      value={formData.shippingOffice}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, shippingOffice: value }))}
-                      disabled={loadingOffices || offices.length === 0}
-                    >
-                      <SelectTrigger className="bg-background">
-                        {loadingOffices ? (
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>{t('checkout.loadingOffices')}</span>
-                          </div>
-                        ) : (
-                          <SelectValue placeholder={t('checkout.selectOffice')} />
-                        )}
-                      </SelectTrigger>
-                      <SelectContent className="bg-background max-h-[300px]">
-                        {offices.length === 0 ? (
-                          <SelectItem value="_none" disabled>
-                            {t('checkout.noOfficesAvailable')}
-                          </SelectItem>
-                        ) : (
-                          offices.map((office) => (
-                            <SelectItem key={office.id} value={office.id}>
-                              {office.name} - {office.place}, {office.address}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    {officesError && !loadingOffices && (
-                      <p className="text-sm text-destructive">{officesError}</p>
-                    )}
-                  </div>
+                  <OfficeCombobox
+                    offices={offices}
+                    value={formData.shippingOffice}
+                    onChange={(value) => setFormData(prev => ({ ...prev, shippingOffice: value }))}
+                    loading={loadingOffices}
+                    error={officesError}
+                    t={t}
+                  />
                 )}
 
                 {/* Address Fields (for address delivery) */}

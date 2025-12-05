@@ -134,6 +134,8 @@
     "noOfficesAvailable": "Няма налични офиси за тази държава",
     "officesLoadError": "Грешка при зареждане на офиси. Моля, опитайте отново.",
     "officeRequired": "Изберете офис за доставка",
+    "searchOffice": "Търси офис по име или адрес...",
+    "noOfficesFound": "Няма намерени офиси",
     "paymentMethod": "Метод на плащане",
     "cashOnDelivery": "Наложен платеж",
     "cardPayment": "Плащане с карта",
