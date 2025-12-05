@@ -54,12 +54,19 @@ serve(async (req) => {
         customer_phone: customer?.phone,
         shipping_address: customer?.address,
         shipping_city: customer?.city,
-        shipping_country: customer?.shippingCountry,
+        // Shipping country info
+        shipping_country: customer?.shippingCountryCode,
+        shipping_country_name: customer?.shippingCountryName,
+        // Shipping method and pricing
+        shipping_method: customer?.shippingMethod,
         shipping_price: customer?.shippingPrice || 0,
         total_with_shipping: customer?.totalWithShipping || totalAmount,
+        // Courier office info (only for office delivery)
         courier_office_id: customer?.courierOfficeId || null,
         courier_office_name: customer?.courierOfficeName || null,
         courier_office_address: customer?.courierOfficeAddress || null,
+        courier_office_city: customer?.courierOfficeCity || null,
+        courier_office_country_code: customer?.courierOfficeCountryCode || null,
       })
       .select()
       .single();

@@ -17,6 +17,8 @@ export type Database = {
       orders: {
         Row: {
           courier_office_address: string | null
+          courier_office_city: string | null
+          courier_office_country_code: string | null
           courier_office_id: string | null
           courier_office_name: string | null
           created_at: string
@@ -30,6 +32,8 @@ export type Database = {
           shipping_address: string | null
           shipping_city: string | null
           shipping_country: string | null
+          shipping_country_name: string | null
+          shipping_method: string | null
           shipping_price: number | null
           status: string
           stripe_session_id: string | null
@@ -41,6 +45,8 @@ export type Database = {
         }
         Insert: {
           courier_office_address?: string | null
+          courier_office_city?: string | null
+          courier_office_country_code?: string | null
           courier_office_id?: string | null
           courier_office_name?: string | null
           created_at?: string
@@ -54,6 +60,8 @@ export type Database = {
           shipping_address?: string | null
           shipping_city?: string | null
           shipping_country?: string | null
+          shipping_country_name?: string | null
+          shipping_method?: string | null
           shipping_price?: number | null
           status?: string
           stripe_session_id?: string | null
@@ -65,6 +73,8 @@ export type Database = {
         }
         Update: {
           courier_office_address?: string | null
+          courier_office_city?: string | null
+          courier_office_country_code?: string | null
           courier_office_id?: string | null
           courier_office_name?: string | null
           created_at?: string
@@ -78,6 +88,8 @@ export type Database = {
           shipping_address?: string | null
           shipping_city?: string | null
           shipping_country?: string | null
+          shipping_country_name?: string | null
+          shipping_method?: string | null
           shipping_price?: number | null
           status?: string
           stripe_session_id?: string | null
