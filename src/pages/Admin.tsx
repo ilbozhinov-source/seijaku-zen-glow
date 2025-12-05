@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Loader2, Users, Shield, Package, LayoutDashboard, Settings, TrendingUp, ShoppingCart, UserCheck, Eye } from 'lucide-react';
+import { ArrowLeft, Loader2, Users, Shield, Package, LayoutDashboard, Settings, TrendingUp, ShoppingCart, UserCheck, Eye, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Profile {
@@ -130,6 +130,35 @@ const Admin = () => {
       toast.success('Статусът е обновен');
       fetchOrders();
     }
+  };
+
+  const exportOrdersToCSV = () => {
+    const headers = ['ID', 'Клиент', 'Email', 'Телефон', 'Град', 'Адрес', 'Сума', 'Валута', 'Плащане', 'Статус', 'Дата'];
+    
+    const csvContent = [
+      headers.join(','),
+      ...orders.map(order => [
+        order.id,
+        `"${order.customer_name || ''}"`,
+        `"${order.customer_email || ''}"`,
+        `"${order.customer_phone || ''}"`,
+        `"${order.shipping_city || ''}"`,
+        `"${order.shipping_address || ''}"`,
+        Number(order.total_amount).toFixed(2),
+        order.currency,
+        order.payment_method === 'cod' ? 'Наложен платеж' : 'Карта',
+        statusLabels[order.status] || order.status,
+        new Date(order.created_at).toLocaleDateString('bg-BG')
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `orders_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    toast.success('CSV файлът е изтеглен');
   };
 
   const totalRevenue = orders
@@ -291,12 +320,24 @@ const Admin = () => {
           {/* Orders Tab */}
           <TabsContent value="orders">
             <Card className="border-primary/20 shadow-zen">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Всички поръчки
-                </CardTitle>
-                <CardDescription>Управление на поръчки и статуси</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    Всички поръчки
+                  </CardTitle>
+                  <CardDescription>Управление на поръчки и статуси</CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={exportOrdersToCSV}
+                  disabled={orders.length === 0}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Експорт CSV
+                </Button>
               </CardHeader>
               <CardContent>
                 {loadingOrders ? (
