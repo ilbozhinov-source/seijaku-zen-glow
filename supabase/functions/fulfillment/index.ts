@@ -115,6 +115,7 @@ async function fetchOffices(countryCode: string, city?: string, postcode?: strin
         address: office.address || office.street || '',
         city: office.city || office.city_name || '',
         postcode: office.postcode || office.zip || '',
+        countryCode: countryCode,
       }));
       return { success: true, data: mappedOffices };
     }

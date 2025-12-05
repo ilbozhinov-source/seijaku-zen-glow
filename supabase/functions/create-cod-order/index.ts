@@ -22,18 +22,28 @@ async function sendToFulfillment(order: any, supabase: any): Promise<string | nu
       email: order.customer_email,
       address: order.shipping_address,
       city: order.shipping_city,
-      country: order.shipping_country || 'BG',
+      countryCode: order.shipping_country,
+      countryName: order.shipping_country_name,
+      // Shipping method: to_address or to_office
+      shippingMethod: order.shipping_method,
+      // Courier office details (when delivery to office)
+      courierOfficeId: order.courier_office_id,
+      courierOfficeName: order.courier_office_name,
+      courierOfficeAddress: order.courier_office_address,
+      courierOfficeCity: order.courier_office_city,
+      courierOfficeCountryCode: order.courier_office_country_code,
+      // Order items
       items: Array.isArray(order.items) ? order.items.map((item: any) => ({
         productId: item.productId || item.id,
         title: item.productTitle || item.title,
         quantity: item.quantity,
         weight: item.weight || 30,
       })) : [],
+      // Pricing
       totalPrice: order.total_amount,
       shippingPrice: order.shipping_price,
       totalWithShipping: order.total_with_shipping,
       currency: order.currency,
-      shippingMethod: 'standard',
       orderId: order.id,
     };
 
@@ -113,12 +123,19 @@ serve(async (req) => {
         customer_phone: customer?.phone,
         shipping_address: customer?.address,
         shipping_city: customer?.city,
-        shipping_country: customer?.shippingCountry,
+        // Shipping country info
+        shipping_country: customer?.shippingCountryCode,
+        shipping_country_name: customer?.shippingCountryName,
+        // Shipping method and pricing
+        shipping_method: customer?.shippingMethod,
         shipping_price: customer?.shippingPrice || 0,
         total_with_shipping: customer?.totalWithShipping || totalAmount,
+        // Courier office info (only for office delivery)
         courier_office_id: customer?.courierOfficeId || null,
         courier_office_name: customer?.courierOfficeName || null,
         courier_office_address: customer?.courierOfficeAddress || null,
+        courier_office_city: customer?.courierOfficeCity || null,
+        courier_office_country_code: customer?.courierOfficeCountryCode || null,
       })
       .select()
       .single();

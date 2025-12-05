@@ -14,24 +14,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 import Footer from '@/components/Footer';
 
-// Shipping rates configuration - easy to change later
-const SHIPPING_RATES: Record<string, { price: number; currency: string; label: string }> = {
-  BG: { price: 5, currency: 'BGN', label: 'лв.' },
-  GR: { price: 10, currency: 'EUR', label: '€' },
-  RO: { price: 40, currency: 'RON', label: 'лей' },
-};
-
-// Fallback countries in case API fails
-const FALLBACK_COUNTRIES = [
+// Supported shipping countries - only these three
+const SUPPORTED_SHIPPING_COUNTRIES = [
   { code: 'BG', name: 'Bulgaria' },
   { code: 'GR', name: 'Greece' },
   { code: 'RO', name: 'Romania' },
-];
+] as const;
 
-interface Country {
-  code: string;
-  name: string;
-}
+// Shipping rates by country and delivery method (in local currency)
+// Easy to change these values later
+const SHIPPING_RATES: Record<string, { toAddress: number; toOffice: number; currency: string; label: string }> = {
+  BG: { toAddress: 5, toOffice: 4, currency: 'BGN', label: 'лв.' },
+  GR: { toAddress: 10, toOffice: 8, currency: 'EUR', label: '€' },
+  RO: { toAddress: 40, toOffice: 30, currency: 'RON', label: 'лей' },
+};
 
 interface Office {
   id: string;
@@ -39,6 +35,7 @@ interface Office {
   address: string;
   city: string;
   postcode?: string;
+  countryCode?: string;
 }
 
 const Checkout = () => {
@@ -47,12 +44,9 @@ const Checkout = () => {
   const { items, getTotalPrice } = useCartStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Countries and offices state
-  const [countries, setCountries] = useState<Country[]>(FALLBACK_COUNTRIES);
+  // Offices state
   const [offices, setOffices] = useState<Office[]>([]);
-  const [loadingCountries, setLoadingCountries] = useState(true);
   const [loadingOffices, setLoadingOffices] = useState(false);
-  const [countriesError, setCountriesError] = useState<string | null>(null);
   const [officesError, setOfficesError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
@@ -71,64 +65,11 @@ const Checkout = () => {
 
   const productsTotal = getTotalPrice();
   const shippingRate = formData.shippingCountry ? SHIPPING_RATES[formData.shippingCountry] : null;
-  const shippingPrice = shippingRate?.price || 0;
+  // Calculate shipping price based on delivery method
+  const shippingPrice = shippingRate 
+    ? (formData.deliveryType === 'office' ? shippingRate.toOffice : shippingRate.toAddress) 
+    : 0;
   const totalWithShipping = productsTotal + shippingPrice;
-
-  // Fetch countries from NextLevel API
-  useEffect(() => {
-    const fetchCountries = async () => {
-      setLoadingCountries(true);
-      setCountriesError(null);
-      
-      try {
-        const { data, error } = await supabase.functions.invoke('fulfillment', {
-          body: {},
-          method: 'GET',
-        });
-
-        // Use fetch directly for GET with query params
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fulfillment?action=countries`,
-          {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-
-        const countriesData = await response.json();
-        
-        if (countriesData.error) {
-          throw new Error(countriesData.error);
-        }
-
-        // Map API response to our format (adjust based on actual API response structure)
-        if (Array.isArray(countriesData)) {
-          const mappedCountries = countriesData.map((c: any) => ({
-            code: c.code || c.iso_code || c.id,
-            name: c.name || c.country_name,
-          }));
-          setCountries(mappedCountries.length > 0 ? mappedCountries : FALLBACK_COUNTRIES);
-        } else {
-          setCountries(FALLBACK_COUNTRIES);
-        }
-      } catch (error) {
-        console.error('Error fetching countries:', error);
-        setCountriesError(t('checkout.countriesLoadError'));
-        setCountries(FALLBACK_COUNTRIES);
-      } finally {
-        setLoadingCountries(false);
-      }
-    };
-
-    fetchCountries();
-  }, [t]);
 
   // Fetch offices when country changes and delivery type is office
   useEffect(() => {
@@ -228,6 +169,7 @@ const Checkout = () => {
 
     try {
       const selectedOffice = offices.find(o => o.id === formData.shippingOffice);
+      const selectedCountry = SUPPORTED_SHIPPING_COUNTRIES.find(c => c.code === formData.shippingCountry);
       
       const customer = {
         name: `${formData.firstName} ${formData.lastName}`,
@@ -242,17 +184,20 @@ const Checkout = () => {
         postalCode: formData.deliveryType === 'office' && selectedOffice
           ? selectedOffice.postcode
           : formData.postalCode,
-        shippingCountry: formData.shippingCountry,
-        shippingOfficeId: formData.deliveryType === 'office' ? formData.shippingOffice : null,
-        deliveryType: formData.deliveryType,
+        // Shipping country info
+        shippingCountryCode: formData.shippingCountry,
+        shippingCountryName: selectedCountry?.name || formData.shippingCountry,
+        // Shipping method (to_address or to_office)
+        shippingMethod: formData.deliveryType === 'office' ? 'to_office' : 'to_address',
+        // Pricing
         shippingPrice: shippingPrice,
         totalWithShipping: totalWithShipping,
-        // Courier office details for order storage
+        // Courier office details (only when delivery to office)
         courierOfficeId: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.id : null,
         courierOfficeName: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.name : null,
-        courierOfficeAddress: formData.deliveryType === 'office' && selectedOffice 
-          ? `${selectedOffice.address}, ${selectedOffice.city}${selectedOffice.postcode ? `, ${selectedOffice.postcode}` : ''}`
-          : null,
+        courierOfficeAddress: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.address : null,
+        courierOfficeCity: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.city : null,
+        courierOfficeCountryCode: formData.deliveryType === 'office' ? formData.shippingCountry : null,
       };
 
       const cartItems = items.map(item => ({
@@ -444,29 +389,19 @@ const Checkout = () => {
                       shippingCountry: value,
                       shippingOffice: '' // Reset office when country changes
                     }))}
-                    disabled={loadingCountries}
+                    disabled={false}
                   >
                     <SelectTrigger className="bg-background">
-                      {loadingCountries ? (
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>{t('checkout.loadingCountries')}</span>
-                        </div>
-                      ) : (
-                        <SelectValue placeholder={t('checkout.selectCountry')} />
-                      )}
+                      <SelectValue placeholder={t('checkout.selectCountry')} />
                     </SelectTrigger>
                     <SelectContent className="bg-background">
-                      {countries.map((country) => (
+                      {SUPPORTED_SHIPPING_COUNTRIES.map((country) => (
                         <SelectItem key={country.code} value={country.code}>
                           {t(`checkout.countries.${country.code}`, { defaultValue: country.name })}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {countriesError && (
-                    <p className="text-sm text-amber-600">{countriesError}</p>
-                  )}
                 </div>
 
                 {/* Delivery Type Selection */}
@@ -671,7 +606,7 @@ const Checkout = () => {
                 <div className="flex justify-between text-muted-foreground">
                   <span>{t('checkout.shippingPrice')}</span>
                   {formData.shippingCountry && shippingRate ? (
-                    <span>{shippingRate.price} {shippingRate.label}</span>
+                    <span>{shippingPrice} {shippingRate.label}</span>
                   ) : (
                     <span className="text-sm italic">{t('checkout.selectCountryForShipping')}</span>
                   )}
