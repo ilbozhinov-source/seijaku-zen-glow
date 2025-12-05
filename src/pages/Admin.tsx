@@ -8,9 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Loader2, Users, Shield, Package, LayoutDashboard, Settings, TrendingUp, ShoppingCart, UserCheck, Eye, Download } from 'lucide-react';
+import { ArrowLeft, Loader2, Users, Shield, Package, LayoutDashboard, Settings, TrendingUp, ShoppingCart, UserCheck, Eye, Download, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Profile {
@@ -67,6 +69,24 @@ const Admin = () => {
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+
+  const filteredOrders = orders.filter(order => {
+    if (statusFilter !== 'all' && order.status !== statusFilter) return false;
+    if (dateFrom) {
+      const orderDate = new Date(order.created_at).setHours(0, 0, 0, 0);
+      const fromDate = new Date(dateFrom).setHours(0, 0, 0, 0);
+      if (orderDate < fromDate) return false;
+    }
+    if (dateTo) {
+      const orderDate = new Date(order.created_at).setHours(23, 59, 59, 999);
+      const toDate = new Date(dateTo).setHours(23, 59, 59, 999);
+      if (orderDate > toDate) return false;
+    }
+    return true;
+  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -137,7 +157,7 @@ const Admin = () => {
     
     const csvContent = [
       headers.join(','),
-      ...orders.map(order => [
+      ...filteredOrders.map(order => [
         order.id,
         `"${order.customer_name || ''}"`,
         `"${order.customer_email || ''}"`,
@@ -320,7 +340,7 @@ const Admin = () => {
           {/* Orders Tab */}
           <TabsContent value="orders">
             <Card className="border-primary/20 shadow-zen">
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4">
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Package className="h-5 w-5" />
@@ -332,20 +352,78 @@ const Admin = () => {
                   variant="outline"
                   size="sm"
                   onClick={exportOrdersToCSV}
-                  disabled={orders.length === 0}
+                  disabled={filteredOrders.length === 0}
                   className="flex items-center gap-2"
                 >
                   <Download className="h-4 w-4" />
-                  Експорт CSV
+                  Експорт CSV ({filteredOrders.length})
                 </Button>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {/* Filters */}
+                <div className="flex flex-wrap items-end gap-4 p-4 bg-muted/50 rounded-lg">
+                  <div className="space-y-2">
+                    <Label htmlFor="status-filter">Статус</Label>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger id="status-filter" className="w-[160px]">
+                        <SelectValue placeholder="Всички" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Всички</SelectItem>
+                        <SelectItem value="pending">Изчакващa</SelectItem>
+                        <SelectItem value="paid">Платена</SelectItem>
+                        <SelectItem value="cod_pending">Наложен платеж</SelectItem>
+                        <SelectItem value="shipped">Изпратена</SelectItem>
+                        <SelectItem value="delivered">Доставена</SelectItem>
+                        <SelectItem value="cancelled">Отказана</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="date-from">От дата</Label>
+                    <Input
+                      id="date-from"
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className="w-[160px]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="date-to">До дата</Label>
+                    <Input
+                      id="date-to"
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      className="w-[160px]"
+                    />
+                  </div>
+                  {(statusFilter !== 'all' || dateFrom || dateTo) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setStatusFilter('all');
+                        setDateFrom('');
+                        setDateTo('');
+                      }}
+                      className="flex items-center gap-1"
+                    >
+                      <X className="h-4 w-4" />
+                      Изчисти
+                    </Button>
+                  )}
+                </div>
+
                 {loadingOrders ? (
                   <div className="flex justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-primary" />
                   </div>
                 ) : orders.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">Няма поръчки</p>
+                ) : filteredOrders.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">Няма поръчки, отговарящи на филтрите</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <Table>
@@ -363,7 +441,7 @@ const Admin = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {orders.map((order) => (
+                        {filteredOrders.map((order) => (
                           <TableRow key={order.id}>
                             <TableCell className="font-medium">{order.customer_name || '-'}</TableCell>
                             <TableCell>{order.customer_email || '-'}</TableCell>
