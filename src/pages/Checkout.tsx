@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCartStore } from '@/stores/cartStore';
-import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag, MapPin, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
@@ -21,17 +21,37 @@ const SHIPPING_RATES: Record<string, { price: number; currency: string; label: s
   RO: { price: 40, currency: 'RON', label: 'лей' },
 };
 
-const COUNTRIES = [
+// Fallback countries in case API fails
+const FALLBACK_COUNTRIES = [
   { code: 'BG', name: 'Bulgaria' },
   { code: 'GR', name: 'Greece' },
   { code: 'RO', name: 'Romania' },
 ];
+
+interface Country {
+  code: string;
+  name: string;
+}
+
+interface Office {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+}
 
 const Checkout = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { items, getTotalPrice } = useCartStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Countries and offices state
+  const [countries, setCountries] = useState<Country[]>(FALLBACK_COUNTRIES);
+  const [offices, setOffices] = useState<Office[]>([]);
+  const [loadingCountries, setLoadingCountries] = useState(true);
+  const [loadingOffices, setLoadingOffices] = useState(false);
+  const [countriesError, setCountriesError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -42,6 +62,8 @@ const Checkout = () => {
     city: '',
     postalCode: '',
     shippingCountry: '',
+    shippingOffice: '',
+    deliveryType: 'address', // 'address' or 'office'
     paymentMethod: 'cod',
   });
 
@@ -50,15 +72,125 @@ const Checkout = () => {
   const shippingPrice = shippingRate?.price || 0;
   const totalWithShipping = productsTotal + shippingPrice;
 
+  // Fetch countries from NextLevel API
+  useEffect(() => {
+    const fetchCountries = async () => {
+      setLoadingCountries(true);
+      setCountriesError(null);
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('fulfillment', {
+          body: {},
+          method: 'GET',
+        });
+
+        // Use fetch directly for GET with query params
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fulfillment?action=countries`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        const countriesData = await response.json();
+        
+        if (countriesData.error) {
+          throw new Error(countriesData.error);
+        }
+
+        // Map API response to our format (adjust based on actual API response structure)
+        if (Array.isArray(countriesData)) {
+          const mappedCountries = countriesData.map((c: any) => ({
+            code: c.code || c.iso_code || c.id,
+            name: c.name || c.country_name,
+          }));
+          setCountries(mappedCountries.length > 0 ? mappedCountries : FALLBACK_COUNTRIES);
+        } else {
+          setCountries(FALLBACK_COUNTRIES);
+        }
+      } catch (error) {
+        console.error('Error fetching countries:', error);
+        setCountriesError(t('checkout.countriesLoadError'));
+        setCountries(FALLBACK_COUNTRIES);
+      } finally {
+        setLoadingCountries(false);
+      }
+    };
+
+    fetchCountries();
+  }, [t]);
+
+  // Fetch offices when country changes
+  useEffect(() => {
+    const fetchOffices = async () => {
+      if (!formData.shippingCountry || formData.deliveryType !== 'office') {
+        setOffices([]);
+        return;
+      }
+
+      setLoadingOffices(true);
+      
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fulfillment?action=offices&country=${formData.shippingCountry}`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        const officesData = await response.json();
+        
+        if (Array.isArray(officesData)) {
+          setOffices(officesData);
+        } else {
+          setOffices([]);
+        }
+      } catch (error) {
+        console.error('Error fetching offices:', error);
+        setOffices([]);
+      } finally {
+        setLoadingOffices(false);
+      }
+    };
+
+    fetchOffices();
+  }, [formData.shippingCountry, formData.deliveryType]);
+
   const checkoutSchema = z.object({
     firstName: z.string().trim().min(2, t('checkout.firstNameRequired')),
     lastName: z.string().trim().min(2, t('checkout.lastNameRequired')),
     email: z.string().trim().email(t('checkout.invalidEmail')),
     phone: z.string().trim().min(6, t('checkout.phoneRequired')),
-    address: z.string().trim().min(5, t('checkout.addressRequired')),
-    city: z.string().trim().min(2, t('checkout.cityRequired')),
-    postalCode: z.string().trim().min(4, t('checkout.postalCodeRequired')),
+    address: formData.deliveryType === 'address' 
+      ? z.string().trim().min(5, t('checkout.addressRequired'))
+      : z.string().optional(),
+    city: formData.deliveryType === 'address'
+      ? z.string().trim().min(2, t('checkout.cityRequired'))
+      : z.string().optional(),
+    postalCode: formData.deliveryType === 'address'
+      ? z.string().trim().min(4, t('checkout.postalCodeRequired'))
+      : z.string().optional(),
     shippingCountry: z.string().min(2, t('checkout.countryRequired')),
+    shippingOffice: formData.deliveryType === 'office'
+      ? z.string().min(1, t('checkout.officeRequired'))
+      : z.string().optional(),
+    deliveryType: z.enum(['address', 'office']),
     paymentMethod: z.enum(['cod', 'card']),
   });
 
@@ -84,14 +216,22 @@ const Checkout = () => {
     setIsSubmitting(true);
 
     try {
+      const selectedOffice = offices.find(o => o.id === formData.shippingOffice);
+      
       const customer = {
         name: `${formData.firstName} ${formData.lastName}`,
         email: formData.email,
         phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
+        address: formData.deliveryType === 'office' && selectedOffice
+          ? `${selectedOffice.name}, ${selectedOffice.address}`
+          : formData.address,
+        city: formData.deliveryType === 'office' && selectedOffice
+          ? selectedOffice.city
+          : formData.city,
         postalCode: formData.postalCode,
         shippingCountry: formData.shippingCountry,
+        shippingOfficeId: formData.deliveryType === 'office' ? formData.shippingOffice : null,
+        deliveryType: formData.deliveryType,
         shippingPrice: shippingPrice,
         totalWithShipping: totalWithShipping,
       };
@@ -146,10 +286,12 @@ const Checkout = () => {
               phone: formData.phone,
             },
             shipping: {
-              address: formData.address,
-              city: formData.city,
+              address: customer.address,
+              city: customer.city,
               postalCode: formData.postalCode,
               country: formData.shippingCountry,
+              deliveryType: formData.deliveryType,
+              officeId: formData.shippingOffice || null,
             },
             paymentMethod: 'cod',
             items: items.map(item => ({
@@ -273,58 +415,146 @@ const Checkout = () => {
                   />
                 </div>
 
+                {/* Country Selection */}
                 <div className="space-y-2">
                   <Label htmlFor="shippingCountry">{t('checkout.shippingCountry')} *</Label>
                   <Select
                     value={formData.shippingCountry}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, shippingCountry: value }))}
+                    onValueChange={(value) => setFormData(prev => ({ 
+                      ...prev, 
+                      shippingCountry: value,
+                      shippingOffice: '' // Reset office when country changes
+                    }))}
+                    disabled={loadingCountries}
                   >
                     <SelectTrigger className="bg-background">
-                      <SelectValue placeholder={t('checkout.selectCountry')} />
+                      {loadingCountries ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>{t('checkout.loadingCountries')}</span>
+                        </div>
+                      ) : (
+                        <SelectValue placeholder={t('checkout.selectCountry')} />
+                      )}
                     </SelectTrigger>
                     <SelectContent className="bg-background">
-                      {COUNTRIES.map((country) => (
+                      {countries.map((country) => (
                         <SelectItem key={country.code} value={country.code}>
-                          {t(`checkout.countries.${country.code}`)}
+                          {t(`checkout.countries.${country.code}`, { defaultValue: country.name })}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {countriesError && (
+                    <p className="text-sm text-amber-600">{countriesError}</p>
+                  )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="address">{t('checkout.address')} *</Label>
-                  <Input
-                    id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
+                {/* Delivery Type Selection */}
+                {formData.shippingCountry && (
+                  <div className="space-y-4">
+                    <Label>{t('checkout.deliveryType')} *</Label>
+                    <RadioGroup
+                      value={formData.deliveryType}
+                      onValueChange={(value) => setFormData(prev => ({ 
+                        ...prev, 
+                        deliveryType: value,
+                        shippingOffice: ''
+                      }))}
+                      className="space-y-3"
+                    >
+                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <RadioGroupItem value="address" id="delivery-address" />
+                        <Label htmlFor="delivery-address" className="flex items-center gap-2 cursor-pointer flex-1">
+                          <MapPin className="w-5 h-5 text-primary" />
+                          {t('checkout.deliveryToAddress')}
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <RadioGroupItem value="office" id="delivery-office" />
+                        <Label htmlFor="delivery-office" className="flex items-center gap-2 cursor-pointer flex-1">
+                          <Building2 className="w-5 h-5 text-primary" />
+                          {t('checkout.deliveryToOffice')}
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                )}
 
-                <div className="grid sm:grid-cols-2 gap-4">
+                {/* Office Selection (for office delivery) */}
+                {formData.deliveryType === 'office' && formData.shippingCountry && (
                   <div className="space-y-2">
-                    <Label htmlFor="city">{t('checkout.city')} *</Label>
-                    <Input
-                      id="city"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      required
-                    />
+                    <Label htmlFor="shippingOffice">{t('checkout.selectOffice')} *</Label>
+                    <Select
+                      value={formData.shippingOffice}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, shippingOffice: value }))}
+                      disabled={loadingOffices}
+                    >
+                      <SelectTrigger className="bg-background">
+                        {loadingOffices ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>{t('checkout.loadingOffices')}</span>
+                          </div>
+                        ) : (
+                          <SelectValue placeholder={t('checkout.selectOffice')} />
+                        )}
+                      </SelectTrigger>
+                      <SelectContent className="bg-background">
+                        {offices.length === 0 ? (
+                          <SelectItem value="_none" disabled>
+                            {t('checkout.noOfficesAvailable')}
+                          </SelectItem>
+                        ) : (
+                          offices.map((office) => (
+                            <SelectItem key={office.id} value={office.id}>
+                              {office.name} - {office.city}, {office.address}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="postalCode">{t('checkout.postalCode')} *</Label>
-                    <Input
-                      id="postalCode"
-                      name="postalCode"
-                      value={formData.postalCode}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                </div>
+                )}
+
+                {/* Address Fields (for address delivery) */}
+                {formData.deliveryType === 'address' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="address">{t('checkout.address')} *</Label>
+                      <Input
+                        id="address"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        required={formData.deliveryType === 'address'}
+                      />
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="city">{t('checkout.city')} *</Label>
+                        <Input
+                          id="city"
+                          name="city"
+                          value={formData.city}
+                          onChange={handleInputChange}
+                          required={formData.deliveryType === 'address'}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="postalCode">{t('checkout.postalCode')} *</Label>
+                        <Input
+                          id="postalCode"
+                          name="postalCode"
+                          value={formData.postalCode}
+                          onChange={handleInputChange}
+                          required={formData.deliveryType === 'address'}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="space-y-4">
                   <Label>{t('checkout.paymentMethod')} *</Label>
@@ -354,7 +584,7 @@ const Checkout = () => {
                   type="submit" 
                   className="w-full" 
                   size="lg"
-                  disabled={isSubmitting || !formData.shippingCountry}
+                  disabled={isSubmitting || !formData.shippingCountry || (formData.deliveryType === 'office' && !formData.shippingOffice)}
                 >
                   {isSubmitting ? (
                     <>
