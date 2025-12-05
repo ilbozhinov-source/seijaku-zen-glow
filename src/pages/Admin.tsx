@@ -72,8 +72,15 @@ const Admin = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const filteredOrders = orders.filter(order => {
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const nameMatch = order.customer_name?.toLowerCase().includes(query);
+      const emailMatch = order.customer_email?.toLowerCase().includes(query);
+      if (!nameMatch && !emailMatch) return false;
+    }
     if (statusFilter !== 'all' && order.status !== statusFilter) return false;
     if (dateFrom) {
       const orderDate = new Date(order.created_at).setHours(0, 0, 0, 0);
@@ -362,6 +369,16 @@ const Admin = () => {
               <CardContent className="space-y-4">
                 {/* Filters */}
                 <div className="flex flex-wrap items-end gap-4 p-4 bg-muted/50 rounded-lg">
+                  <div className="space-y-2 flex-1 min-w-[200px]">
+                    <Label htmlFor="search">Търсене</Label>
+                    <Input
+                      id="search"
+                      type="text"
+                      placeholder="Име или email..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="status-filter">Статус</Label>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -399,7 +416,7 @@ const Admin = () => {
                       className="w-[160px]"
                     />
                   </div>
-                  {(statusFilter !== 'all' || dateFrom || dateTo) && (
+                  {(statusFilter !== 'all' || dateFrom || dateTo || searchQuery) && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -407,6 +424,7 @@ const Admin = () => {
                         setStatusFilter('all');
                         setDateFrom('');
                         setDateTo('');
+                        setSearchQuery('');
                       }}
                       className="flex items-center gap-1"
                     >
