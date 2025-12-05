@@ -1,20 +1,38 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Package } from 'lucide-react';
+import { Package, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/stores/cartStore';
+import { supabase } from '@/integrations/supabase/client';
 
 const CodSuccess = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const clearCart = useCartStore((state) => state.clearCart);
+  const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
   
   const orderId = searchParams.get('order_id');
 
   useEffect(() => {
-    // Clear cart on successful order
     clearCart();
   }, [clearCart]);
+
+  useEffect(() => {
+    const fetchTracking = async () => {
+      if (orderId) {
+        const { data } = await supabase
+          .from('orders')
+          .select('tracking_number')
+          .eq('id', orderId)
+          .maybeSingle();
+        
+        if (data?.tracking_number) {
+          setTrackingNumber(data.tracking_number);
+        }
+      }
+    };
+    fetchTracking();
+  }, [orderId]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -35,6 +53,16 @@ const CodSuccess = () => {
           <p className="text-sm text-muted-foreground">
             Номер на поръчка: <span className="font-mono font-medium">{orderId.slice(0, 8)}</span>
           </p>
+        )}
+
+        {trackingNumber && (
+          <div className="bg-primary/10 rounded-lg p-4 flex items-center justify-center gap-3">
+            <Truck className="w-5 h-5 text-primary" />
+            <div>
+              <p className="text-sm text-muted-foreground">Tracking номер:</p>
+              <p className="font-mono font-bold text-foreground">{trackingNumber}</p>
+            </div>
+          </div>
         )}
         
         <div className="bg-muted/50 rounded-lg p-4 text-left space-y-2">

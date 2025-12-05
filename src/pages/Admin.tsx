@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Loader2, Users, Shield, Package, LayoutDashboard, Settings, TrendingUp, ShoppingCart, UserCheck, Eye, Download, X, Box } from 'lucide-react';
+import { ArrowLeft, Loader2, Users, Shield, Package, LayoutDashboard, Settings, TrendingUp, ShoppingCart, UserCheck, Eye, Download, X, Box, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ProductsManager from '@/components/admin/ProductsManager';
@@ -41,6 +41,7 @@ interface Order {
   customer_phone: string | null;
   shipping_address: string | null;
   shipping_city: string | null;
+  tracking_number: string | null;
   created_at: string;
 }
 
@@ -514,6 +515,7 @@ const Admin = () => {
                           <TableHead>Адрес</TableHead>
                           <TableHead>Сума</TableHead>
                           <TableHead>Плащане</TableHead>
+                          <TableHead>Tracking</TableHead>
                           <TableHead>Статус</TableHead>
                           <TableHead>Дата</TableHead>
                           <TableHead>Действия</TableHead>
@@ -533,6 +535,11 @@ const Admin = () => {
                               <Badge variant="secondary">
                                 {order.payment_method === 'cod' ? 'Наложен платеж' : 'Карта'}
                               </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {order.tracking_number ? (
+                                <span className="font-mono text-xs bg-primary/10 px-2 py-1 rounded">{order.tracking_number}</span>
+                              ) : '-'}
                             </TableCell>
                             <TableCell>
                               <Badge variant="outline" className={statusColors[order.status] || ''}>
@@ -743,6 +750,20 @@ const Admin = () => {
                     <p>{selectedOrder.shipping_address}</p>
                   </div>
                 </div>
+
+                {/* Tracking Number */}
+                {selectedOrder.tracking_number && (
+                  <>
+                    <Separator />
+                    <div className="bg-primary/10 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Truck className="h-5 w-5 text-primary" />
+                        <h4 className="font-semibold">Tracking номер</h4>
+                      </div>
+                      <p className="font-mono text-lg font-bold">{selectedOrder.tracking_number}</p>
+                    </div>
+                  </>
+                )}
 
                 <Separator />
 
