@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ShoppingCart } from "lucide-react";
-import { getProductByHandle, CartItem } from "@/lib/products";
+import { ArrowLeft, ShoppingCart, Loader2 } from "lucide-react";
+import { getProductByHandle, Product, CartItem } from "@/lib/products";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import { ProductSchema } from "@/components/ProductSchema";
@@ -14,12 +14,31 @@ import { useTranslation } from 'react-i18next';
 const ProductDetail = () => {
   const { t } = useTranslation();
   const { handle } = useParams<{ handle: string }>();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const addItem = useCartStore(state => state.addItem);
   
   useSEO();
 
-  const product = handle ? getProductByHandle(handle) : null;
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!handle) {
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      const data = await getProductByHandle(handle);
+      setProduct(data);
+      // Reset to first available variant
+      if (data) {
+        const firstAvailableIndex = data.variants.findIndex(v => v.availableForSale);
+        setSelectedVariantIndex(firstAvailableIndex >= 0 ? firstAvailableIndex : 0);
+      }
+      setLoading(false);
+    };
+    fetchProduct();
+  }, [handle]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -38,6 +57,14 @@ const ProductDetail = () => {
     addItem(cartItem);
     toast.success(t('products.addedToCart'));
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-soft">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!product) {
     return (

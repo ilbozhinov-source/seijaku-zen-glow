@@ -68,6 +68,83 @@ export type Database = {
         }
         Relationships: []
       }
+      product_variants: {
+        Row: {
+          available_for_sale: boolean
+          created_at: string
+          currency: string
+          id: string
+          price: number
+          product_id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          available_for_sale?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          price: number
+          product_id: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          available_for_sale?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          price?: number
+          product_id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          created_at: string
+          description: string | null
+          handle: string
+          id: string
+          image_alt: string | null
+          image_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          handle: string
+          id?: string
+          image_alt?: string | null
+          image_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          handle?: string
+          id?: string
+          image_alt?: string | null
+          image_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
