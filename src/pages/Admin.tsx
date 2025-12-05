@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, Loader2, Users, Shield, Package, LayoutDashboard, Settings, TrendingUp, ShoppingCart, UserCheck, Eye, Download, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface Profile {
   id: string;
@@ -195,6 +196,34 @@ const Admin = () => {
   const pendingOrders = orders.filter(o => o.status === 'pending' || o.status === 'cod_pending').length;
   const completedOrders = orders.filter(o => o.status === 'delivered').length;
 
+  const monthlyStats = useMemo(() => {
+    const months = ['Яну', 'Фев', 'Мар', 'Апр', 'Май', 'Юни', 'Юли', 'Авг', 'Сеп', 'Окт', 'Ное', 'Дек'];
+    const stats: { month: string; revenue: number; orders: number }[] = [];
+    
+    // Get last 6 months
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const monthName = months[date.getMonth()];
+      
+      const monthOrders = orders.filter(o => {
+        const orderDate = new Date(o.created_at);
+        return orderDate.getFullYear() === date.getFullYear() && 
+               orderDate.getMonth() === date.getMonth() &&
+               (o.status === 'paid' || o.status === 'delivered' || o.status === 'shipped');
+      });
+      
+      stats.push({
+        month: monthName,
+        revenue: monthOrders.reduce((sum, o) => sum + Number(o.total_amount), 0),
+        orders: monthOrders.length
+      });
+    }
+    
+    return stats;
+  }, [orders]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-soft">
@@ -287,6 +316,33 @@ const Admin = () => {
                 </CardContent>
               </Card>
             </div>
+
+            <Card className="border-primary/20 shadow-zen">
+              <CardHeader>
+                <CardTitle>Продажби по месеци</CardTitle>
+                <CardDescription>Приходи за последните 6 месеца</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={monthlyStats}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="month" className="text-xs" />
+                      <YAxis className="text-xs" />
+                      <Tooltip 
+                        formatter={(value: number) => [`${value.toFixed(2)} лв.`, 'Приходи']}
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
 
             <Card className="border-primary/20 shadow-zen">
               <CardHeader>
