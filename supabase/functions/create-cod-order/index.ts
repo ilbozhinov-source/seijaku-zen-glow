@@ -22,7 +22,7 @@ async function sendToFulfillment(order: any, supabase: any): Promise<string | nu
       email: order.customer_email,
       address: order.shipping_address,
       city: order.shipping_city,
-      country: 'Bulgaria',
+      country: order.shipping_country || 'BG',
       items: Array.isArray(order.items) ? order.items.map((item: any) => ({
         productId: item.productId || item.id,
         title: item.productTitle || item.title,
@@ -30,6 +30,8 @@ async function sendToFulfillment(order: any, supabase: any): Promise<string | nu
         weight: item.weight || 30,
       })) : [],
       totalPrice: order.total_amount,
+      shippingPrice: order.shipping_price,
+      totalWithShipping: order.total_with_shipping,
       currency: order.currency,
       shippingMethod: 'standard',
       orderId: order.id,
@@ -111,6 +113,9 @@ serve(async (req) => {
         customer_phone: customer?.phone,
         shipping_address: customer?.address,
         shipping_city: customer?.city,
+        shipping_country: customer?.shippingCountry,
+        shipping_price: customer?.shippingPrice || 0,
+        total_with_shipping: customer?.totalWithShipping || totalAmount,
       })
       .select()
       .single();

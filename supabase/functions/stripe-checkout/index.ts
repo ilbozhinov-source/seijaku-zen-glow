@@ -54,6 +54,9 @@ serve(async (req) => {
         customer_phone: customer?.phone,
         shipping_address: customer?.address,
         shipping_city: customer?.city,
+        shipping_country: customer?.shippingCountry,
+        shipping_price: customer?.shippingPrice || 0,
+        total_with_shipping: customer?.totalWithShipping || totalAmount,
       })
       .select()
       .single();

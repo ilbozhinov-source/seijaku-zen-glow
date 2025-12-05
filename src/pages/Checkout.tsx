@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCartStore } from '@/stores/cartStore';
 import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
@@ -13,10 +14,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 import Footer from '@/components/Footer';
 
+// Shipping rates configuration - easy to change later
+const SHIPPING_RATES: Record<string, { price: number; currency: string; label: string }> = {
+  BG: { price: 5, currency: 'BGN', label: 'лв.' },
+  GR: { price: 10, currency: 'EUR', label: '€' },
+  RO: { price: 40, currency: 'RON', label: 'лей' },
+};
+
+const COUNTRIES = [
+  { code: 'BG', name: 'Bulgaria' },
+  { code: 'GR', name: 'Greece' },
+  { code: 'RO', name: 'Romania' },
+];
+
 const Checkout = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { items, clearCart, getTotalPrice } = useCartStore();
+  const { items, getTotalPrice } = useCartStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -27,10 +41,14 @@ const Checkout = () => {
     address: '',
     city: '',
     postalCode: '',
+    shippingCountry: '',
     paymentMethod: 'cod',
   });
 
-  const totalPrice = getTotalPrice();
+  const productsTotal = getTotalPrice();
+  const shippingRate = formData.shippingCountry ? SHIPPING_RATES[formData.shippingCountry] : null;
+  const shippingPrice = shippingRate?.price || 0;
+  const totalWithShipping = productsTotal + shippingPrice;
 
   const checkoutSchema = z.object({
     firstName: z.string().trim().min(2, t('checkout.firstNameRequired')),
@@ -40,6 +58,7 @@ const Checkout = () => {
     address: z.string().trim().min(5, t('checkout.addressRequired')),
     city: z.string().trim().min(2, t('checkout.cityRequired')),
     postalCode: z.string().trim().min(4, t('checkout.postalCodeRequired')),
+    shippingCountry: z.string().min(2, t('checkout.countryRequired')),
     paymentMethod: z.enum(['cod', 'card']),
   });
 
@@ -71,6 +90,10 @@ const Checkout = () => {
         phone: formData.phone,
         address: formData.address,
         city: formData.city,
+        postalCode: formData.postalCode,
+        shippingCountry: formData.shippingCountry,
+        shippingPrice: shippingPrice,
+        totalWithShipping: totalWithShipping,
       };
 
       const cartItems = items.map(item => ({
@@ -126,6 +149,7 @@ const Checkout = () => {
               address: formData.address,
               city: formData.city,
               postalCode: formData.postalCode,
+              country: formData.shippingCountry,
             },
             paymentMethod: 'cod',
             items: items.map(item => ({
@@ -134,7 +158,9 @@ const Checkout = () => {
               quantity: item.quantity,
               price: parseFloat(item.price.amount),
             })),
-            total: totalPrice,
+            total: productsTotal,
+            shippingPrice: shippingPrice,
+            totalWithShipping: totalWithShipping,
             currency: 'BGN',
           },
         });
@@ -248,6 +274,25 @@ const Checkout = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="shippingCountry">{t('checkout.shippingCountry')} *</Label>
+                  <Select
+                    value={formData.shippingCountry}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, shippingCountry: value }))}
+                  >
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder={t('checkout.selectCountry')} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background">
+                      {COUNTRIES.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {t(`checkout.countries.${country.code}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="address">{t('checkout.address')} *</Label>
                   <Input
                     id="address"
@@ -309,7 +354,7 @@ const Checkout = () => {
                   type="submit" 
                   className="w-full" 
                   size="lg"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !formData.shippingCountry}
                 >
                   {isSubmitting ? (
                     <>
@@ -359,14 +404,37 @@ const Checkout = () => {
                 ))}
               </div>
               
-              <div className="border-t pt-4 space-y-2">
-                <div className="flex justify-between text-lg font-semibold">
+              <div className="border-t pt-4 space-y-3">
+                {/* Products subtotal */}
+                <div className="flex justify-between text-muted-foreground">
+                  <span>{t('checkout.subtotal')}</span>
+                  <span>{t('products.priceBGN', { price: Math.round(productsTotal) })}</span>
+                </div>
+                
+                {/* Shipping price */}
+                <div className="flex justify-between text-muted-foreground">
+                  <span>{t('checkout.shippingPrice')}</span>
+                  {formData.shippingCountry && shippingRate ? (
+                    <span>{shippingRate.price} {shippingRate.label}</span>
+                  ) : (
+                    <span className="text-sm italic">{t('checkout.selectCountryForShipping')}</span>
+                  )}
+                </div>
+                
+                {/* Total */}
+                <div className="flex justify-between text-lg font-semibold pt-2 border-t">
                   <span>{t('checkout.total')}</span>
                   <div className="text-right">
-                    <span className="block">{t('products.priceBGN', { price: Math.round(totalPrice) })}</span>
-                    <span className="text-sm text-muted-foreground font-normal">
-                      {t('products.priceEUR', { price: (totalPrice / 1.9553).toFixed(2) })}
-                    </span>
+                    {formData.shippingCountry ? (
+                      <>
+                        <span className="block">{t('products.priceBGN', { price: Math.round(totalWithShipping) })}</span>
+                        <span className="text-sm text-muted-foreground font-normal">
+                          {t('products.priceEUR', { price: (totalWithShipping / 1.9553).toFixed(2) })}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">{t('checkout.selectCountryForTotal')}</span>
+                    )}
                   </div>
                 </div>
               </div>
