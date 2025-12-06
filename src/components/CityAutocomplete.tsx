@@ -206,8 +206,8 @@ export const CityAutocomplete = ({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, [searchTerm, value, onCityChange]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -272,7 +272,10 @@ export const CityAutocomplete = ({
                     <button
                       key={`${city.name}-${index}`}
                       type="button"
-                      onClick={() => handleSelectCity(city)}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSelectCity(city);
+                      }}
                       className={cn(
                         "w-full text-left px-3 py-2 rounded-md hover:bg-muted transition-colors flex items-center justify-between gap-2",
                         value === city.name && "bg-muted"
