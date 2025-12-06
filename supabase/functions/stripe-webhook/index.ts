@@ -7,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
 };
 
-const NEXTLEVEL_API_BASE = 'https://api.nextlevel.delivery/v1/fulfillment';
+const NEXTLEVEL_API_BASE = 'https://api.nextlevel.delivery';
 
 async function sendToFulfillment(order: any, supabase: any): Promise<string | null> {
   try {
@@ -47,12 +47,13 @@ async function sendToFulfillment(order: any, supabase: any): Promise<string | nu
     console.log('NextLevel payload:', JSON.stringify(payload, null, 2));
     console.log('Using API key:', apiKey);
 
-    // Try different authentication methods
-    const response = await fetch(`${NEXTLEVEL_API_BASE}/offers`, {
+    // Use webhook URL format with API key in path
+    const requestUrl = `${NEXTLEVEL_API_BASE}/webhooks/orders/${apiKey}`;
+    console.log('Sending request to:', requestUrl);
+
+    const response = await fetch(requestUrl, {
       method: 'POST',
       headers: {
-        'api-key': apiKey,
-        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
@@ -76,9 +77,10 @@ async function sendToFulfillment(order: any, supabase: any): Promise<string | nu
       return null;
     }
 
-    // NextLevel returns offer/tracking number
-    const trackingNumber = result.tracking_number || result.trackingNumber || result.number || null;
-    console.log('NextLevel tracking number:', trackingNumber);
+    // NextLevel webhook returns: {"success":true,"status":"pending","id":number}
+    const nextLevelId = result.id || result.tracking_number || result.trackingNumber || result.number || null;
+    const trackingNumber = nextLevelId ? String(nextLevelId) : null;
+    console.log('NextLevel order ID:', nextLevelId, 'Tracking number:', trackingNumber);
 
     // Update order with tracking number
     if (trackingNumber) {
