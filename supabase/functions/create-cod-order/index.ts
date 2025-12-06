@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const NEXTLEVEL_API_BASE = 'https://api.nextlevel.delivery/v1/fulfillment';
+
 async function sendToFulfillment(order: any, supabase: any): Promise<string | null> {
   try {
     const appId = Deno.env.get('FULFILLMENT_APP_ID');
@@ -16,69 +18,81 @@ async function sendToFulfillment(order: any, supabase: any): Promise<string | nu
       return null;
     }
 
-    const fulfillmentPayload = {
-      customerName: order.customer_name,
-      phone: order.customer_phone,
-      email: order.customer_email,
-      address: order.shipping_address,
-      city: order.shipping_city,
-      countryCode: order.shipping_country,
-      countryName: order.shipping_country_name,
-      // Shipping method: to_address or to_office
-      shippingMethod: order.shipping_method,
-      // Courier office details (when delivery to office)
-      courierOfficeId: order.courier_office_id,
-      courierOfficeName: order.courier_office_name,
-      courierOfficeAddress: order.courier_office_address,
-      courierOfficeCity: order.courier_office_city,
-      courierOfficeCountryCode: order.courier_office_country_code,
-      // Order items
-      items: Array.isArray(order.items) ? order.items.map((item: any) => ({
-        productId: item.productId || item.id,
-        title: item.productTitle || item.title,
-        quantity: item.quantity,
-        weight: item.weight || 30,
-      })) : [],
-      // Pricing
-      totalPrice: order.total_amount,
-      shippingPrice: order.shipping_price,
-      totalWithShipping: order.total_with_shipping,
+    console.log('Sending COD order to NextLevel fulfillment:', order.id);
+
+    // Prepare items for NextLevel API
+    const offerItems = Array.isArray(order.items) ? order.items.map((item: any) => ({
+      name: `${item.productTitle || item.title} - ${item.variantTitle || ''}`.trim(),
+      quantity: item.quantity || 1,
+      price: parseFloat(item.price?.amount || item.price || '0'),
+    })) : [];
+
+    // Prepare the payload for NextLevel offers API
+    const payload = {
+      external_id: order.id,
+      recipient_name: order.customer_name,
+      recipient_phone: order.customer_phone,
+      recipient_email: order.customer_email,
+      recipient_country: order.shipping_country || 'BG',
+      recipient_city: order.shipping_city,
+      recipient_address: order.shipping_address,
+      recipient_office_id: order.courier_office_id || null,
+      courier: order.courier_code || null,
+      items: offerItems,
+      // COD amount for cash on delivery orders
+      cod_amount: order.total_with_shipping || order.total_amount,
       currency: order.currency,
-      orderId: order.id,
+      comment: `Поръчка от gomatcha.bg - ${order.id} (Наложен платеж)`,
     };
 
-    console.log('Sending order to fulfillment:', order.id);
+    console.log('NextLevel payload:', JSON.stringify(payload, null, 2));
 
-    // Create signature
-    const timestamp = Date.now().toString();
-    const encoder = new TextEncoder();
-    const data = encoder.encode(timestamp + JSON.stringify(fulfillmentPayload));
-    const key = encoder.encode(appSecret);
-    const cryptoKey = await crypto.subtle.importKey(
-      'raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-    );
-    const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, data);
-    const signature = Array.from(new Uint8Array(signatureBuffer))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+    const response = await fetch(`${NEXTLEVEL_API_BASE}/offers`, {
+      method: 'POST',
+      headers: {
+        'app-id': appId,
+        'app-secret': appSecret,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
 
-    // For now, generate mock tracking number since we don't have real API endpoint
-    // TODO: Replace with actual fulfillment API call when endpoint is provided
-    const mockTrackingNumber = `TRK${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-    
-    console.log('Generated tracking number:', mockTrackingNumber);
+    const responseText = await response.text();
+    console.log('NextLevel API response status:', response.status);
+    console.log('NextLevel API response body:', responseText);
 
-    // Update order with tracking number
-    const { error: updateError } = await supabase
-      .from('orders')
-      .update({ tracking_number: mockTrackingNumber })
-      .eq('id', order.id);
-
-    if (updateError) {
-      console.error('Failed to update order with tracking:', updateError);
+    if (!response.ok) {
+      console.error('NextLevel API error:', response.status, responseText);
+      return null;
     }
 
-    return mockTrackingNumber;
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch {
+      console.error('Failed to parse NextLevel response:', responseText);
+      return null;
+    }
+
+    // NextLevel returns offer/tracking number
+    const trackingNumber = result.tracking_number || result.trackingNumber || result.number || null;
+    console.log('NextLevel tracking number:', trackingNumber);
+
+    // Update order with tracking number
+    if (trackingNumber) {
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({ tracking_number: trackingNumber })
+        .eq('id', order.id);
+
+      if (updateError) {
+        console.error('Failed to update order with tracking:', updateError);
+      } else {
+        console.log('Order updated with tracking number:', trackingNumber);
+      }
+    }
+
+    return trackingNumber;
   } catch (error) {
     console.error('Fulfillment error:', error);
     return null;

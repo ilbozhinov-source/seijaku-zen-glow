@@ -167,7 +167,7 @@ async function fetchOffices(
   }
 }
 
-async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{ success: boolean; trackingNumber?: string; error?: string }> {
+async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{ success: boolean; trackingNumber?: string; offerNumber?: string; error?: string }> {
   const appId = Deno.env.get('FULFILLMENT_APP_ID');
   const appSecret = Deno.env.get('FULFILLMENT_APP_SECRET');
 
@@ -178,41 +178,35 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{ succes
 
   console.log('Sending order to fulfillment API:', order.orderId);
 
-  // Prepare the payload for the fulfillment API
+  // Prepare items for NextLevel API
+  const offerItems = order.items.map(item => ({
+    name: `${item.productTitle} - ${item.variantTitle}`,
+    quantity: item.quantity,
+    price: parseFloat(item.price.amount),
+  }));
+
+  // Prepare the payload for NextLevel offers API
+  // Based on NextLevel API structure for creating fulfillment offers
   const payload = {
-    order_id: order.orderId,
-    recipient: {
-      name: order.customerName,
-      email: order.customerEmail,
-      phone: order.customerPhone,
-      address: order.shippingAddress,
-      city: order.shippingCity,
-      country: order.shippingCountry,
-      office_id: order.shippingOfficeId,
-    },
-    courier: {
-      name: order.courierName,
-      code: order.courierCode,
-    },
-    items: order.items.map(item => ({
-      name: item.productTitle,
-      variant: item.variantTitle,
-      quantity: item.quantity,
-      price: parseFloat(item.price.amount),
-      currency: item.price.currencyCode,
-    })),
-    total_amount: order.totalAmount,
-    shipping_price: order.shippingPrice,
-    total_with_shipping: order.totalWithShipping,
+    external_id: order.orderId,
+    recipient_name: order.customerName,
+    recipient_phone: order.customerPhone,
+    recipient_email: order.customerEmail,
+    recipient_country: order.shippingCountry,
+    recipient_city: order.shippingCity,
+    recipient_address: order.shippingAddress,
+    recipient_office_id: order.shippingOfficeId || null,
+    courier: order.courierCode || null,
+    items: offerItems,
+    cod_amount: order.totalWithShipping,
     currency: order.currency,
+    comment: `Поръчка от gomatcha.bg`,
   };
 
   try {
-    console.log('Fulfillment payload prepared:', JSON.stringify(payload, null, 2));
+    console.log('Fulfillment payload:', JSON.stringify(payload, null, 2));
 
-    // TODO: Uncomment when ready to connect to real API:
-    /*
-    const response = await fetch(`${NEXTLEVEL_API_BASE}/orders`, {
+    const response = await fetch(`${NEXTLEVEL_API_BASE}/offers`, {
       method: 'POST',
       headers: {
         'app-id': appId,
@@ -222,28 +216,35 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{ succes
       body: JSON.stringify(payload),
     });
 
+    const responseText = await response.text();
+    console.log('NextLevel API response status:', response.status);
+    console.log('NextLevel API response body:', responseText);
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Fulfillment API error:', response.status, errorText);
-      return { success: false, error: `API error: ${response.status}` };
+      console.error('Fulfillment API error:', response.status, responseText);
+      return { success: false, error: `API error: ${response.status} - ${responseText}` };
     }
 
-    const result = await response.json();
-    console.log('Fulfillment API response:', result);
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch {
+      console.error('Failed to parse fulfillment response:', responseText);
+      return { success: false, error: 'Invalid API response' };
+    }
+    
+    console.log('Fulfillment API response parsed:', result);
+    
+    // NextLevel returns offer number and tracking number
+    const trackingNumber = result.tracking_number || result.trackingNumber || result.number || null;
+    const offerNumber = result.number || result.offer_number || result.id || null;
+    
+    console.log('Order sent to fulfillment. Tracking:', trackingNumber, 'Offer:', offerNumber);
     
     return { 
       success: true, 
-      trackingNumber: result.tracking_number 
-    };
-    */
-
-    // Mock response for testing
-    const mockTrackingNumber = `NXL-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
-    console.log('Mock tracking number generated:', mockTrackingNumber);
-    
-    return { 
-      success: true, 
-      trackingNumber: mockTrackingNumber 
+      trackingNumber: trackingNumber,
+      offerNumber: offerNumber,
     };
 
   } catch (error: unknown) {
