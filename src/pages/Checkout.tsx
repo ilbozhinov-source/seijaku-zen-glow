@@ -9,14 +9,14 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCartStore } from '@/stores/cartStore';
-import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag, Search, Check, Phone, Truck, Package } from 'lucide-react';
+import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag, Search, Check, Phone, Truck, Package, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
 import Footer from '@/components/Footer';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
-
+import { SamedayBoxSelector } from '@/components/SamedayBoxSelector';
 // Supported shipping countries - only these three
 const SUPPORTED_SHIPPING_COUNTRIES = [
   { code: 'BG', name: 'Bulgaria' },
@@ -221,6 +221,10 @@ const Checkout = () => {
   const [loadingOffices, setLoadingOffices] = useState(false);
   const [officesError, setOfficesError] = useState<string | null>(null);
   
+  // Sameday easybox state
+  const [showEasyboxModal, setShowEasyboxModal] = useState(false);
+  const [selectedEasybox, setSelectedEasybox] = useState<{ id: string; label: string } | null>(null);
+  
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -335,6 +339,14 @@ const Checkout = () => {
       shippingMethodId: methodId,
       shippingOffice: '', // Reset office when method changes
     }));
+    // Reset easybox selection when method changes
+    setSelectedEasybox(null);
+  }, []);
+
+  // Handle easybox selection
+  const handleEasyboxSelect = useCallback((box: { id: string; label: string }) => {
+    setSelectedEasybox(box);
+    setShowEasyboxModal(false);
   }, []);
 
   const productsTotal = getTotalPrice();
@@ -470,6 +482,12 @@ const Checkout = () => {
       return;
     }
 
+    // Validate easybox selection if method is easybox
+    if (selectedShippingMethod?.type === 'easybox' && !selectedEasybox) {
+      toast.error(t('checkout.easyboxRequired'));
+      return;
+    }
+
     const validation = checkoutSchema.safeParse(formData);
     if (!validation.success) {
       toast.error(validation.error.errors[0]?.message || t('checkout.fillAllFields'));
@@ -490,6 +508,8 @@ const Checkout = () => {
         phoneNumber: formData.phoneNumber,
         address: selectedShippingMethod?.type === 'office' && selectedOffice
           ? `${selectedOffice.name}, ${selectedOffice.address}`
+          : selectedShippingMethod?.type === 'easybox' && selectedEasybox
+          ? selectedEasybox.label
           : formData.address,
         city: selectedShippingMethod?.type === 'office' && selectedOffice
           ? selectedOffice.place  // place = city from NextLevel API
@@ -518,6 +538,9 @@ const Checkout = () => {
         courierOfficeCity: selectedShippingMethod?.type === 'office' && selectedOffice ? selectedOffice.place : null,
         courierOfficePostCode: selectedShippingMethod?.type === 'office' && selectedOffice ? selectedOffice.post_code : null,
         courierOfficeCountryCode: selectedShippingMethod?.type === 'office' ? formData.shippingCountry : null,
+        // Sameday easybox details
+        samedayBoxId: selectedShippingMethod?.type === 'easybox' && selectedEasybox ? selectedEasybox.id : null,
+        samedayBoxLabel: selectedShippingMethod?.type === 'easybox' && selectedEasybox ? selectedEasybox.label : null,
       };
 
       const cartItems = items.map(item => ({
@@ -816,15 +839,59 @@ const Checkout = () => {
                   </>
                 )}
 
-                {/* Easybox info (placeholder for future) */}
+                {/* Easybox selection */}
                 {selectedShippingMethod?.type === 'easybox' && (
-                  <div className="p-4 border rounded-lg bg-muted/50">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Package className="w-5 h-5" />
-                      <span>{t('checkout.easyboxInfo')}</span>
-                    </div>
+                  <div className="space-y-3">
+                    <Label>{t('checkout.selectEasybox')} *</Label>
+                    
+                    {selectedEasybox ? (
+                      <div className="p-4 border rounded-lg bg-primary/5 border-primary/30">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <Package className="h-4 w-4 text-primary shrink-0" />
+                              <span className="font-medium">{t('checkout.selectedEasybox')}</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1 truncate">
+                              {selectedEasybox.label}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowEasyboxModal(true)}
+                          >
+                            <Edit2 className="h-4 w-4 mr-1" />
+                            {t('checkout.change')}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full justify-start h-auto py-4"
+                        onClick={() => setShowEasyboxModal(true)}
+                      >
+                        <Package className="h-5 w-5 mr-2 text-primary" />
+                        <span>{t('checkout.selectEasyboxButton')}</span>
+                      </Button>
+                    )}
+                    
+                    <p className="text-sm text-muted-foreground">
+                      {t('checkout.easyboxInfo')}
+                    </p>
                   </div>
                 )}
+
+                {/* Sameday Box Selector Modal */}
+                <SamedayBoxSelector
+                  isOpen={showEasyboxModal}
+                  onClose={() => setShowEasyboxModal(false)}
+                  onSelect={handleEasyboxSelect}
+                  t={t}
+                />
 
                 <div className="space-y-4">
                   <Label>{t('checkout.paymentMethod')} *</Label>
@@ -858,7 +925,8 @@ const Checkout = () => {
                     isSubmitting || 
                     !formData.shippingCountry || 
                     !formData.shippingMethodId ||
-                    (selectedShippingMethod?.type === 'office' && (!formData.shippingOffice || offices.length === 0 || loadingOffices))
+                    (selectedShippingMethod?.type === 'office' && (!formData.shippingOffice || offices.length === 0 || loadingOffices)) ||
+                    (selectedShippingMethod?.type === 'easybox' && !selectedEasybox)
                   }
                 >
                   {isSubmitting ? (

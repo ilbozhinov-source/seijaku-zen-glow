@@ -777,11 +777,23 @@ const Admin = () => {
                       </p>
                     </div>
                     <div>
+                      <p className="text-muted-foreground">Метод на доставка</p>
+                      <p className="font-medium">
+                        {(selectedOrder as any).shipping_method || '-'}
+                      </p>
+                    </div>
+                    <div>
                       <p className="text-muted-foreground">Град</p>
                       <p className="font-medium">{selectedOrder.shipping_city || '-'}</p>
                     </div>
+                    <div>
+                      <p className="text-muted-foreground">Цена доставка</p>
+                      <p className="font-medium">
+                        {Number(selectedOrder.shipping_price || 0).toFixed(2)} {selectedOrder.currency}
+                      </p>
+                    </div>
                     <div className="col-span-2">
-                      <p className="text-muted-foreground">Адрес</p>
+                      <p className="text-muted-foreground">Адрес / Автомат</p>
                       <p className="font-medium">{selectedOrder.shipping_address || '-'}</p>
                     </div>
                   </div>
