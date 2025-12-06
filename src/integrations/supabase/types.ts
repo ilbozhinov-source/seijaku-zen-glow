@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       orders: {
         Row: {
+          courier_code: string | null
+          courier_name: string | null
           courier_office_address: string | null
           courier_office_city: string | null
           courier_office_country_code: string | null
@@ -46,6 +48,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          courier_code?: string | null
+          courier_name?: string | null
           courier_office_address?: string | null
           courier_office_city?: string | null
           courier_office_country_code?: string | null
@@ -76,6 +80,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          courier_code?: string | null
+          courier_name?: string | null
           courier_office_address?: string | null
           courier_office_city?: string | null
           courier_office_country_code?: string | null

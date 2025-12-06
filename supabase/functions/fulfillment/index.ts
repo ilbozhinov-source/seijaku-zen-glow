@@ -24,6 +24,8 @@ interface FulfillmentOrder {
   shippingCity: string;
   shippingCountry: string;
   shippingOfficeId?: string;
+  courierName?: string;
+  courierCode?: string;
   items: OrderItem[];
   totalAmount: number;
   shippingPrice: number;
@@ -181,6 +183,10 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{ succes
       city: order.shippingCity,
       country: order.shippingCountry,
       office_id: order.shippingOfficeId,
+    },
+    courier: {
+      name: order.courierName,
+      code: order.courierCode,
     },
     items: order.items.map(item => ({
       name: item.productTitle,
@@ -375,6 +381,8 @@ serve(async (req) => {
         shippingAddress: order.shipping_address || '',
         shippingCity: order.shipping_city || '',
         shippingCountry: order.shipping_country || 'BG',
+        courierName: order.courier_name || undefined,
+        courierCode: order.courier_code || undefined,
         items: order.items as OrderItem[],
         totalAmount: order.total_amount,
         shippingPrice: order.shipping_price || 0,
