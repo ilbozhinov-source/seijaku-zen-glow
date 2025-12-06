@@ -35,12 +35,11 @@ interface FulfillmentOrder {
 
 // Fetch countries from NextLevel API
 async function fetchCountries(): Promise<{ success: boolean; data?: any; error?: string }> {
-  const appId = Deno.env.get('FULFILLMENT_APP_ID');
-  const appSecret = Deno.env.get('FULFILLMENT_APP_SECRET');
+  const apiKey = Deno.env.get('FULFILLMENT_APP_ID');
 
-  if (!appId || !appSecret) {
-    console.error('NextLevel credentials not configured');
-    return { success: false, error: 'Fulfillment credentials not configured' };
+  if (!apiKey) {
+    console.error('NextLevel API key not configured');
+    return { success: false, error: 'Fulfillment API key not configured' };
   }
 
   try {
@@ -49,8 +48,8 @@ async function fetchCountries(): Promise<{ success: boolean; data?: any; error?:
     const response = await fetch(`${NEXTLEVEL_API_BASE}/countries`, {
       method: 'GET',
       headers: {
-        'app-id': appId,
-        'app-secret': appSecret,
+        'api-key': apiKey,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
     });
@@ -82,12 +81,11 @@ async function fetchOffices(
   courier?: string,
   filterMachines?: boolean
 ): Promise<{ success: boolean; offices: any[]; error?: string }> {
-  const appId = Deno.env.get('FULFILLMENT_APP_ID');
-  const appSecret = Deno.env.get('FULFILLMENT_APP_SECRET');
+  const apiKey = Deno.env.get('FULFILLMENT_APP_ID');
 
-  if (!appId || !appSecret) {
-    console.error('NextLevel credentials not configured');
-    return { success: false, offices: [], error: 'Fulfillment credentials not configured' };
+  if (!apiKey) {
+    console.error('NextLevel API key not configured');
+    return { success: false, offices: [], error: 'Fulfillment API key not configured' };
   }
 
   try {
@@ -106,8 +104,8 @@ async function fetchOffices(
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'app-id': appId,
-        'app-secret': appSecret,
+        'api-key': apiKey,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
     });
@@ -168,12 +166,11 @@ async function fetchOffices(
 }
 
 async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{ success: boolean; trackingNumber?: string; offerNumber?: string; error?: string }> {
-  const appId = Deno.env.get('FULFILLMENT_APP_ID');
-  const appSecret = Deno.env.get('FULFILLMENT_APP_SECRET');
+  const apiKey = Deno.env.get('FULFILLMENT_APP_ID');
 
-  if (!appId || !appSecret) {
-    console.error('Fulfillment credentials not configured');
-    return { success: false, error: 'Fulfillment credentials not configured' };
+  if (!apiKey) {
+    console.error('Fulfillment API key not configured');
+    return { success: false, error: 'Fulfillment API key not configured' };
   }
 
   console.log('Sending order to fulfillment API:', order.orderId);
@@ -205,13 +202,15 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{ succes
 
   try {
     console.log('Fulfillment payload:', JSON.stringify(payload, null, 2));
+    console.log('Using API key:', apiKey);
 
     const response = await fetch(`${NEXTLEVEL_API_BASE}/offers`, {
       method: 'POST',
       headers: {
-        'app-id': appId,
-        'app-secret': appSecret,
+        'api-key': apiKey,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify(payload),
     });

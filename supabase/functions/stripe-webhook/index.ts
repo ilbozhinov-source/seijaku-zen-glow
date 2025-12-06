@@ -11,11 +11,10 @@ const NEXTLEVEL_API_BASE = 'https://api.nextlevel.delivery/v1/fulfillment';
 
 async function sendToFulfillment(order: any, supabase: any): Promise<string | null> {
   try {
-    const appId = Deno.env.get('FULFILLMENT_APP_ID');
-    const appSecret = Deno.env.get('FULFILLMENT_APP_SECRET');
+    const apiKey = Deno.env.get('FULFILLMENT_APP_ID');
 
-    if (!appId || !appSecret) {
-      console.log('Fulfillment credentials not configured, skipping');
+    if (!apiKey) {
+      console.log('Fulfillment API key not configured, skipping');
       return null;
     }
 
@@ -46,13 +45,16 @@ async function sendToFulfillment(order: any, supabase: any): Promise<string | nu
     };
 
     console.log('NextLevel payload:', JSON.stringify(payload, null, 2));
+    console.log('Using API key:', apiKey);
 
+    // Try different authentication methods
     const response = await fetch(`${NEXTLEVEL_API_BASE}/offers`, {
       method: 'POST',
       headers: {
-        'app-id': appId,
-        'app-secret': appSecret,
+        'api-key': apiKey,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify(payload),
     });
