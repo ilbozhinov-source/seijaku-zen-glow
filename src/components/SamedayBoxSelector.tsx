@@ -131,9 +131,9 @@ export const SamedayBoxSelector = ({ isOpen, onClose, onSelect, t }: SamedayBoxS
           <div className="space-y-2">
             <Label>{t('checkout.selectCity')}</Label>
             <Select
-              value={selectedCity}
+              value={selectedCity || 'all'}
               onValueChange={(value) => {
-                setSelectedCity(value);
+                setSelectedCity(value === 'all' ? '' : value);
                 setSelectedBoxId('');
               }}
               disabled={loadingCities}
@@ -142,7 +142,7 @@ export const SamedayBoxSelector = ({ isOpen, onClose, onSelect, t }: SamedayBoxS
                 <SelectValue placeholder={loadingCities ? t('checkout.loading') : t('checkout.selectCityPlaceholder')} />
               </SelectTrigger>
               <SelectContent className="bg-background max-h-[300px]">
-                <SelectItem value="">{t('checkout.allCities')}</SelectItem>
+                <SelectItem value="all">{t('checkout.allCities')}</SelectItem>
                 {cities.map((city) => (
                   <SelectItem key={city} value={city}>
                     {city}
