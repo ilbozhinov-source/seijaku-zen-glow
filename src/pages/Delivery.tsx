@@ -64,40 +64,66 @@ const Delivery = () => {
 
           {/* Pricing Section */}
           <div className="bg-primary/5 border border-primary/20 rounded-2xl p-8 mb-8">
-            <h3 className="font-bold text-xl mb-6 text-center">{t("delivery.pricesTitle")}</h3>
+            <h3 className="font-bold text-2xl mb-8 text-center">{t("delivery.pricesTitle")}</h3>
             
-            {/* Under 69.99 */}
-            <div className="mb-6 pb-6 border-b border-border/30">
-              <p className="font-medium mb-4 text-muted-foreground">{t("delivery.under70")}</p>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Building2 className="w-5 h-5 text-primary" />
-                  <span>{t("delivery.speedyOffice")}</span>
+            {/* Bulgaria */}
+            <div className="mb-8 pb-8 border-b border-border/30">
+              <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary" />
+                {t("delivery.forBulgaria")}
+              </h4>
+              <p className="text-muted-foreground mb-4">{t("delivery.bulgariaPartners")}</p>
+              <div className="space-y-3 pl-7">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Building2 className="w-4 h-4 text-primary" />
+                    <span>{t("delivery.econtOfficeNew")}</span>
+                  </div>
+                  <span className="font-semibold text-primary">6,00 лв.</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-primary" />
-                  <span>{t("delivery.ekontOffice")}</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Home className="w-4 h-4 text-primary" />
+                    <span>{t("delivery.econtAddress")}</span>
+                  </div>
+                  <span className="font-semibold text-primary">7,00 лв.</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Home className="w-5 h-5 text-primary" />
-                  <span>{t("delivery.homeAddress")}</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Truck className="w-4 h-4 text-primary" />
+                    <span>{t("delivery.mdaAutomat")}</span>
+                  </div>
+                  <span className="font-semibold text-primary">4,50 лв.</span>
                 </div>
               </div>
             </div>
 
-            {/* Over 69.99 */}
-            <div>
-              <p className="font-medium mb-4 text-primary">{t("delivery.over70")}</p>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Truck className="w-5 h-5 text-primary" />
-                  <span className="font-medium">{t("delivery.freeOffice")}</span>
+            {/* International */}
+            <div className="mb-8 pb-8 border-b border-border/30">
+              <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <Truck className="w-5 h-5 text-primary" />
+                {t("delivery.forAbroad")}
+              </h4>
+              <div className="space-y-3 pl-7">
+                <div className="flex items-center justify-between">
+                  <span>{t("delivery.greece")}</span>
+                  <span className="font-semibold text-primary">4,00 €</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Truck className="w-5 h-5 text-primary" />
-                  <span className="font-medium">{t("delivery.freeAddress")}</span>
+                <div className="flex items-center justify-between">
+                  <span>{t("delivery.romania")}</span>
+                  <span className="font-semibold text-primary">4,00 €</span>
                 </div>
               </div>
+            </div>
+
+            {/* Free Shipping */}
+            <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-6">
+              <h4 className="font-semibold text-lg mb-2 text-green-700 dark:text-green-400 flex items-center gap-2">
+                🎁 {t("delivery.freeShipping")}
+              </h4>
+              <p className="text-muted-foreground">
+                {t("delivery.freeShippingDesc")}
+              </p>
             </div>
           </div>
         </div>
