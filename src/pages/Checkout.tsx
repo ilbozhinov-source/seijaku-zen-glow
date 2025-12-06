@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCartStore } from '@/stores/cartStore';
-import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag, MapPin, Building2, Search, Check, Phone, Truck } from 'lucide-react';
+import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag, Search, Check, Phone, Truck, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
@@ -30,33 +30,43 @@ const PHONE_CONFIG: Record<string, { code: string; minLength: number; maxLength:
   RO: { code: '+40', minLength: 9, maxLength: 10, placeholder: '712345678' },
 };
 
-// Courier configuration by country
-// For BG: Fetch from Fulfillment API (Econt, Sameday)
-// For GR and RO: Fixed couriers
-interface CourierConfig {
+// ============================================
+// SHIPPING METHOD CONFIGURATION
+// Easy to add new countries and methods
+// ============================================
+
+interface ShippingMethod {
+  id: string;
   name: string;
-  code: string;
-  supportsAddress: boolean;
-  supportsOffice: boolean;
+  price: number;
+  currency: 'BGN' | 'EUR';
+  currencyLabel: string;
+  courierCode: string;
+  courierName: string;
+  type: 'office' | 'address' | 'easybox';
 }
 
-const FIXED_COURIERS: Record<string, CourierConfig> = {
-  GR: { name: 'SpeedX', code: 'SPEEDX', supportsAddress: true, supportsOffice: true },
-  RO: { name: 'FAN', code: 'FAN', supportsAddress: true, supportsOffice: true },
+// Shipping methods configuration by country
+const SHIPPING_METHODS: Record<string, ShippingMethod[]> = {
+  BG: [
+    { id: 'econt_office', name: 'Еконт — до офис', price: 8.00, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'ECONT', courierName: 'Econt', type: 'office' },
+    { id: 'econt_address', name: 'Еконт — до адрес', price: 7.00, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'ECONT', courierName: 'Econt', type: 'address' },
+    { id: 'sameday_easybox', name: 'Sameday easybox', price: 4.50, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'SAMEDAY', courierName: 'Sameday', type: 'easybox' },
+  ],
+  GR: [
+    { id: 'speedex', name: 'Speedex', price: 4.00, currency: 'EUR', currencyLabel: '€', courierCode: 'SPEEDX', courierName: 'SpeedX', type: 'address' },
+  ],
+  RO: [
+    { id: 'fan', name: 'FAN Courier', price: 4.00, currency: 'EUR', currencyLabel: '€', courierCode: 'FAN', courierName: 'FAN', type: 'address' },
+  ],
 };
 
-// Default couriers for BG (will be fetched from API)
-const DEFAULT_BG_COURIERS: CourierConfig[] = [
-  { name: 'Econt', code: 'ECONT', supportsAddress: true, supportsOffice: true },
-  { name: 'Sameday', code: 'SAMEDAY', supportsAddress: true, supportsOffice: true },
-];
-
-// Shipping rates by country and delivery method (in local currency)
-// Easy to change these values later
-const SHIPPING_RATES: Record<string, { toAddress: number; toOffice: number; currency: string; label: string }> = {
-  BG: { toAddress: 5, toOffice: 4, currency: 'BGN', label: 'лв.' },
-  GR: { toAddress: 10, toOffice: 8, currency: 'EUR', label: '€' },
-  RO: { toAddress: 40, toOffice: 30, currency: 'RON', label: 'лей' },
+// Placeholder for future easybox selection
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const selectEasyboxLocker = async (_country: string): Promise<string | null> => {
+  // TODO: Implement easybox locker selection modal
+  // For now, just return null - the method stores only shippingMethod and shippingPrice
+  return null;
 };
 
 interface Office {
@@ -220,21 +230,27 @@ const Checkout = () => {
     postalCode: '',
     shippingCountry: '',
     shippingOffice: '',
-    deliveryType: 'address', // 'address' or 'office'
+    shippingMethodId: '', // Selected shipping method ID
     paymentMethod: 'cod',
-    selectedCourier: '', // Courier code
   });
 
   // Phone validation error
   const [phoneError, setPhoneError] = useState<string | null>(null);
-  
-  // Couriers state
-  const [availableCouriers, setAvailableCouriers] = useState<CourierConfig[]>([]);
 
   // Get phone config for current country
   const phoneConfig = formData.shippingCountry ? PHONE_CONFIG[formData.shippingCountry] : null;
   const phoneCountryCode = phoneConfig?.code || '+359';
   const fullPhoneNumber = phoneConfig ? `${phoneConfig.code}${formData.phoneNumber}` : formData.phoneNumber;
+
+  // Get available shipping methods for current country
+  const availableShippingMethods = formData.shippingCountry 
+    ? SHIPPING_METHODS[formData.shippingCountry] || []
+    : [];
+
+  // Get selected shipping method
+  const selectedShippingMethod = useMemo(() => {
+    return availableShippingMethods.find(m => m.id === formData.shippingMethodId);
+  }, [availableShippingMethods, formData.shippingMethodId]);
 
   // GeoIP detection on first load
   useEffect(() => {
@@ -286,25 +302,16 @@ const Checkout = () => {
     detectLocation();
   }, [i18n]);
 
-  // Update couriers when country changes
+  // Auto-select first/only shipping method when country changes
   useEffect(() => {
-    if (!formData.shippingCountry) {
-      setAvailableCouriers([]);
-      return;
-    }
-
-    // For GR and RO: Use fixed couriers
-    if (formData.shippingCountry === 'GR' || formData.shippingCountry === 'RO') {
-      const fixedCourier = FIXED_COURIERS[formData.shippingCountry];
-      setAvailableCouriers([fixedCourier]);
-      // Auto-select the only courier
-      setFormData(prev => ({ ...prev, selectedCourier: fixedCourier.code }));
-    } else if (formData.shippingCountry === 'BG') {
-      // For BG: Use default couriers (could fetch from API in future)
-      setAvailableCouriers(DEFAULT_BG_COURIERS);
-      // Auto-select first courier if none selected
-      if (!formData.selectedCourier) {
-        setFormData(prev => ({ ...prev, selectedCourier: DEFAULT_BG_COURIERS[0].code }));
+    if (formData.shippingCountry) {
+      const methods = SHIPPING_METHODS[formData.shippingCountry] || [];
+      if (methods.length === 1) {
+        // Auto-select if only one method
+        setFormData(prev => ({ ...prev, shippingMethodId: methods[0].id }));
+      } else if (methods.length > 1 && !methods.find(m => m.id === formData.shippingMethodId)) {
+        // Reset method selection if current selection is not valid for new country
+        setFormData(prev => ({ ...prev, shippingMethodId: '' }));
       }
     }
   }, [formData.shippingCountry]);
@@ -315,38 +322,31 @@ const Checkout = () => {
       ...prev, 
       shippingCountry: value,
       shippingOffice: '', // Reset office when country changes
-      selectedCourier: '', // Reset courier when country changes
-      deliveryType: 'address', // Reset delivery type
+      shippingMethodId: '', // Reset method when country changes
     }));
     localStorage.setItem('shipping_country', value);
   }, []);
 
-  // Handle courier change
-  const handleCourierChange = useCallback((courierCode: string) => {
+  // Handle shipping method change
+  const handleShippingMethodChange = useCallback((methodId: string) => {
     setFormData(prev => ({ 
       ...prev, 
-      selectedCourier: courierCode,
-      shippingOffice: '', // Reset office when courier changes
+      shippingMethodId: methodId,
+      shippingOffice: '', // Reset office when method changes
     }));
   }, []);
 
-  // Get current courier config
-  const currentCourier = useMemo(() => {
-    return availableCouriers.find(c => c.code === formData.selectedCourier);
-  }, [availableCouriers, formData.selectedCourier]);
-
   const productsTotal = getTotalPrice();
-  const shippingRate = formData.shippingCountry ? SHIPPING_RATES[formData.shippingCountry] : null;
-  // Calculate shipping price based on delivery method
-  const shippingPrice = shippingRate 
-    ? (formData.deliveryType === 'office' ? shippingRate.toOffice : shippingRate.toAddress) 
-    : 0;
+  const shippingPrice = selectedShippingMethod?.price || 0;
+  const shippingCurrency = selectedShippingMethod?.currency || 'BGN';
+  const shippingCurrencyLabel = selectedShippingMethod?.currencyLabel || 'лв.';
   const totalWithShipping = productsTotal + shippingPrice;
 
-  // Fetch offices when country changes and delivery type is office
+  // Fetch offices when method requires office selection
   useEffect(() => {
     const fetchOfficesFromApi = async () => {
-      if (!formData.shippingCountry || formData.deliveryType !== 'office') {
+      // Only fetch offices for office-type shipping methods
+      if (!formData.shippingCountry || !selectedShippingMethod || selectedShippingMethod.type !== 'office') {
         setOffices([]);
         setOfficesError(null);
         return;
@@ -402,7 +402,7 @@ const Checkout = () => {
     };
 
     fetchOfficesFromApi();
-  }, [formData.shippingCountry, formData.deliveryType, t]);
+  }, [formData.shippingCountry, selectedShippingMethod, t]);
 
   const checkoutSchema = z.object({
     firstName: z.string().trim().min(2, t('checkout.firstNameRequired')),
@@ -411,20 +411,20 @@ const Checkout = () => {
     phoneNumber: phoneConfig 
       ? z.string().trim().min(phoneConfig.minLength, t('checkout.phoneInvalid')).max(phoneConfig.maxLength, t('checkout.phoneInvalid'))
       : z.string().trim().min(6, t('checkout.phoneRequired')),
-    address: formData.deliveryType === 'address' 
+    address: selectedShippingMethod?.type === 'address' 
       ? z.string().trim().min(5, t('checkout.addressRequired'))
       : z.string().optional(),
-    city: formData.deliveryType === 'address'
+    city: selectedShippingMethod?.type === 'address'
       ? z.string().trim().min(2, t('checkout.cityRequired'))
       : z.string().optional(),
-    postalCode: formData.deliveryType === 'address'
+    postalCode: selectedShippingMethod?.type === 'address'
       ? z.string().trim().min(4, t('checkout.postalCodeRequired'))
       : z.string().optional(),
     shippingCountry: z.string().min(2, t('checkout.countryRequired')),
-    shippingOffice: formData.deliveryType === 'office'
+    shippingMethodId: z.string().min(1, t('checkout.shippingMethodRequired')),
+    shippingOffice: selectedShippingMethod?.type === 'office'
       ? z.string().min(1, t('checkout.officeRequired'))
       : z.string().optional(),
-    deliveryType: z.enum(['address', 'office']),
     paymentMethod: z.enum(['cod', 'card']),
   });
 
@@ -487,33 +487,36 @@ const Checkout = () => {
         phone: fullPhoneNumber, // Full phone with country code
         phoneCountryCode: phoneCountryCode,
         phoneNumber: formData.phoneNumber,
-        address: formData.deliveryType === 'office' && selectedOffice
+        address: selectedShippingMethod?.type === 'office' && selectedOffice
           ? `${selectedOffice.name}, ${selectedOffice.address}`
           : formData.address,
-        city: formData.deliveryType === 'office' && selectedOffice
+        city: selectedShippingMethod?.type === 'office' && selectedOffice
           ? selectedOffice.place  // place = city from NextLevel API
           : formData.city,
-        postalCode: formData.deliveryType === 'office' && selectedOffice
+        postalCode: selectedShippingMethod?.type === 'office' && selectedOffice
           ? selectedOffice.post_code
           : formData.postalCode,
         // Shipping country info
         shippingCountryCode: formData.shippingCountry,
         shippingCountryName: selectedCountry?.name || formData.shippingCountry,
-        // Shipping method (to_address or to_office)
-        shippingMethod: formData.deliveryType === 'office' ? 'to_office' : 'to_address',
+        // Shipping method info
+        shippingMethod: selectedShippingMethod?.id || '',
+        shippingMethodName: selectedShippingMethod?.name || '',
+        shippingMethodType: selectedShippingMethod?.type || 'address',
         // Pricing
         shippingPrice: shippingPrice,
+        shippingCurrency: shippingCurrency,
         totalWithShipping: totalWithShipping,
         // Courier info
-        courierName: currentCourier?.name || null,
-        courierCode: currentCourier?.code || null,
+        courierName: selectedShippingMethod?.courierName || null,
+        courierCode: selectedShippingMethod?.courierCode || null,
         // Courier office details (only when delivery to office)
-        courierOfficeId: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.id : null,
-        courierOfficeName: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.name : null,
-        courierOfficeAddress: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.address : null,
-        courierOfficeCity: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.place : null,
-        courierOfficePostCode: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.post_code : null,
-        courierOfficeCountryCode: formData.deliveryType === 'office' ? formData.shippingCountry : null,
+        courierOfficeId: selectedShippingMethod?.type === 'office' && selectedOffice ? selectedOffice.id : null,
+        courierOfficeName: selectedShippingMethod?.type === 'office' && selectedOffice ? selectedOffice.name : null,
+        courierOfficeAddress: selectedShippingMethod?.type === 'office' && selectedOffice ? selectedOffice.address : null,
+        courierOfficeCity: selectedShippingMethod?.type === 'office' && selectedOffice ? selectedOffice.place : null,
+        courierOfficePostCode: selectedShippingMethod?.type === 'office' && selectedOffice ? selectedOffice.post_code : null,
+        courierOfficeCountryCode: selectedShippingMethod?.type === 'office' ? formData.shippingCountry : null,
       };
 
       const cartItems = items.map(item => ({
@@ -570,7 +573,7 @@ const Checkout = () => {
               city: customer.city,
               postalCode: formData.postalCode,
               country: formData.shippingCountry,
-              deliveryType: formData.deliveryType,
+              shippingMethod: selectedShippingMethod?.name || '',
               officeId: formData.shippingOffice || null,
             },
             paymentMethod: 'cod',
@@ -582,8 +585,9 @@ const Checkout = () => {
             })),
             total: productsTotal,
             shippingPrice: shippingPrice,
+            shippingCurrency: shippingCurrency,
             totalWithShipping: totalWithShipping,
-            currency: 'BGN',
+            currency: shippingCurrency,
           },
         });
 
@@ -735,75 +739,45 @@ const Checkout = () => {
                   </Select>
                 </div>
 
-                {/* Courier Selection - only show for BG with multiple couriers */}
-                {formData.shippingCountry === 'BG' && availableCouriers.length > 1 && (
-                  <div className="space-y-2">
-                    <Label>{t('checkout.courier')} *</Label>
-                    <Select
-                      value={formData.selectedCourier}
-                      onValueChange={handleCourierChange}
-                    >
-                      <SelectTrigger className="bg-background">
-                        <SelectValue placeholder={t('checkout.selectCourier')} />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background">
-                        {availableCouriers.map((courier) => (
-                          <SelectItem key={courier.code} value={courier.code}>
-                            <div className="flex items-center gap-2">
-                              <Truck className="w-4 h-4" />
-                              {courier.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {/* Courier display for GR/RO - readonly */}
-                {(formData.shippingCountry === 'GR' || formData.shippingCountry === 'RO') && currentCourier && (
-                  <div className="space-y-2">
-                    <Label>{t('checkout.courier')}</Label>
-                    <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50">
-                      <Truck className="w-5 h-5 text-primary" />
-                      <span className="font-medium">{currentCourier.name}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Delivery Type Selection */}
+                {/* Shipping Method Selection */}
                 {formData.shippingCountry && (
                   <div className="space-y-4">
-                    <Label>{t('checkout.deliveryType')} *</Label>
+                    <Label>{t('checkout.shippingMethod')} *</Label>
                     <RadioGroup
-                      value={formData.deliveryType}
-                      onValueChange={(value) => setFormData(prev => ({ 
-                        ...prev, 
-                        deliveryType: value,
-                        shippingOffice: ''
-                      }))}
+                      value={formData.shippingMethodId}
+                      onValueChange={handleShippingMethodChange}
                       className="space-y-3"
                     >
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                        <RadioGroupItem value="address" id="delivery-address" />
-                        <Label htmlFor="delivery-address" className="flex items-center gap-2 cursor-pointer flex-1">
-                          <MapPin className="w-5 h-5 text-primary" />
-                          {t('checkout.deliveryToAddress')}
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                        <RadioGroupItem value="office" id="delivery-office" />
-                        <Label htmlFor="delivery-office" className="flex items-center gap-2 cursor-pointer flex-1">
-                          <Building2 className="w-5 h-5 text-primary" />
-                          {t('checkout.deliveryToOffice')}
-                        </Label>
-                      </div>
+                      {availableShippingMethods.map((method) => (
+                        <div 
+                          key={method.id}
+                          className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <RadioGroupItem value={method.id} id={`method-${method.id}`} />
+                          <Label 
+                            htmlFor={`method-${method.id}`} 
+                            className="flex items-center justify-between cursor-pointer flex-1"
+                          >
+                            <div className="flex items-center gap-2">
+                              {method.type === 'office' ? (
+                                <Package className="w-5 h-5 text-primary" />
+                              ) : (
+                                <Truck className="w-5 h-5 text-primary" />
+                              )}
+                              <span>{method.name}</span>
+                            </div>
+                            <span className="font-semibold">
+                              {method.price.toFixed(2)} {method.currencyLabel}
+                            </span>
+                          </Label>
+                        </div>
+                      ))}
                     </RadioGroup>
                   </div>
                 )}
 
-                {/* Office Selection (for office delivery) - Searchable Combobox */}
-                {formData.deliveryType === 'office' && formData.shippingCountry && (
+                {/* Office Selection (for office delivery methods) */}
+                {selectedShippingMethod?.type === 'office' && formData.shippingCountry && (
                   <OfficeCombobox
                     offices={offices}
                     value={formData.shippingOffice}
@@ -814,8 +788,8 @@ const Checkout = () => {
                   />
                 )}
 
-                {/* Address Fields (for address delivery) */}
-                {formData.deliveryType === 'address' && (
+                {/* Address Fields (for address delivery methods) */}
+                {selectedShippingMethod?.type === 'address' && (
                   <>
                     <div className="space-y-2">
                       <Label htmlFor="address">{t('checkout.address')} *</Label>
@@ -824,7 +798,7 @@ const Checkout = () => {
                         name="address"
                         value={formData.address}
                         onChange={handleInputChange}
-                        required={formData.deliveryType === 'address'}
+                        required={selectedShippingMethod?.type === 'address'}
                       />
                     </div>
 
@@ -836,7 +810,7 @@ const Checkout = () => {
                           name="city"
                           value={formData.city}
                           onChange={handleInputChange}
-                          required={formData.deliveryType === 'address'}
+                          required={selectedShippingMethod?.type === 'address'}
                         />
                       </div>
                       <div className="space-y-2">
@@ -846,11 +820,21 @@ const Checkout = () => {
                           name="postalCode"
                           value={formData.postalCode}
                           onChange={handleInputChange}
-                          required={formData.deliveryType === 'address'}
+                          required={selectedShippingMethod?.type === 'address'}
                         />
                       </div>
                     </div>
                   </>
+                )}
+
+                {/* Easybox info (placeholder for future) */}
+                {selectedShippingMethod?.type === 'easybox' && (
+                  <div className="p-4 border rounded-lg bg-muted/50">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Package className="w-5 h-5" />
+                      <span>{t('checkout.easyboxInfo')}</span>
+                    </div>
+                  </div>
                 )}
 
                 <div className="space-y-4">
@@ -884,7 +868,8 @@ const Checkout = () => {
                   disabled={
                     isSubmitting || 
                     !formData.shippingCountry || 
-                    (formData.deliveryType === 'office' && (!formData.shippingOffice || offices.length === 0 || loadingOffices))
+                    !formData.shippingMethodId ||
+                    (selectedShippingMethod?.type === 'office' && (!formData.shippingOffice || offices.length === 0 || loadingOffices))
                   }
                 >
                   {isSubmitting ? (
@@ -945,10 +930,10 @@ const Checkout = () => {
                 {/* Shipping price */}
                 <div className="flex justify-between text-muted-foreground">
                   <span>{t('checkout.shippingPrice')}</span>
-                  {formData.shippingCountry && shippingRate ? (
-                    <span>{shippingPrice} {shippingRate.label}</span>
+                  {selectedShippingMethod ? (
+                    <span>{shippingPrice.toFixed(2)} {shippingCurrencyLabel}</span>
                   ) : (
-                    <span className="text-sm italic">{t('checkout.selectCountryForShipping')}</span>
+                    <span className="text-sm italic">{t('checkout.selectShippingMethod')}</span>
                   )}
                 </div>
                 
@@ -956,15 +941,22 @@ const Checkout = () => {
                 <div className="flex justify-between text-lg font-semibold pt-2 border-t">
                   <span>{t('checkout.total')}</span>
                   <div className="text-right">
-                    {formData.shippingCountry ? (
+                    {selectedShippingMethod ? (
                       <>
-                        <span className="block">{t('products.priceBGN', { price: Math.round(totalWithShipping) })}</span>
-                        <span className="text-sm text-muted-foreground font-normal">
-                          {t('products.priceEUR', { price: (totalWithShipping / 1.9553).toFixed(2) })}
+                        <span className="block">
+                          {shippingCurrency === 'BGN' 
+                            ? t('products.priceBGN', { price: Math.round(totalWithShipping) })
+                            : `${totalWithShipping.toFixed(2)} ${shippingCurrencyLabel}`
+                          }
                         </span>
+                        {shippingCurrency === 'BGN' && (
+                          <span className="text-sm text-muted-foreground font-normal">
+                            {t('products.priceEUR', { price: (totalWithShipping / 1.9553).toFixed(2) })}
+                          </span>
+                        )}
                       </>
                     ) : (
-                      <span className="text-muted-foreground">{t('checkout.selectCountryForTotal')}</span>
+                      <span className="text-muted-foreground">{t('checkout.selectShippingForTotal')}</span>
                     )}
                   </div>
                 </div>
