@@ -63,6 +63,9 @@ serve(async (req) => {
         shipping_method: customer?.shippingMethod,
         shipping_price: customer?.shippingPrice || 0,
         total_with_shipping: customer?.totalWithShipping || totalAmount,
+        // Courier info
+        courier_name: customer?.courierName || null,
+        courier_code: customer?.courierCode || null,
         // Courier office info (only for office delivery)
         courier_office_id: customer?.courierOfficeId || null,
         courier_office_name: customer?.courierOfficeName || null,

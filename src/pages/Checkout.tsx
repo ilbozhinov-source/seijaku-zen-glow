@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCartStore } from '@/stores/cartStore';
-import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag, MapPin, Building2, Search, Check, Phone } from 'lucide-react';
+import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag, MapPin, Building2, Search, Check, Phone, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
@@ -29,6 +29,27 @@ const PHONE_CONFIG: Record<string, { code: string; minLength: number; maxLength:
   GR: { code: '+30', minLength: 10, maxLength: 10, placeholder: '6912345678' },
   RO: { code: '+40', minLength: 9, maxLength: 10, placeholder: '712345678' },
 };
+
+// Courier configuration by country
+// For BG: Fetch from Fulfillment API (Econt, Sameday)
+// For GR and RO: Fixed couriers
+interface CourierConfig {
+  name: string;
+  code: string;
+  supportsAddress: boolean;
+  supportsOffice: boolean;
+}
+
+const FIXED_COURIERS: Record<string, CourierConfig> = {
+  GR: { name: 'SpeedX', code: 'SPEEDX', supportsAddress: true, supportsOffice: true },
+  RO: { name: 'FAN', code: 'FAN', supportsAddress: true, supportsOffice: true },
+};
+
+// Default couriers for BG (will be fetched from API)
+const DEFAULT_BG_COURIERS: CourierConfig[] = [
+  { name: 'Econt', code: 'ECONT', supportsAddress: true, supportsOffice: true },
+  { name: 'Sameday', code: 'SAMEDAY', supportsAddress: true, supportsOffice: true },
+];
 
 // Shipping rates by country and delivery method (in local currency)
 // Easy to change these values later
@@ -201,10 +222,14 @@ const Checkout = () => {
     shippingOffice: '',
     deliveryType: 'address', // 'address' or 'office'
     paymentMethod: 'cod',
+    selectedCourier: '', // Courier code
   });
 
   // Phone validation error
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  
+  // Couriers state
+  const [availableCouriers, setAvailableCouriers] = useState<CourierConfig[]>([]);
 
   // Get phone config for current country
   const phoneConfig = formData.shippingCountry ? PHONE_CONFIG[formData.shippingCountry] : null;
@@ -261,15 +286,54 @@ const Checkout = () => {
     detectLocation();
   }, [i18n]);
 
+  // Update couriers when country changes
+  useEffect(() => {
+    if (!formData.shippingCountry) {
+      setAvailableCouriers([]);
+      return;
+    }
+
+    // For GR and RO: Use fixed couriers
+    if (formData.shippingCountry === 'GR' || formData.shippingCountry === 'RO') {
+      const fixedCourier = FIXED_COURIERS[formData.shippingCountry];
+      setAvailableCouriers([fixedCourier]);
+      // Auto-select the only courier
+      setFormData(prev => ({ ...prev, selectedCourier: fixedCourier.code }));
+    } else if (formData.shippingCountry === 'BG') {
+      // For BG: Use default couriers (could fetch from API in future)
+      setAvailableCouriers(DEFAULT_BG_COURIERS);
+      // Auto-select first courier if none selected
+      if (!formData.selectedCourier) {
+        setFormData(prev => ({ ...prev, selectedCourier: DEFAULT_BG_COURIERS[0].code }));
+      }
+    }
+  }, [formData.shippingCountry]);
+
   // Save shipping country to localStorage when changed
   const handleCountryChange = useCallback((value: string) => {
     setFormData(prev => ({ 
       ...prev, 
       shippingCountry: value,
-      shippingOffice: '' // Reset office when country changes
+      shippingOffice: '', // Reset office when country changes
+      selectedCourier: '', // Reset courier when country changes
+      deliveryType: 'address', // Reset delivery type
     }));
     localStorage.setItem('shipping_country', value);
   }, []);
+
+  // Handle courier change
+  const handleCourierChange = useCallback((courierCode: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      selectedCourier: courierCode,
+      shippingOffice: '', // Reset office when courier changes
+    }));
+  }, []);
+
+  // Get current courier config
+  const currentCourier = useMemo(() => {
+    return availableCouriers.find(c => c.code === formData.selectedCourier);
+  }, [availableCouriers, formData.selectedCourier]);
 
   const productsTotal = getTotalPrice();
   const shippingRate = formData.shippingCountry ? SHIPPING_RATES[formData.shippingCountry] : null;
@@ -440,6 +504,9 @@ const Checkout = () => {
         // Pricing
         shippingPrice: shippingPrice,
         totalWithShipping: totalWithShipping,
+        // Courier info
+        courierName: currentCourier?.name || null,
+        courierCode: currentCourier?.code || null,
         // Courier office details (only when delivery to office)
         courierOfficeId: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.id : null,
         courierOfficeName: formData.deliveryType === 'office' && selectedOffice ? selectedOffice.name : null,
@@ -667,6 +734,42 @@ const Checkout = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Courier Selection - only show for BG with multiple couriers */}
+                {formData.shippingCountry === 'BG' && availableCouriers.length > 1 && (
+                  <div className="space-y-2">
+                    <Label>{t('checkout.courier')} *</Label>
+                    <Select
+                      value={formData.selectedCourier}
+                      onValueChange={handleCourierChange}
+                    >
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder={t('checkout.selectCourier')} />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background">
+                        {availableCouriers.map((courier) => (
+                          <SelectItem key={courier.code} value={courier.code}>
+                            <div className="flex items-center gap-2">
+                              <Truck className="w-4 h-4" />
+                              {courier.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Courier display for GR/RO - readonly */}
+                {(formData.shippingCountry === 'GR' || formData.shippingCountry === 'RO') && currentCourier && (
+                  <div className="space-y-2">
+                    <Label>{t('checkout.courier')}</Label>
+                    <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50">
+                      <Truck className="w-5 h-5 text-primary" />
+                      <span className="font-medium">{currentCourier.name}</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Delivery Type Selection */}
                 {formData.shippingCountry && (
