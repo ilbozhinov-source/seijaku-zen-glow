@@ -74,8 +74,14 @@ async function fetchCountries(): Promise<{ success: boolean; data?: any; error?:
 
 // Fetch offices for a country from NextLevel API
 // API docs: GET https://api.nextlevel.delivery/v1/fulfillment/offices/
-// Params: country (BG/GR/RO), place (city), post_code
-async function fetchOffices(countryCode: string, place?: string, postCode?: string): Promise<{ success: boolean; offices: any[]; error?: string }> {
+// Params: country (BG/GR/RO), place (city), post_code, courier (optional)
+async function fetchOffices(
+  countryCode: string, 
+  place?: string, 
+  postCode?: string,
+  courier?: string,
+  filterMachines?: boolean
+): Promise<{ success: boolean; offices: any[]; error?: string }> {
   const appId = Deno.env.get('FULFILLMENT_APP_ID');
   const appSecret = Deno.env.get('FULFILLMENT_APP_SECRET');
 
@@ -85,13 +91,14 @@ async function fetchOffices(countryCode: string, place?: string, postCode?: stri
   }
 
   try {
-    console.log('Fetching offices for country:', countryCode, 'place:', place, 'post_code:', postCode);
+    console.log('Fetching offices for country:', countryCode, 'place:', place, 'post_code:', postCode, 'courier:', courier);
     
     // Build query parameters as per NextLevel API docs
     const params = new URLSearchParams();
     params.append('country', countryCode);
     if (place) params.append('place', place);
     if (postCode) params.append('post_code', postCode);
+    if (courier) params.append('courier', courier);
     
     const url = `${NEXTLEVEL_API_BASE}/offices/?${params.toString()}`;
     console.log('Calling NextLevel API:', url);
@@ -124,36 +131,35 @@ async function fetchOffices(countryCode: string, place?: string, postCode?: stri
     console.log('NextLevel raw response type:', typeof data, Array.isArray(data) ? `array of ${data.length}` : 'not array');
     
     // Map API response to our standardized format
-    // NextLevel returns array of offices with: id, name, place (city), post_code, address, country
+    // NextLevel returns array of offices with: id, name, place (city), post_code, address, country, is_machine, street, street_num
+    let officesArray: any[] = [];
+    
     if (Array.isArray(data)) {
-      const mappedOffices = data.map((office: any) => ({
-        id: office.id?.toString() || '',
-        name: office.name || '',
-        place: office.place || office.city || '',
-        post_code: office.post_code || office.postcode || '',
-        address: office.address || '',
-        country: office.country || countryCode,
-      }));
-      console.log('Mapped offices count:', mappedOffices.length);
-      return { success: true, offices: mappedOffices };
+      officesArray = data;
+    } else if (data?.data && Array.isArray(data.data)) {
+      officesArray = data.data;
     }
     
-    // If response has a data array property
-    if (data?.data && Array.isArray(data.data)) {
-      const mappedOffices = data.data.map((office: any) => ({
-        id: office.id?.toString() || '',
-        name: office.name || '',
-        place: office.place || office.city || '',
-        post_code: office.post_code || office.postcode || '',
-        address: office.address || '',
-        country: office.country || countryCode,
-      }));
-      console.log('Mapped offices from data property, count:', mappedOffices.length);
-      return { success: true, offices: mappedOffices };
+    // Filter by is_machine if requested (for Sameday easybox)
+    if (filterMachines) {
+      officesArray = officesArray.filter((office: any) => office.is_machine === true);
+      console.log('Filtered to machines only, count:', officesArray.length);
     }
     
-    console.log('Unexpected response format, returning empty offices');
-    return { success: true, offices: [] };
+    const mappedOffices = officesArray.map((office: any) => ({
+      id: office.id?.toString() || '',
+      name: office.name || '',
+      place: office.place || office.city || '',
+      post_code: office.post_code || office.postcode || '',
+      address: office.street && office.street_num 
+        ? `${office.street} ${office.street_num}` 
+        : (office.address || ''),
+      country: office.country || countryCode,
+      is_machine: office.is_machine || false,
+    }));
+    
+    console.log('Mapped offices count:', mappedOffices.length);
+    return { success: true, offices: mappedOffices };
   } catch (error: unknown) {
     console.error('NextLevel offices API request failed:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -274,11 +280,13 @@ serve(async (req) => {
     }
 
     // Fetch offices for a country
-    // Params: country (BG/GR/RO), place (city), post_code
+    // Params: country (BG/GR/RO), place (city), post_code, courier (optional), machines_only (optional)
     if (action === 'offices') {
       const countryCode = url.searchParams.get('country');
       const place = url.searchParams.get('place') || undefined;
       const postCode = url.searchParams.get('post_code') || undefined;
+      const courier = url.searchParams.get('courier') || undefined;
+      const machinesOnly = url.searchParams.get('machines_only') === 'true';
       
       if (!countryCode) {
         return new Response(JSON.stringify({ success: false, error: 'Country code is required', offices: [] }), {
@@ -287,13 +295,35 @@ serve(async (req) => {
         });
       }
       
-      console.log('Fetching offices for country:', countryCode, 'place:', place, 'post_code:', postCode);
-      const result = await fetchOffices(countryCode, place, postCode);
+      console.log('Fetching offices for country:', countryCode, 'place:', place, 'post_code:', postCode, 'courier:', courier, 'machines_only:', machinesOnly);
+      const result = await fetchOffices(countryCode, place, postCode, courier, machinesOnly);
       
       // Return standardized format: { success, offices, error? }
       return new Response(JSON.stringify({
         success: result.success,
         offices: result.offices,
+        error: result.error || undefined,
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Fetch Sameday easybox lockers (machines) for Bulgaria
+    // Params: place (city) - optional filter by city
+    if (action === 'sameday-boxes') {
+      const place = url.searchParams.get('place') || undefined;
+      
+      console.log('Fetching Sameday easybox lockers, place:', place);
+      const result = await fetchOffices('BG', place, undefined, 'Sameday', true);
+      
+      // Extract unique cities from boxes for dropdown
+      const cities = [...new Set(result.offices.map((o: any) => o.place))].filter(Boolean).sort();
+      
+      return new Response(JSON.stringify({
+        success: result.success,
+        boxes: result.offices,
+        cities: cities,
         error: result.error || undefined,
       }), {
         status: 200,
