@@ -46,19 +46,25 @@ async function sendToFulfillment(order: any, supabase: any): Promise<string | nu
     };
 
     console.log('NextLevel payload:', JSON.stringify(payload, null, 2));
+    console.log('Using credentials - App ID:', appId, 'App Secret length:', appSecret?.length);
 
-    const response = await fetch(`${NEXTLEVEL_API_BASE}/offers`, {
+    const requestUrl = `${NEXTLEVEL_API_BASE}/offers`;
+    console.log('Sending request to:', requestUrl);
+
+    const response = await fetch(requestUrl, {
       method: 'POST',
       headers: {
         'app-id': appId,
         'app-secret': appSecret,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify(payload),
     });
 
     const responseText = await response.text();
     console.log('NextLevel API response status:', response.status);
+    console.log('NextLevel API response headers:', JSON.stringify(Object.fromEntries(response.headers.entries())));
     console.log('NextLevel API response body:', responseText);
 
     if (!response.ok) {
