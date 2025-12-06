@@ -49,8 +49,8 @@ interface ShippingMethod {
 // Shipping methods configuration by country
 const SHIPPING_METHODS: Record<string, ShippingMethod[]> = {
   BG: [
-    { id: 'econt_office', name: 'Еконт — до офис', price: 8.00, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'ECONT', courierName: 'Econt', type: 'office' },
-    { id: 'econt_address', name: 'Еконт — до адрес', price: 7.00, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'ECONT', courierName: 'Econt', type: 'address' },
+    { id: 'econt_office', name: 'Еконт — до офис', price: 7.00, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'ECONT', courierName: 'Econt', type: 'office' },
+    { id: 'econt_address', name: 'Еконт — до адрес', price: 6.00, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'ECONT', courierName: 'Econt', type: 'address' },
     { id: 'sameday_easybox', name: 'Sameday easybox', price: 4.50, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'SAMEDAY', courierName: 'Sameday', type: 'easybox' },
   ],
   GR: [
