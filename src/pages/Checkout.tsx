@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
 import Footer from '@/components/Footer';
+import { CityAutocomplete } from '@/components/CityAutocomplete';
 
 // Supported shipping countries - only these three
 const SUPPORTED_SHIPPING_COUNTRIES = [
@@ -802,28 +803,16 @@ const Checkout = () => {
                       />
                     </div>
 
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="city">{t('checkout.city')} *</Label>
-                        <Input
-                          id="city"
-                          name="city"
-                          value={formData.city}
-                          onChange={handleInputChange}
-                          required={selectedShippingMethod?.type === 'address'}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="postalCode">{t('checkout.postalCode')} *</Label>
-                        <Input
-                          id="postalCode"
-                          name="postalCode"
-                          value={formData.postalCode}
-                          onChange={handleInputChange}
-                          required={selectedShippingMethod?.type === 'address'}
-                        />
-                      </div>
-                    </div>
+                    <CityAutocomplete
+                      country={formData.shippingCountry}
+                      value={formData.city}
+                      postalCode={formData.postalCode}
+                      onCityChange={(city) => setFormData(prev => ({ ...prev, city }))}
+                      onPostalCodeChange={(postalCode) => setFormData(prev => ({ ...prev, postalCode }))}
+                      cityLabel={t('checkout.city')}
+                      postalCodeLabel={t('checkout.postalCode')}
+                      required={selectedShippingMethod?.type === 'address'}
+                    />
                   </>
                 )}
 
