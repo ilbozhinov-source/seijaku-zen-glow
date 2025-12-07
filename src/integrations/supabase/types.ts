@@ -28,11 +28,15 @@ export type Database = {
           customer_email: string | null
           customer_name: string | null
           customer_phone: string | null
+          fulfillment_error: string | null
+          fulfillment_order_id: string | null
           id: string
           items: Json
           payment_method: string
           phone_country_code: string | null
           phone_number: string | null
+          postal_code: string | null
+          sent_to_fulfillment: boolean | null
           shipping_address: string | null
           shipping_city: string | null
           shipping_country: string | null
@@ -60,11 +64,15 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          fulfillment_error?: string | null
+          fulfillment_order_id?: string | null
           id?: string
           items: Json
           payment_method: string
           phone_country_code?: string | null
           phone_number?: string | null
+          postal_code?: string | null
+          sent_to_fulfillment?: boolean | null
           shipping_address?: string | null
           shipping_city?: string | null
           shipping_country?: string | null
@@ -92,11 +100,15 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          fulfillment_error?: string | null
+          fulfillment_order_id?: string | null
           id?: string
           items?: Json
           payment_method?: string
           phone_country_code?: string | null
           phone_number?: string | null
+          postal_code?: string | null
+          sent_to_fulfillment?: boolean | null
           shipping_address?: string | null
           shipping_city?: string | null
           shipping_country?: string | null
