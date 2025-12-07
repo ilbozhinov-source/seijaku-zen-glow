@@ -1,15 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CheckCircle, Truck } from 'lucide-react';
+import { CheckCircle, Truck, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/stores/cartStore';
 import { supabase } from '@/integrations/supabase/client';
+
+interface OrderFulfillmentData {
+  tracking_number: string | null;
+  sent_to_fulfillment: boolean | null;
+  fulfillment_error: string | null;
+}
 
 const CheckoutSuccess = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const clearCart = useCartStore((state) => state.clearCart);
-  const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
+  const [orderData, setOrderData] = useState<OrderFulfillmentData | null>(null);
   
   const orderId = searchParams.get('order_id');
 
@@ -18,23 +24,23 @@ const CheckoutSuccess = () => {
   }, [clearCart]);
 
   useEffect(() => {
-    const fetchTracking = async () => {
+    const fetchOrderData = async () => {
       if (orderId) {
         const { data } = await supabase
           .from('orders')
-          .select('tracking_number')
+          .select('tracking_number, sent_to_fulfillment, fulfillment_error')
           .eq('id', orderId)
           .maybeSingle();
         
-        if (data?.tracking_number) {
-          setTrackingNumber(data.tracking_number);
+        if (data) {
+          setOrderData(data as OrderFulfillmentData);
         }
       }
     };
     
-    // Poll for tracking number (it may take a moment for webhook to process)
-    fetchTracking();
-    const interval = setInterval(fetchTracking, 2000);
+    // Poll for fulfillment data (it may take a moment for webhook to process)
+    fetchOrderData();
+    const interval = setInterval(fetchOrderData, 2000);
     setTimeout(() => clearInterval(interval), 10000);
     
     return () => clearInterval(interval);
@@ -61,12 +67,30 @@ const CheckoutSuccess = () => {
           </p>
         )}
 
-        {trackingNumber && (
+        {/* Show tracking number if fulfillment was successful */}
+        {orderData?.sent_to_fulfillment && orderData?.tracking_number && (
           <div className="bg-primary/10 rounded-lg p-4 flex items-center justify-center gap-3">
             <Truck className="w-5 h-5 text-primary" />
             <div>
+              <p className="text-sm text-muted-foreground">Поръчката е изпратена към склада</p>
               <p className="text-sm text-muted-foreground">Tracking номер:</p>
-              <p className="font-mono font-bold text-foreground">{trackingNumber}</p>
+              <p className="font-mono font-bold text-foreground">{orderData.tracking_number}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Show message if fulfillment failed */}
+        {orderData?.sent_to_fulfillment === false && (
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+            <div className="text-left">
+              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                Поръчката е създадена успешно
+              </p>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                Имаше проблем със свързването към куриерската система. 
+                Ние ще обработим поръчката ви ръчно и ще се свържем с вас.
+              </p>
             </div>
           </div>
         )}

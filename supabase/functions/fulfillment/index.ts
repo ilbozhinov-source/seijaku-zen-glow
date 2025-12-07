@@ -6,6 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Correct NextLevel API endpoint for fulfillment orders
 const NEXTLEVEL_API_BASE = 'https://api.nextlevel.delivery/v1/fulfillment';
 
 interface OrderItem {
@@ -13,6 +14,7 @@ interface OrderItem {
   variantTitle: string;
   quantity: number;
   price: { amount: string; currencyCode: string };
+  sku?: string;
 }
 
 interface FulfillmentOrder {
@@ -23,23 +25,53 @@ interface FulfillmentOrder {
   shippingAddress: string;
   shippingCity: string;
   shippingCountry: string;
+  postalCode?: string;
   shippingOfficeId?: string;
   courierName?: string;
   courierCode?: string;
+  shippingMethod?: string;
   items: OrderItem[];
   totalAmount: number;
   shippingPrice: number;
   totalWithShipping: number;
   currency: string;
+  paymentMethod: string;
+}
+
+// Map our courier codes to NextLevel courier names
+function mapCourierService(courierCode: string | undefined, shippingMethod: string | undefined, country: string): { courier: string; service: string } {
+  // Default mapping based on country and shipping method
+  if (country === 'BG') {
+    if (shippingMethod === 'sameday_box' || courierCode === 'Sameday') {
+      return { courier: 'Sameday', service: 'easybox' };
+    }
+    if (courierCode === 'Econt' || shippingMethod?.includes('econt')) {
+      return { courier: 'Econt', service: shippingMethod === 'to_office' ? 'office' : 'address' };
+    }
+    // Default to Econt for Bulgaria
+    return { courier: 'Econt', service: 'address' };
+  }
+  
+  if (country === 'GR') {
+    return { courier: 'SpeedX', service: 'address' };
+  }
+  
+  if (country === 'RO') {
+    return { courier: 'FAN', service: 'address' };
+  }
+  
+  // Default
+  return { courier: courierCode || 'Econt', service: 'address' };
 }
 
 // Fetch countries from NextLevel API
 async function fetchCountries(): Promise<{ success: boolean; data?: any; error?: string }> {
-  const apiKey = Deno.env.get('FULFILLMENT_APP_ID');
+  const appId = Deno.env.get('NEXTLEVEL_APP_ID');
+  const appSecret = Deno.env.get('NEXTLEVEL_APP_SECRET');
 
-  if (!apiKey) {
-    console.error('NextLevel API key not configured');
-    return { success: false, error: 'Fulfillment API key not configured' };
+  if (!appId || !appSecret) {
+    console.error('NextLevel API credentials not configured');
+    return { success: false, error: 'Fulfillment API credentials not configured' };
   }
 
   try {
@@ -48,8 +80,8 @@ async function fetchCountries(): Promise<{ success: boolean; data?: any; error?:
     const response = await fetch(`${NEXTLEVEL_API_BASE}/countries`, {
       method: 'GET',
       headers: {
-        'api-key': apiKey,
-        'Authorization': `Bearer ${apiKey}`,
+        'app-id': appId,
+        'app-secret': appSecret,
         'Content-Type': 'application/json',
       },
     });
@@ -72,8 +104,6 @@ async function fetchCountries(): Promise<{ success: boolean; data?: any; error?:
 }
 
 // Fetch offices for a country from NextLevel API
-// API docs: GET https://api.nextlevel.delivery/v1/fulfillment/offices/
-// Params: country (BG/GR/RO), place (city), post_code, courier (optional)
 async function fetchOffices(
   countryCode: string, 
   place?: string, 
@@ -81,17 +111,17 @@ async function fetchOffices(
   courier?: string,
   filterMachines?: boolean
 ): Promise<{ success: boolean; offices: any[]; error?: string }> {
-  const apiKey = Deno.env.get('FULFILLMENT_APP_ID');
+  const appId = Deno.env.get('NEXTLEVEL_APP_ID');
+  const appSecret = Deno.env.get('NEXTLEVEL_APP_SECRET');
 
-  if (!apiKey) {
-    console.error('NextLevel API key not configured');
-    return { success: false, offices: [], error: 'Fulfillment API key not configured' };
+  if (!appId || !appSecret) {
+    console.error('NextLevel API credentials not configured');
+    return { success: false, offices: [], error: 'Fulfillment API credentials not configured' };
   }
 
   try {
     console.log('Fetching offices for country:', countryCode, 'place:', place, 'post_code:', postCode, 'courier:', courier);
     
-    // Build query parameters as per NextLevel API docs
     const params = new URLSearchParams();
     params.append('country', countryCode);
     if (place) params.append('place', place);
@@ -104,8 +134,8 @@ async function fetchOffices(
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'api-key': apiKey,
-        'Authorization': `Bearer ${apiKey}`,
+        'app-id': appId,
+        'app-secret': appSecret,
         'Content-Type': 'application/json',
       },
     });
@@ -128,8 +158,6 @@ async function fetchOffices(
     
     console.log('NextLevel raw response type:', typeof data, Array.isArray(data) ? `array of ${data.length}` : 'not array');
     
-    // Map API response to our standardized format
-    // NextLevel returns array of offices with: id, name, place (city), post_code, address, country, is_machine, street, street_num
     let officesArray: any[] = [];
     
     if (Array.isArray(data)) {
@@ -138,7 +166,6 @@ async function fetchOffices(
       officesArray = data.data;
     }
     
-    // Filter by is_machine if requested (for Sameday easybox)
     if (filterMachines) {
       officesArray = officesArray.filter((office: any) => office.is_machine === true);
       console.log('Filtered to machines only, count:', officesArray.length);
@@ -165,50 +192,85 @@ async function fetchOffices(
   }
 }
 
-async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{ success: boolean; trackingNumber?: string; offerNumber?: string; error?: string }> {
-  const apiKey = Deno.env.get('FULFILLMENT_APP_ID');
+// Send order to NextLevel Fulfillment API
+// Endpoint: POST https://api.nextlevel.delivery/v1/fulfillment/orders
+async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{ 
+  success: boolean; 
+  trackingNumber?: string; 
+  fulfillmentOrderId?: string; 
+  error?: string 
+}> {
+  const appId = Deno.env.get('NEXTLEVEL_APP_ID');
+  const appSecret = Deno.env.get('NEXTLEVEL_APP_SECRET');
 
-  if (!apiKey) {
-    console.error('Fulfillment API key not configured');
-    return { success: false, error: 'Fulfillment API key not configured' };
+  if (!appId || !appSecret) {
+    console.error('Fulfillment API credentials not configured');
+    return { success: false, error: 'Fulfillment API credentials not configured' };
   }
 
-  console.log('Sending order to fulfillment API:', order.orderId);
+  console.log('Sending order to NextLevel fulfillment API:', order.orderId);
+
+  // Map courier and service based on order details
+  const { courier, service } = mapCourierService(order.courierCode, order.shippingMethod, order.shippingCountry);
 
   // Prepare items for NextLevel API
-  const offerItems = order.items.map(item => ({
-    name: `${item.productTitle} - ${item.variantTitle}`,
+  const items = order.items.map((item, index) => ({
+    sku: item.sku || `SKU-${index + 1}`,
+    name: `${item.productTitle} - ${item.variantTitle}`.trim(),
     quantity: item.quantity,
+    weight: 0.1, // Default weight in kg for matcha
     price: parseFloat(item.price.amount),
   }));
 
-  // Prepare the payload for NextLevel offers API
-  // Based on NextLevel API structure for creating fulfillment offers
+  // Build the payload according to NextLevel API structure
+  // POST /v1/fulfillment/orders
+  // API requires "products" field instead of "items"
   const payload = {
+    // Order ID (NextLevel requires "order_id")
+    order_id: order.orderId,
     external_id: order.orderId,
-    recipient_name: order.customerName,
-    recipient_phone: order.customerPhone,
-    recipient_email: order.customerEmail,
-    recipient_country: order.shippingCountry,
-    recipient_city: order.shippingCity,
-    recipient_address: order.shippingAddress,
-    recipient_office_id: order.shippingOfficeId || null,
-    courier: order.courierCode || null,
-    items: offerItems,
-    cod_amount: order.totalWithShipping,
+    
+    // Receiver information
+    receiver_name: order.customerName,
+    receiver_phone: order.customerPhone,
+    receiver_email: order.customerEmail,
+    receiver_country: order.shippingCountry,
+    receiver_city: order.shippingCity,
+    receiver_address: order.shippingAddress,
+    receiver_postcode: order.postalCode || '',
+    
+    // Courier and service
+    courier_name: courier,
+    service: service,
+    
+    // Office delivery (if applicable)
+    office_id: order.shippingOfficeId || null,
+    
+    // Products (NextLevel uses "products" not "items")
+    products: items,
+    
+    // Payment and COD
+    cod_amount: order.paymentMethod === 'cod' ? order.totalWithShipping : 0,
     currency: order.currency,
-    comment: `Поръчка от gomatcha.bg`,
+    
+    // Additional info
+    comment: `Поръчка от gomatcha.bg - ${order.orderId}`,
+    
+    // Shipping price
+    shipping_price: order.shippingPrice,
+    total_amount: order.totalWithShipping,
   };
 
   try {
-    console.log('Fulfillment payload:', JSON.stringify(payload, null, 2));
-    console.log('Using API key:', apiKey);
+    console.log('=== NextLevel Fulfillment Request ===');
+    console.log('URL: POST', `${NEXTLEVEL_API_BASE}/orders`);
+    console.log('Payload:', JSON.stringify(payload, null, 2));
 
-    const response = await fetch(`${NEXTLEVEL_API_BASE}/offers`, {
+    const response = await fetch(`${NEXTLEVEL_API_BASE}/orders`, {
       method: 'POST',
       headers: {
-        'api-key': apiKey,
-        'Authorization': `Bearer ${apiKey}`,
+        'app-id': appId,
+        'app-secret': appSecret,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
@@ -216,38 +278,45 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{ succes
     });
 
     const responseText = await response.text();
-    console.log('NextLevel API response status:', response.status);
-    console.log('NextLevel API response body:', responseText);
+    console.log('=== NextLevel Fulfillment Response ===');
+    console.log('Status:', response.status);
+    console.log('Headers:', JSON.stringify(Object.fromEntries(response.headers.entries())));
+    console.log('Body:', responseText);
 
     if (!response.ok) {
-      console.error('Fulfillment API error:', response.status, responseText);
-      return { success: false, error: `API error: ${response.status} - ${responseText}` };
+      console.error('NextLevel Fulfillment API error:', response.status, responseText);
+      return { 
+        success: false, 
+        error: `NextLevel API error: ${response.status}` 
+      };
     }
 
     let result;
     try {
       result = JSON.parse(responseText);
     } catch {
-      console.error('Failed to parse fulfillment response:', responseText);
-      return { success: false, error: 'Invalid API response' };
+      console.error('Failed to parse NextLevel response:', responseText);
+      return { success: false, error: 'Invalid API response from NextLevel' };
     }
     
-    console.log('Fulfillment API response parsed:', result);
+    console.log('NextLevel Fulfillment API response parsed:', result);
     
-    // NextLevel returns offer number and tracking number
-    const trackingNumber = result.tracking_number || result.trackingNumber || result.number || null;
-    const offerNumber = result.number || result.offer_number || result.id || null;
+    // Extract tracking number and fulfillment order ID from response
+    const trackingNumber = result.tracking_number || result.trackingNumber || result.awb || null;
+    const fulfillmentOrderId = result.id || result.order_id || result.fulfillment_order_id || null;
     
-    console.log('Order sent to fulfillment. Tracking:', trackingNumber, 'Offer:', offerNumber);
+    console.log('Order sent to fulfillment successfully.');
+    console.log('Tracking Number:', trackingNumber);
+    console.log('Fulfillment Order ID:', fulfillmentOrderId);
     
     return { 
       success: true, 
-      trackingNumber: trackingNumber,
-      offerNumber: offerNumber,
+      trackingNumber: trackingNumber ? String(trackingNumber) : undefined,
+      fulfillmentOrderId: fulfillmentOrderId ? String(fulfillmentOrderId) : undefined,
     };
 
   } catch (error: unknown) {
-    console.error('Fulfillment API request failed:', error);
+    console.error('NextLevel Fulfillment API request failed:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return { success: false, error: message };
   }
@@ -280,7 +349,6 @@ serve(async (req) => {
     }
 
     // Fetch offices for a country
-    // Params: country (BG/GR/RO), place (city), post_code, courier (optional), machines_only (optional)
     if (action === 'offices') {
       const countryCode = url.searchParams.get('country');
       const place = url.searchParams.get('place') || undefined;
@@ -298,7 +366,6 @@ serve(async (req) => {
       console.log('Fetching offices for country:', countryCode, 'place:', place, 'post_code:', postCode, 'courier:', courier, 'machines_only:', machinesOnly);
       const result = await fetchOffices(countryCode, place, postCode, courier, machinesOnly);
       
-      // Return standardized format: { success, offices, error? }
       return new Response(JSON.stringify({
         success: result.success,
         offices: result.offices,
@@ -310,14 +377,12 @@ serve(async (req) => {
     }
 
     // Fetch Sameday easybox lockers (machines) for Bulgaria
-    // Params: place (city) - optional filter by city
     if (action === 'sameday-boxes') {
       const place = url.searchParams.get('place') || undefined;
       
       console.log('Fetching Sameday easybox lockers, place:', place);
       const result = await fetchOffices('BG', place, undefined, 'Sameday', true);
       
-      // Extract unique cities from boxes for dropdown
       const cities = [...new Set(result.offices.map((o: any) => o.place))].filter(Boolean).sort();
       
       return new Response(JSON.stringify({
@@ -335,8 +400,8 @@ serve(async (req) => {
     if (action === 'test') {
       console.log('Testing fulfillment integration...');
       
-      const appId = Deno.env.get('FULFILLMENT_APP_ID');
-      const appSecret = Deno.env.get('FULFILLMENT_APP_SECRET');
+      const appId = Deno.env.get('NEXTLEVEL_APP_ID');
+      const appSecret = Deno.env.get('NEXTLEVEL_APP_SECRET');
       
       const testOrder: FulfillmentOrder = {
         orderId: 'TEST-' + Date.now(),
@@ -346,6 +411,8 @@ serve(async (req) => {
         shippingAddress: 'ул. Тестова 1',
         shippingCity: 'София',
         shippingCountry: 'BG',
+        postalCode: '1000',
+        shippingMethod: 'to_address',
         items: [{
           productTitle: 'SEIJAKU Церемониална Матча',
           variantTitle: '30g',
@@ -353,9 +420,10 @@ serve(async (req) => {
           price: { amount: '28.00', currencyCode: 'BGN' }
         }],
         totalAmount: 28.00,
-        shippingPrice: 5.00,
-        totalWithShipping: 33.00,
-        currency: 'BGN'
+        shippingPrice: 6.00,
+        totalWithShipping: 34.00,
+        currency: 'BGN',
+        paymentMethod: 'cod',
       };
 
       const result = await sendOrderToFulfillment(testOrder);
@@ -411,24 +479,47 @@ serve(async (req) => {
         shippingAddress: order.shipping_address || '',
         shippingCity: order.shipping_city || '',
         shippingCountry: order.shipping_country || 'BG',
+        postalCode: order.postal_code || '',
+        shippingOfficeId: order.courier_office_id || undefined,
         courierName: order.courier_name || undefined,
         courierCode: order.courier_code || undefined,
+        shippingMethod: order.shipping_method || undefined,
         items: order.items as OrderItem[],
         totalAmount: order.total_amount,
         shippingPrice: order.shipping_price || 0,
         totalWithShipping: order.total_with_shipping || order.total_amount,
         currency: order.currency,
+        paymentMethod: order.payment_method,
       };
 
       const result = await sendOrderToFulfillment(fulfillmentOrder);
 
-      if (result.success && result.trackingNumber) {
-        // Update order with tracking number
-        await supabase
-          .from('orders')
-          .update({ tracking_number: result.trackingNumber })
-          .eq('id', orderId);
-        console.log('Order sent to fulfillment successfully. Tracking:', result.trackingNumber);
+      // Update order with fulfillment status
+      const updateData: any = {
+        sent_to_fulfillment: result.success,
+      };
+      
+      if (result.success) {
+        if (result.trackingNumber) {
+          updateData.tracking_number = result.trackingNumber;
+        }
+        if (result.fulfillmentOrderId) {
+          updateData.fulfillment_order_id = result.fulfillmentOrderId;
+        }
+        updateData.fulfillment_error = null;
+      } else {
+        updateData.fulfillment_error = result.error || 'Unknown fulfillment error';
+      }
+      
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update(updateData)
+        .eq('id', orderId);
+        
+      if (updateError) {
+        console.error('Failed to update order fulfillment status:', updateError);
+      } else {
+        console.log('Order fulfillment status updated:', updateData);
       }
 
       return new Response(JSON.stringify(result), {

@@ -6,54 +6,89 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const NEXTLEVEL_API_BASE = 'https://api.nextlevel.delivery';
+// Correct NextLevel API endpoint for fulfillment orders
+const NEXTLEVEL_API_BASE = 'https://api.nextlevel.delivery/v1/fulfillment';
 
-async function sendToFulfillment(order: any, supabase: any): Promise<string | null> {
+// Map our courier codes to NextLevel courier names
+function mapCourierService(courierCode: string | undefined, shippingMethod: string | undefined, country: string): { courier: string; service: string } {
+  if (country === 'BG') {
+    if (shippingMethod === 'sameday_box' || courierCode === 'Sameday') {
+      return { courier: 'Sameday', service: 'easybox' };
+    }
+    if (courierCode === 'Econt' || shippingMethod?.includes('econt')) {
+      return { courier: 'Econt', service: shippingMethod === 'to_office' ? 'office' : 'address' };
+    }
+    return { courier: 'Econt', service: 'address' };
+  }
+  
+  if (country === 'GR') {
+    return { courier: 'SpeedX', service: 'address' };
+  }
+  
+  if (country === 'RO') {
+    return { courier: 'FAN', service: 'address' };
+  }
+  
+  return { courier: courierCode || 'Econt', service: 'address' };
+}
+
+async function sendToFulfillment(order: any, supabase: any): Promise<{ success: boolean; trackingNumber?: string; fulfillmentOrderId?: string; error?: string }> {
   try {
-    const apiKey = Deno.env.get('FULFILLMENT_APP_ID');
+    const appId = Deno.env.get('NEXTLEVEL_APP_ID');
+    const appSecret = Deno.env.get('NEXTLEVEL_APP_SECRET');
 
-    if (!apiKey) {
-      console.log('Fulfillment API key not configured, skipping');
-      return null;
+    if (!appId || !appSecret) {
+      console.log('NextLevel API credentials not configured, skipping fulfillment');
+      return { success: false, error: 'Fulfillment API credentials not configured' };
     }
 
     console.log('Sending COD order to NextLevel fulfillment:', order.id);
 
+    // Map courier and service
+    const { courier, service } = mapCourierService(order.courier_code, order.shipping_method, order.shipping_country || 'BG');
+
     // Prepare items for NextLevel API
-    const offerItems = Array.isArray(order.items) ? order.items.map((item: any) => ({
+    const items = Array.isArray(order.items) ? order.items.map((item: any, index: number) => ({
+      sku: item.sku || `SKU-${index + 1}`,
       name: `${item.productTitle || item.title} - ${item.variantTitle || ''}`.trim(),
       quantity: item.quantity || 1,
+      weight: 0.1,
       price: parseFloat(item.price?.amount || item.price || '0'),
     })) : [];
 
-    // Prepare the payload for NextLevel offers API
+    // Build the payload according to NextLevel API structure
+    // POST /v1/fulfillment/orders
+    // API requires "products" field instead of "items"
     const payload = {
+      order_id: order.id,
       external_id: order.id,
-      recipient_name: order.customer_name,
-      recipient_phone: order.customer_phone,
-      recipient_email: order.customer_email,
-      recipient_country: order.shipping_country || 'BG',
-      recipient_city: order.shipping_city,
-      recipient_address: order.shipping_address,
-      recipient_office_id: order.courier_office_id || null,
-      courier: order.courier_code || null,
-      items: offerItems,
-      // COD amount for cash on delivery orders
+      receiver_name: order.customer_name,
+      receiver_phone: order.customer_phone,
+      receiver_email: order.customer_email,
+      receiver_country: order.shipping_country || 'BG',
+      receiver_city: order.shipping_city,
+      receiver_address: order.shipping_address,
+      receiver_postcode: order.postal_code || '',
+      courier_name: courier,
+      service: service,
+      office_id: order.courier_office_id || null,
+      products: items,
       cod_amount: order.total_with_shipping || order.total_amount,
       currency: order.currency,
       comment: `Поръчка от gomatcha.bg - ${order.id} (Наложен платеж)`,
+      shipping_price: order.shipping_price || 0,
+      total_amount: order.total_with_shipping || order.total_amount,
     };
 
-    console.log('NextLevel payload:', JSON.stringify(payload, null, 2));
-    console.log('Using API key:', apiKey);
+    console.log('=== NextLevel Fulfillment Request (COD) ===');
+    console.log('URL: POST', `${NEXTLEVEL_API_BASE}/orders`);
+    console.log('Payload:', JSON.stringify(payload, null, 2));
 
-    // Use webhook URL format with API key in path
-    const requestUrl = `${NEXTLEVEL_API_BASE}/webhooks/orders/${apiKey}`;
-    console.log('Sending request to:', requestUrl);
-
-    const response = await fetch(requestUrl, {
+    const response = await fetch(`${NEXTLEVEL_API_BASE}/orders`, {
       method: 'POST',
       headers: {
+        'app-id': appId,
+        'app-secret': appSecret,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
@@ -61,13 +96,24 @@ async function sendToFulfillment(order: any, supabase: any): Promise<string | nu
     });
 
     const responseText = await response.text();
-    console.log('NextLevel API response status:', response.status);
-    console.log('NextLevel API response headers:', JSON.stringify(Object.fromEntries(response.headers.entries())));
-    console.log('NextLevel API response body:', responseText);
+    console.log('=== NextLevel Fulfillment Response ===');
+    console.log('Status:', response.status);
+    console.log('Headers:', JSON.stringify(Object.fromEntries(response.headers.entries())));
+    console.log('Body:', responseText);
 
     if (!response.ok) {
-      console.error('NextLevel API error:', response.status, responseText);
-      return null;
+      console.error('NextLevel Fulfillment API error:', response.status, responseText);
+      
+      // Update order with error but don't fail the order creation
+      await supabase
+        .from('orders')
+        .update({ 
+          sent_to_fulfillment: false,
+          fulfillment_error: `NextLevel API error: ${response.status}`
+        })
+        .eq('id', order.id);
+        
+      return { success: false, error: `NextLevel API error: ${response.status}` };
     }
 
     let result;
@@ -75,33 +121,69 @@ async function sendToFulfillment(order: any, supabase: any): Promise<string | nu
       result = JSON.parse(responseText);
     } catch {
       console.error('Failed to parse NextLevel response:', responseText);
-      return null;
-    }
-
-    // NextLevel webhook returns: {"success":true,"status":"pending","id":number}
-    // Use the id as the NextLevel order reference
-    const nextLevelId = result.id || result.tracking_number || result.trackingNumber || result.number || null;
-    const trackingNumber = nextLevelId ? String(nextLevelId) : null;
-    console.log('NextLevel order ID:', nextLevelId, 'Tracking number:', trackingNumber);
-
-    // Update order with tracking number
-    if (trackingNumber) {
-      const { error: updateError } = await supabase
+      
+      await supabase
         .from('orders')
-        .update({ tracking_number: trackingNumber })
+        .update({ 
+          sent_to_fulfillment: false,
+          fulfillment_error: 'Invalid API response from NextLevel'
+        })
         .eq('id', order.id);
-
-      if (updateError) {
-        console.error('Failed to update order with tracking:', updateError);
-      } else {
-        console.log('Order updated with tracking number:', trackingNumber);
-      }
+        
+      return { success: false, error: 'Invalid API response from NextLevel' };
     }
 
-    return trackingNumber;
+    // Extract tracking number and fulfillment order ID from response
+    const trackingNumber = result.tracking_number || result.trackingNumber || result.awb || null;
+    const fulfillmentOrderId = result.id || result.order_id || result.fulfillment_order_id || null;
+    
+    console.log('Order sent to fulfillment successfully.');
+    console.log('Tracking Number:', trackingNumber);
+    console.log('Fulfillment Order ID:', fulfillmentOrderId);
+
+    // Update order with success status
+    const updateData: any = {
+      sent_to_fulfillment: true,
+      fulfillment_error: null,
+    };
+    
+    if (trackingNumber) {
+      updateData.tracking_number = String(trackingNumber);
+    }
+    if (fulfillmentOrderId) {
+      updateData.fulfillment_order_id = String(fulfillmentOrderId);
+    }
+    
+    const { error: updateError } = await supabase
+      .from('orders')
+      .update(updateData)
+      .eq('id', order.id);
+
+    if (updateError) {
+      console.error('Failed to update order with fulfillment data:', updateError);
+    } else {
+      console.log('Order updated with fulfillment data:', updateData);
+    }
+
+    return { 
+      success: true, 
+      trackingNumber: trackingNumber ? String(trackingNumber) : undefined,
+      fulfillmentOrderId: fulfillmentOrderId ? String(fulfillmentOrderId) : undefined,
+    };
   } catch (error) {
     console.error('Fulfillment error:', error);
-    return null;
+    const errorMessage = error instanceof Error ? error.message : 'Unknown fulfillment error';
+    
+    // Update order with error
+    await supabase
+      .from('orders')
+      .update({ 
+        sent_to_fulfillment: false,
+        fulfillment_error: errorMessage
+      })
+      .eq('id', order.id);
+      
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -140,27 +222,25 @@ serve(async (req) => {
         status: 'cod_pending',
         customer_name: customer?.name,
         customer_email: customer?.email,
-        customer_phone: customer?.phone, // Full phone with country code
+        customer_phone: customer?.phone,
         phone_country_code: customer?.phoneCountryCode || null,
         phone_number: customer?.phoneNumber || null,
         shipping_address: customer?.address,
         shipping_city: customer?.city,
-        // Shipping country info
+        postal_code: customer?.postalCode || null,
         shipping_country: customer?.shippingCountryCode,
         shipping_country_name: customer?.shippingCountryName,
-        // Shipping method and pricing
         shipping_method: customer?.shippingMethod,
         shipping_price: customer?.shippingPrice || 0,
         total_with_shipping: customer?.totalWithShipping || totalAmount,
-        // Courier info
         courier_name: customer?.courierName || null,
         courier_code: customer?.courierCode || null,
-        // Courier office info (only for office delivery)
         courier_office_id: customer?.courierOfficeId || null,
         courier_office_name: customer?.courierOfficeName || null,
         courier_office_address: customer?.courierOfficeAddress || null,
         courier_office_city: customer?.courierOfficeCity || null,
         courier_office_country_code: customer?.courierOfficeCountryCode || null,
+        sent_to_fulfillment: false,
       })
       .select()
       .single();
@@ -172,13 +252,16 @@ serve(async (req) => {
 
     console.log('COD Order created:', order.id);
 
-    // Send to fulfillment and get tracking number
-    const trackingNumber = await sendToFulfillment(order, supabase);
+    // Send to fulfillment
+    const fulfillmentResult = await sendToFulfillment(order, supabase);
 
     return new Response(JSON.stringify({ 
       orderId: order.id,
       status: 'cod_pending',
-      trackingNumber: trackingNumber,
+      trackingNumber: fulfillmentResult.trackingNumber || null,
+      fulfillmentOrderId: fulfillmentResult.fulfillmentOrderId || null,
+      sentToFulfillment: fulfillmentResult.success,
+      fulfillmentError: fulfillmentResult.success ? null : fulfillmentResult.error,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
