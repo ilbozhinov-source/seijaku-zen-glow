@@ -210,61 +210,90 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{
 
   console.log('Sending order to NextLevel fulfillment API:', order.orderId);
 
-  // Map courier and service based on order details
-  const { courier, service } = mapCourierService(order.courierCode, order.shippingMethod, order.shippingCountry);
+  // Map courier based on country
+  const { courier } = mapCourierService(order.courierCode, order.shippingMethod, order.shippingCountry);
 
-  // Prepare items for NextLevel API
-  const items = order.items.map((item, index) => ({
-    sku: item.sku || `SKU-${index + 1}`,
-    name: `${item.productTitle} - ${item.variantTitle}`.trim(),
+  // Calculate products price (sum of unit_price * quantity)
+  const productsPrice = order.items.reduce((sum, item) => {
+    return sum + (parseFloat(item.price.amount) * item.quantity);
+  }, 0);
+
+  // Map currency based on country
+  const currencyMap: Record<string, string> = {
+    'BG': 'BGN',
+    'GR': 'EUR',
+    'RO': 'RON',
+  };
+  const currency = currencyMap[order.shippingCountry] || order.currency || 'BGN';
+
+  // Determine COD amount (if payment is COD, use totalWithShipping)
+  const codAmount = order.paymentMethod === 'cod' ? order.totalWithShipping : 0;
+  
+  // Determine is_paid (1 if card payment, 0 if COD)
+  const isPaid = order.paymentMethod === 'card' || order.paymentMethod === 'stripe' ? 1 : 0;
+  
+  // Determine is_shipping_free
+  const isShippingFree = order.shippingPrice === 0 ? 1 : 0;
+
+  // Format shipping price as string with 2 decimals
+  const shippingPriceFormatted = order.shippingPrice.toFixed(2);
+
+  // Format created_at as "YYYY-MM-DD HH:mm:ss"
+  const now = new Date();
+  const createdAt = now.toISOString().replace('T', ' ').substring(0, 19);
+
+  // Prepare products array for NextLevel API
+  const products = order.items.map((item, index) => ({
+    sku: item.sku || `MATCHA-${order.shippingCountry}-${index + 1}`,
+    name: item.variantTitle 
+      ? `${item.productTitle} - ${item.variantTitle}`.trim()
+      : item.productTitle,
     quantity: item.quantity,
-    weight: 0.1, // Default weight in kg for matcha
-    price: parseFloat(item.price.amount),
+    unit_price: parseFloat(item.price.amount),
+    variant: item.variantTitle || null,
+    is_digital: null,
+    weight: 0.05, // 30g matcha = 0.03kg, with packaging ~0.05kg
+    discount_type: null,
+    discount_value: null,
   }));
 
-  // Build the payload according to NextLevel API structure
-  // POST /v1/fulfillment/orders
-  // API requires "products" field instead of "items"
+  // Build the payload according to NextLevel API exact structure
   const payload = {
-    // Order ID (NextLevel requires "order_id")
     order_id: order.orderId,
-    external_id: order.orderId,
-    
-    // Receiver information
-    receiver_name: order.customerName,
-    receiver_phone: order.customerPhone,
-    receiver_email: order.customerEmail,
-    receiver_country: order.shippingCountry,
-    receiver_city: order.shippingCity,
-    receiver_address: order.shippingAddress,
-    receiver_postcode: order.postalCode || '',
-    
-    // Courier and service
-    courier_name: courier,
-    service: service,
-    
-    // Office delivery (if applicable)
-    office_id: order.shippingOfficeId || null,
-    
-    // Products (NextLevel uses "products" not "items")
-    products: items,
-    
-    // Payment and COD
-    cod_amount: order.paymentMethod === 'cod' ? order.totalWithShipping : 0,
-    currency: order.currency,
-    
-    // Additional info
-    comment: `Поръчка от gomatcha.bg - ${order.orderId}`,
-    
-    // Shipping price
-    shipping_price: order.shippingPrice,
-    total_amount: order.totalWithShipping,
+    cod: codAmount,
+    price: productsPrice,
+    currency: currency,
+    shipping_price: shippingPriceFormatted,
+    ref: order.orderId,
+    courier: courier,
+    discount_type: null,
+    discount_value: null,
+    is_paid: isPaid,
+    is_shipping_free: isShippingFree,
+    receiver: {
+      name: order.customerName,
+      phone: order.customerPhone,
+      office_id: order.shippingOfficeId ? parseInt(order.shippingOfficeId, 10) : null,
+      country: order.shippingCountry,
+      email: order.customerEmail,
+      place: order.shippingCity,
+      post_code: order.postalCode || '',
+      street: order.shippingAddress,
+      street_no: null,
+      complex: null,
+      block_no: null,
+      entrance_no: null,
+      floor_no: null,
+      apartment_no: null,
+    },
+    products: products,
+    note: null,
+    created_at: createdAt,
   };
 
   try {
-    console.log('=== NextLevel Fulfillment Request ===');
-    console.log('URL: POST', `${NEXTLEVEL_API_BASE}/orders`);
-    console.log('Payload:', JSON.stringify(payload, null, 2));
+    console.log('=== NextLevel ORDER REQUEST ===');
+    console.log(JSON.stringify(payload, null, 2));
 
     const response = await fetch(`${NEXTLEVEL_API_BASE}/orders`, {
       method: 'POST',
@@ -272,15 +301,13 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{
         'app-id': appId,
         'app-secret': appSecret,
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
       },
       body: JSON.stringify(payload),
     });
 
     const responseText = await response.text();
-    console.log('=== NextLevel Fulfillment Response ===');
+    console.log('=== NextLevel ORDER RESPONSE ===');
     console.log('Status:', response.status);
-    console.log('Headers:', JSON.stringify(Object.fromEntries(response.headers.entries())));
     console.log('Body:', responseText);
 
     if (!response.ok) {
