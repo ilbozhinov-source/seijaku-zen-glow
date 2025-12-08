@@ -77,7 +77,7 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
       products: items,
       price: (order.total_with_shipping || order.total_amount) - (order.shipping_price || 0),
       currency: order.currency,
-      note: Поръчка от gomatcha.bg - ${order.id} (Наложен платеж)`,
+      note: `Поръчка от gomatcha.bg - ${order.id} (Наложен платеж)`,
       shipping_price: order.shipping_price || 0,
       total_amount: order.total_with_shipping || order.total_amount,
     };
