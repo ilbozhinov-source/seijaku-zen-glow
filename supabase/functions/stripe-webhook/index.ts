@@ -45,46 +45,80 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
 
     console.log('Sending Stripe order to NextLevel fulfillment:', order.id);
 
-    // Map courier and service
-    const { courier, service } = mapCourierService(order.courier_code, order.shipping_method, order.shipping_country || 'BG');
+    // Determine country and currency
+    const country = order.shipping_country || 'BG';
+    let currency = 'BGN';
+    if (country === 'GR') currency = 'EUR';
+    if (country === 'RO') currency = 'RON';
 
-    // Prepare items for NextLevel API
-    const items = Array.isArray(order.items) ? order.items.map((item: any, index: number) => ({
-      sku: item.sku || `SKU-${index + 1}`,
-      name: `${item.productTitle || item.title} - ${item.variantTitle || ''}`.trim(),
-      quantity: item.quantity || 1,
-      weight: 0.1,
-      price: parseFloat(item.price?.amount || item.price || '0'),
-    })) : [];
+    // Determine courier based on country and shipping method
+    let courier = 'Econt';
+    if (country === 'GR') courier = 'SpeedX';
+    else if (country === 'RO') courier = 'FAN';
+    else if (order.courier_name) courier = order.courier_name;
+    else if (order.shipping_method?.includes('sameday')) courier = 'Sameday';
 
-    // Build the payload according to NextLevel API structure
-    // POST /v1/fulfillment/orders
-    // API requires "products" field instead of "items"
+    // Calculate products subtotal (price without shipping)
+    const items = Array.isArray(order.items) ? order.items : [];
+    let productsTotal = 0;
+    const products = items.map((item: any, index: number) => {
+      const unitPrice = parseFloat(item.price?.amount || item.price || '0');
+      const quantity = item.quantity || 1;
+      productsTotal += unitPrice * quantity;
+      return {
+        sku: item.sku || item.variantId || `SKU-${index + 1}`,
+        name: `${item.productTitle || item.title || 'Product'} ${item.variantTitle ? `- ${item.variantTitle}` : ''}`.trim(),
+        quantity: quantity,
+        unit_price: unitPrice,
+        variant: item.variantTitle || null,
+        is_digital: null,
+        weight: 0.05,
+        discount_type: null,
+        discount_value: null,
+      };
+    });
+
+    // Format created_at for NextLevel
+    const createdAt = order.created_at 
+      ? new Date(order.created_at).toISOString().replace('T', ' ').substring(0, 19)
+      : new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+    // Build payload according to NextLevel API structure
     const payload = {
       order_id: order.id,
-      external_id: order.id,
-      receiver_name: order.customer_name,
-      receiver_phone: order.customer_phone,
-      receiver_email: order.customer_email,
-      receiver_country: order.shipping_country || 'BG',
-      receiver_city: order.shipping_city,
-      receiver_address: order.shipping_address,
-      receiver_postcode: order.postal_code || '',
-      courier_name: courier,
-      service: service,
-      office_id: order.courier_office_id || null,
-      products: items,
-      // For Stripe payments, COD amount is 0 (already paid)
-      cod_amount: 0,
-      currency: order.currency,
-      comment: `Поръчка от gomatcha.bg - ${order.id} (Платено с карта)`,
-      shipping_price: order.shipping_price || 0,
-      total_amount: order.total_with_shipping || order.total_amount,
+      cod: 0, // Card payment - already paid, no COD
+      price: productsTotal,
+      currency: currency,
+      shipping_price: order.shipping_price ? order.shipping_price.toFixed(2) : "0.00",
+      ref: order.id,
+      courier: courier,
+      discount_type: null,
+      discount_value: null,
+      is_paid: 1, // Card payment is already paid
+      is_shipping_free: order.shipping_price === 0 ? 1 : 0,
+      receiver: {
+        name: order.customer_name || '',
+        phone: order.customer_phone || '',
+        office_id: order.courier_office_id ? parseInt(order.courier_office_id) : null,
+        country: country,
+        email: order.customer_email || '',
+        place: order.shipping_city || '',
+        post_code: order.postal_code || '',
+        street: order.shipping_address || '',
+        street_no: null,
+        complex: null,
+        block_no: null,
+        entrance_no: null,
+        floor_no: null,
+        apartment_no: null,
+      },
+      products: products,
+      note: null,
+      created_at: createdAt,
     };
 
-    console.log('=== NextLevel Fulfillment Request (Stripe) ===');
-    console.log('URL: POST', `${NEXTLEVEL_API_BASE}/orders`);
-    console.log('Payload:', JSON.stringify(payload, null, 2));
+    console.log('=== NextLevel ORDER REQUEST (Stripe) ===');
+    console.log(JSON.stringify(payload, null, 2));
 
     const response = await fetch(`${NEXTLEVEL_API_BASE}/orders`, {
       method: 'POST',
@@ -92,15 +126,13 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
         'app-id': appId,
         'app-secret': appSecret,
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
       },
       body: JSON.stringify(payload),
     });
 
     const responseText = await response.text();
-    console.log('=== NextLevel Fulfillment Response ===');
+    console.log('=== NextLevel ORDER RESPONSE ===');
     console.log('Status:', response.status);
-    console.log('Headers:', JSON.stringify(Object.fromEntries(response.headers.entries())));
     console.log('Body:', responseText);
 
     if (!response.ok) {
@@ -110,7 +142,7 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
         .from('orders')
         .update({ 
           sent_to_fulfillment: false,
-          fulfillment_error: `NextLevel API error: ${response.status}`
+          fulfillment_error: `NextLevel API error: ${response.status} - ${responseText.substring(0, 200)}`
         })
         .eq('id', order.id);
         
@@ -188,13 +220,22 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
 }
 
 serve(async (req) => {
+  console.log('=== STRIPE WEBHOOK CALLED ===');
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('Processing webhook request...');
+    
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+    
+    console.log('Stripe secret key configured:', !!stripeSecretKey);
+    console.log('Webhook secret configured:', !!webhookSecret);
     
     if (!stripeSecretKey) {
       throw new Error('Stripe secret key not configured');
@@ -206,6 +247,9 @@ serve(async (req) => {
 
     const signature = req.headers.get('stripe-signature');
     const body = await req.text();
+    
+    console.log('Signature present:', !!signature);
+    console.log('Body length:', body.length);
 
     let event: Stripe.Event;
 
@@ -213,6 +257,7 @@ serve(async (req) => {
     if (webhookSecret && signature) {
       try {
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+        console.log('Webhook signature verified successfully');
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
         console.error('Webhook signature verification failed:', message);
