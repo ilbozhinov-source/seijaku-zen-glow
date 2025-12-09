@@ -292,8 +292,18 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{
   };
 
   try {
-    console.log('=== NextLevel ORDER REQUEST ===');
+    console.log('=======================================================');
+    console.log('=== FULFILLMENT REQUEST START ===');
+    console.log('=======================================================');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Order ID:', order.orderId);
+    console.log('API Endpoint:', `${NEXTLEVEL_API_BASE}/orders`);
+    console.log('App ID configured:', !!appId);
+    console.log('App Secret configured:', !!appSecret);
+    console.log('');
+    console.log('FULFILLMENT REQUEST BODY:');
     console.log(JSON.stringify(payload, null, 2));
+    console.log('=======================================================');
 
     const response = await fetch(`${NEXTLEVEL_API_BASE}/orders`, {
       method: 'POST',
@@ -306,27 +316,37 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{
     });
 
     const responseText = await response.text();
-    console.log('=== NextLevel ORDER RESPONSE ===');
-    console.log('Status:', response.status);
-    console.log('Body:', responseText);
+    
+    console.log('=======================================================');
+    console.log('=== FULFILLMENT RESPONSE ===');
+    console.log('=======================================================');
+    console.log('FULFILLMENT RESPONSE STATUS:', response.status);
+    console.log('FULFILLMENT RESPONSE HEADERS:', JSON.stringify(Object.fromEntries(response.headers.entries())));
+    console.log('FULFILLMENT RESPONSE DATA:', responseText);
+    console.log('=======================================================');
 
     if (!response.ok) {
-      console.error('NextLevel Fulfillment API error:', response.status, responseText);
+      console.error('=== FULFILLMENT ERROR: API returned non-OK status ===');
+      console.error('Status Code:', response.status);
+      console.error('Response Body:', responseText);
       return { 
         success: false, 
-        error: `NextLevel API error: ${response.status}` 
+        error: `NextLevel API error: ${response.status} - ${responseText.substring(0, 200)}` 
       };
     }
 
     let result;
     try {
       result = JSON.parse(responseText);
-    } catch {
-      console.error('Failed to parse NextLevel response:', responseText);
+    } catch (parseErr) {
+      console.error('=== FULFILLMENT ERROR: Failed to parse JSON response ===');
+      console.error('Parse Error:', parseErr);
+      console.error('Raw Response:', responseText);
       return { success: false, error: 'Invalid API response from NextLevel' };
     }
     
-    console.log('NextLevel Fulfillment API response parsed:', result);
+    console.log('=== FULFILLMENT SUCCESS: Response parsed ===');
+    console.log('Parsed Result:', JSON.stringify(result, null, 2));
     
     // Extract tracking number and fulfillment order ID from response
     const trackingNumber = result.tracking_number || result.trackingNumber || result.awb || null;
@@ -343,7 +363,14 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{
     };
 
   } catch (error: unknown) {
-    console.error('NextLevel Fulfillment API request failed:', error);
+    console.error('=======================================================');
+    console.error('=== FULFILLMENT ERROR: Exception thrown ===');
+    console.error('=======================================================');
+    console.error('FULFILLMENT ERROR:', error);
+    console.error('Error Type:', error?.constructor?.name);
+    console.error('Error Message:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Error Stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('=======================================================');
     const message = error instanceof Error ? error.message : 'Unknown error';
     return { success: false, error: message };
   }
