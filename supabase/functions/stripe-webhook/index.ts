@@ -117,8 +117,18 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
       created_at: createdAt,
     };
 
-    console.log('=== NextLevel ORDER REQUEST (Stripe) ===');
+    console.log('=======================================================');
+    console.log('=== STRIPE FULFILLMENT REQUEST START ===');
+    console.log('=======================================================');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Order ID:', order.id);
+    console.log('API Endpoint:', `${NEXTLEVEL_API_BASE}/orders`);
+    console.log('App ID configured:', !!appId);
+    console.log('App Secret configured:', !!appSecret);
+    console.log('');
+    console.log('FULFILLMENT REQUEST BODY:');
     console.log(JSON.stringify(payload, null, 2));
+    console.log('=======================================================');
 
     const response = await fetch(`${NEXTLEVEL_API_BASE}/orders`, {
       method: 'POST',
@@ -131,9 +141,14 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
     });
 
     const responseText = await response.text();
-    console.log('=== NextLevel ORDER RESPONSE ===');
-    console.log('Status:', response.status);
-    console.log('Body:', responseText);
+    
+    console.log('=======================================================');
+    console.log('=== STRIPE FULFILLMENT RESPONSE ===');
+    console.log('=======================================================');
+    console.log('FULFILLMENT RESPONSE STATUS:', response.status);
+    console.log('FULFILLMENT RESPONSE HEADERS:', JSON.stringify(Object.fromEntries(response.headers.entries())));
+    console.log('FULFILLMENT RESPONSE DATA:', responseText);
+    console.log('=======================================================');
 
     if (!response.ok) {
       console.error('NextLevel Fulfillment API error:', response.status, responseText);
@@ -204,7 +219,14 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
       fulfillmentOrderId: fulfillmentOrderId ? String(fulfillmentOrderId) : undefined,
     };
   } catch (error) {
-    console.error('Fulfillment error:', error);
+    console.error('=======================================================');
+    console.error('=== STRIPE FULFILLMENT ERROR: Exception thrown ===');
+    console.error('=======================================================');
+    console.error('FULFILLMENT ERROR:', error);
+    console.error('Error Type:', error?.constructor?.name);
+    console.error('Error Message:', error instanceof Error ? error.message : 'Unknown fulfillment error');
+    console.error('Error Stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('=======================================================');
     const errorMessage = error instanceof Error ? error.message : 'Unknown fulfillment error';
     
     await supabase
