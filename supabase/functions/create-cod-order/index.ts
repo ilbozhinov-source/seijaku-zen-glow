@@ -42,49 +42,86 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
       return { success: false, error: 'Fulfillment API credentials not configured' };
     }
 
-    console.log('Sending COD order to NextLevel fulfillment:', order.id);
+    console.log('=======================================================');
+    console.log('=== COD FULFILLMENT REQUEST START ===');
+    console.log('=======================================================');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Order ID:', order.id);
 
-    // Map courier and service
-    const { courier, service } = mapCourierService(order.courier_code, order.shipping_method, order.shipping_country || 'BG');
+    // Determine country and currency
+    const country = order.shipping_country || 'BG';
+    let currency = 'BGN';
+    if (country === 'GR') currency = 'EUR';
+    if (country === 'RO') currency = 'RON';
 
-    // Prepare items for NextLevel API
-    const items = Array.isArray(order.items) ? order.items.map((item: any, index: number) => ({
-      sku: item.sku || `SKU-${index + 1}`,
-      name: `${item.productTitle || item.title} - ${item.variantTitle || ''}`.trim(),
-      quantity: item.quantity || 1,
-      weight: 0.1,
-      price: parseFloat(item.price?.amount || item.price || '0'),
-    })) : [];
+    // Map courier based on country and shipping method
+    const { courier } = mapCourierService(order.courier_code, order.shipping_method, country);
 
-    // Build the payload according to NextLevel API structure
-    // POST /v1/fulfillment/orders
-    // API requires "products" field instead of "items"
+    // Calculate products subtotal (price without shipping)
+    const items = Array.isArray(order.items) ? order.items : [];
+    let productsTotal = 0;
+    const products = items.map((item: any, index: number) => {
+      const unitPrice = parseFloat(item.price?.amount || item.price || '0');
+      const quantity = item.quantity || 1;
+      productsTotal += unitPrice * quantity;
+      return {
+        sku: item.sku || item.variantId || `SKU-${index + 1}`,
+        name: `${item.productTitle || item.title || 'Product'} ${item.variantTitle ? `- ${item.variantTitle}` : ''}`.trim(),
+        quantity: quantity,
+        unit_price: unitPrice,
+        variant: item.variantTitle || null,
+        is_digital: null,
+        weight: 0.05,
+        discount_type: null,
+        discount_value: null,
+      };
+    });
+
+    // Format created_at for NextLevel
+    const createdAt = order.created_at 
+      ? new Date(order.created_at).toISOString().replace('T', ' ').substring(0, 19)
+      : new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+    // COD amount = total with shipping (customer pays on delivery)
+    const codAmount = order.total_with_shipping || (productsTotal + (order.shipping_price || 0));
+
+    // Build payload according to NextLevel API structure (same as test that works!)
     const payload = {
       order_id: order.id,
-      external_id: order.id,
-      receiver: {
-        name: order.customer_name,
-      phone: order.customer_phone,
-      email: order.customer_email,
-      country: order.shipping_country || 'BG',
-      place: order.shipping_city,
-      address: order.shipping_address,
-      post_code: order.postal_code || '',
-      office_id: order.courier_office_id || null
-      },
+      cod: codAmount, // COD payment - customer pays this on delivery
+      price: productsTotal,
+      currency: currency,
+      shipping_price: order.shipping_price ? order.shipping_price.toFixed(2) : "0.00",
+      ref: order.id,
       courier: courier,
-      service: service,
-      products: items,
-      price: (order.total_with_shipping || order.total_amount) - (order.shipping_price || 0),
-      currency: order.currency,
-      note: `Поръчка от gomatcha.bg - ${order.id} (Наложен платеж)`,
-      shipping_price: order.shipping_price || 0,
-      total_amount: order.total_with_shipping || order.total_amount,
+      discount_type: null,
+      discount_value: null,
+      is_paid: 0, // COD - not paid yet
+      is_shipping_free: order.shipping_price === 0 ? 1 : 0,
+      receiver: {
+        name: order.customer_name || '',
+        phone: order.customer_phone || '',
+        office_id: order.courier_office_id ? parseInt(order.courier_office_id) : null,
+        country: country,
+        email: order.customer_email || '',
+        place: order.shipping_city || '',
+        post_code: order.postal_code || '',
+        street: order.shipping_address || '',
+        street_no: null,
+        complex: null,
+        block_no: null,
+        entrance_no: null,
+        floor_no: null,
+        apartment_no: null,
+      },
+      products: products,
+      note: null,
+      created_at: createdAt,
     };
 
-    console.log('=== NextLevel Fulfillment Request (COD) ===');
-    console.log('URL: POST', `${NEXTLEVEL_API_BASE}/orders`);
-    console.log('Payload:', JSON.stringify(payload, null, 2));
+    console.log('FULFILLMENT REQUEST BODY:');
+    console.log(JSON.stringify(payload, null, 2));
+    console.log('=======================================================');
 
     const response = await fetch(`${NEXTLEVEL_API_BASE}/orders`, {
       method: 'POST',
@@ -92,26 +129,29 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
         'app-id': appId,
         'app-secret': appSecret,
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
       },
       body: JSON.stringify(payload),
     });
 
     const responseText = await response.text();
-    console.log('=== NextLevel Fulfillment Response ===');
-    console.log('Status:', response.status);
-    console.log('Headers:', JSON.stringify(Object.fromEntries(response.headers.entries())));
-    console.log('Body:', responseText);
+    
+    console.log('=======================================================');
+    console.log('=== COD FULFILLMENT RESPONSE ===');
+    console.log('=======================================================');
+    console.log('FULFILLMENT RESPONSE STATUS:', response.status);
+    console.log('FULFILLMENT RESPONSE DATA:', responseText);
+    console.log('=======================================================');
 
     if (!response.ok) {
-      console.error('NextLevel Fulfillment API error:', response.status, responseText);
+      console.error('=== COD FULFILLMENT ERROR: API returned non-OK status ===');
+      console.error('Status Code:', response.status);
+      console.error('Response Body:', responseText);
       
-      // Update order with error but don't fail the order creation
       await supabase
         .from('orders')
         .update({ 
           sent_to_fulfillment: false,
-          fulfillment_error: `NextLevel API error: ${response.status}`
+          fulfillment_error: `NextLevel API error: ${response.status} - ${responseText.substring(0, 200)}`
         })
         .eq('id', order.id);
         
@@ -121,8 +161,9 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
     let result;
     try {
       result = JSON.parse(responseText);
-    } catch {
-      console.error('Failed to parse NextLevel response:', responseText);
+    } catch (parseErr) {
+      console.error('=== COD FULFILLMENT ERROR: Failed to parse JSON response ===');
+      console.error('Parse Error:', parseErr);
       
       await supabase
         .from('orders')
@@ -139,7 +180,7 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
     const trackingNumber = result.tracking_number || result.trackingNumber || result.awb || null;
     const fulfillmentOrderId = result.id || result.order_id || result.fulfillment_order_id || null;
     
-    console.log('Order sent to fulfillment successfully.');
+    console.log('=== COD FULFILLMENT SUCCESS ===');
     console.log('Tracking Number:', trackingNumber);
     console.log('Fulfillment Order ID:', fulfillmentOrderId);
 
@@ -173,10 +214,15 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
       fulfillmentOrderId: fulfillmentOrderId ? String(fulfillmentOrderId) : undefined,
     };
   } catch (error) {
-    console.error('Fulfillment error:', error);
+    console.error('=======================================================');
+    console.error('=== COD FULFILLMENT ERROR: Exception thrown ===');
+    console.error('=======================================================');
+    console.error('FULFILLMENT ERROR:', error);
+    console.error('Error Message:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('=======================================================');
+    
     const errorMessage = error instanceof Error ? error.message : 'Unknown fulfillment error';
     
-    // Update order with error
     await supabase
       .from('orders')
       .update({ 
