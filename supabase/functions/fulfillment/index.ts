@@ -53,7 +53,7 @@ function mapCourierService(courierCode: string | undefined, shippingMethod: stri
   }
   
   if (country === 'GR') {
-    return { courier: 'SpeedX', service: 'address' };
+    return { courier: 'Speedex', service: 'address' };
   }
   
   if (country === 'RO') {
