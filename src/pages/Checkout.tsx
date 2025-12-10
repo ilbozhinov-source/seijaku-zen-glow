@@ -428,8 +428,13 @@ const Checkout = () => {
           setOfficesError(result.error || t('checkout.officesLoadError'));
           setOffices([]);
         } else if (Array.isArray(result.offices) && result.offices.length > 0) {
-          setOffices(result.offices);
-          setOfficesError(null);
+          // Filter out easybox locations when selecting regular courier offices
+          // Easybox entries have "easybox" in their name (case insensitive)
+          const filteredOffices = result.offices.filter((office: Office) => 
+            !office.name.toLowerCase().includes('easybox')
+          );
+          setOffices(filteredOffices);
+          setOfficesError(filteredOffices.length === 0 ? t('checkout.noOfficesAvailable') : null);
         } else {
           setOffices([]);
           setOfficesError(t('checkout.noOfficesAvailable'));
