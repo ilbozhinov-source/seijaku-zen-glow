@@ -160,6 +160,7 @@
     "quantity": "Quantity",
     "subtotal": "Products",
     "shippingPrice": "Shipping",
+    "freeShipping": "Free",
     "selectShippingMethod": "Select shipping method",
     "selectShippingForTotal": "Select shipping method",
     "total": "Total",

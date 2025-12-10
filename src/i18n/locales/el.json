@@ -144,6 +144,7 @@
     "quantity": "Ποσότητα",
     "subtotal": "Προϊόντα",
     "shippingPrice": "Αποστολή",
+    "freeShipping": "Δωρεάν",
     "selectShippingMethod": "Επιλέξτε τρόπο αποστολής",
     "selectShippingForTotal": "Επιλέξτε τρόπο αποστολής",
     "total": "Σύνολο",
