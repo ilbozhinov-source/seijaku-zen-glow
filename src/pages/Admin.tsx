@@ -30,6 +30,7 @@ interface Profile {
 
 interface Order {
   id: string;
+  order_number: string | null;
   user_id: string | null;
   items: any;
   total_amount: number;
@@ -521,6 +522,7 @@ const Admin = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead>№</TableHead>
                           <TableHead>Клиент</TableHead>
                           <TableHead>Email</TableHead>
                           <TableHead>Телефон</TableHead>
@@ -539,6 +541,7 @@ const Admin = () => {
                       <TableBody>
                         {filteredOrders.map((order) => (
                           <TableRow key={order.id}>
+                            <TableCell className="font-mono text-xs">{order.order_number || order.id.slice(0, 8)}</TableCell>
                             <TableCell className="font-medium">{order.customer_name || '-'}</TableCell>
                             <TableCell>{order.customer_email || '-'}</TableCell>
                             <TableCell>{order.customer_phone || '-'}</TableCell>
@@ -732,8 +735,9 @@ const Admin = () => {
                 <Package className="h-5 w-5" />
                 Детайли на поръчка
               </DialogTitle>
-              <DialogDescription>
-                {selectedOrder && new Date(selectedOrder.created_at).toLocaleString('bg-BG')}
+              <DialogDescription className="flex flex-col gap-1">
+                <span>Номер: <span className="font-mono font-bold">{selectedOrder?.order_number || selectedOrder?.id.slice(0, 8)}</span></span>
+                <span>{selectedOrder && new Date(selectedOrder.created_at).toLocaleString('bg-BG')}</span>
               </DialogDescription>
             </DialogHeader>
 

@@ -32,6 +32,7 @@ export type Database = {
           fulfillment_order_id: string | null
           id: string
           items: Json
+          order_number: string | null
           payment_method: string
           phone_country_code: string | null
           phone_number: string | null
@@ -68,6 +69,7 @@ export type Database = {
           fulfillment_order_id?: string | null
           id?: string
           items: Json
+          order_number?: string | null
           payment_method: string
           phone_country_code?: string | null
           phone_number?: string | null
@@ -104,6 +106,7 @@ export type Database = {
           fulfillment_order_id?: string | null
           id?: string
           items?: Json
+          order_number?: string | null
           payment_method?: string
           phone_country_code?: string | null
           phone_number?: string | null
