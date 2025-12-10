@@ -144,6 +144,7 @@
     "quantity": "Cantitate",
     "subtotal": "Produse",
     "shippingPrice": "Livrare",
+    "freeShipping": "Gratuită",
     "selectShippingMethod": "Selectează metodă de livrare",
     "selectShippingForTotal": "Selectează metodă de livrare",
     "total": "Total",

@@ -379,9 +379,13 @@ const Checkout = () => {
   }, []);
 
   const productsTotal = getTotalPrice();
-  const shippingPrice = selectedShippingMethod?.price || 0;
+  const FREE_SHIPPING_THRESHOLD_BGN = 79;
+  const baseShippingPrice = selectedShippingMethod?.price || 0;
   const shippingCurrency = selectedShippingMethod?.currency || 'BGN';
   const shippingCurrencyLabel = selectedShippingMethod?.currencyLabel || 'лв.';
+  // Free shipping for Bulgaria when order is 79 BGN or more
+  const isFreeShipping = formData.shippingCountry === 'BG' && productsTotal >= FREE_SHIPPING_THRESHOLD_BGN;
+  const shippingPrice = isFreeShipping ? 0 : baseShippingPrice;
   const totalWithShipping = productsTotal + shippingPrice;
 
   // Fetch offices when method requires office selection
@@ -1022,7 +1026,11 @@ const Checkout = () => {
                 <div className="flex justify-between text-muted-foreground">
                   <span>{t('checkout.shippingPrice')}</span>
                   {selectedShippingMethod ? (
-                    <span>{shippingPrice.toFixed(2)} {shippingCurrencyLabel}</span>
+                    isFreeShipping ? (
+                      <span className="text-green-600 font-medium">{t('checkout.freeShipping')}</span>
+                    ) : (
+                      <span>{shippingPrice.toFixed(2)} {shippingCurrencyLabel}</span>
+                    )
                   ) : (
                     <span className="text-sm italic">{t('checkout.selectShippingMethod')}</span>
                   )}

@@ -160,6 +160,7 @@
     "quantity": "Количество",
     "subtotal": "Цена на продуктите",
     "shippingPrice": "Доставка",
+    "freeShipping": "Безплатна",
     "selectShippingMethod": "Изберете метод на доставка",
     "selectShippingForTotal": "Изберете метод на доставка",
     "total": "Обща сума",
