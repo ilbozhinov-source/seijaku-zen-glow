@@ -105,7 +105,9 @@
     "itemsInCart": "{{count}} produs în coș",
     "itemsInCart_plural": "{{count}} produse în coș",
     "total": "Total",
-    "checkout": "Finalizare"
+    "checkout": "Finalizare",
+    "freeShippingBanner": "Încă {{amount}} BGN pentru livrare gratuită!",
+    "freeShippingUnlocked": "🎉 Ai livrare gratuită!"
   },
   "checkout": {
     "title": "Finalizare Comandă",
@@ -359,13 +361,16 @@
     "timeTitle": "Timp de Livrare",
     "timeDesc": "Livrările se efectuează prin serviciile de curierat Speedy și Econt. Pentru comenzile primite până la ora 13:30 într-o zi lucrătoare, livrarea se face în 2 zile lucrătoare.",
     "pricesTitle": "Prețuri de Livrare",
-    "under70": "De la 0€ la 35,79€:",
-    "speedyOffice": "La oficiul Speedy - 3,06€",
-    "ekontOffice": "La oficiul Econt - 3,32€",
-    "homeAddress": "La adresa personală - 3,57€",
-    "over70": "Pentru comenzi peste 38,35€:",
-    "freeOffice": "GRATUIT la oficiu",
-    "freeAddress": "GRATUIT la adresă"
+    "forBulgaria": "Pentru Bulgaria",
+    "bulgariaPartners": "Colaborăm cu serviciile de curierat ECONT și MDA.",
+    "econtOfficeNew": "La oficiul ECONT",
+    "econtAddress": "La adresă cu ECONT",
+    "mdaAutomat": "La automat MDA",
+    "forAbroad": "Internațional",
+    "greece": "Grecia",
+    "romania": "România",
+    "freeShipping": "Livrare Gratuită",
+    "freeShippingDesc": "Pentru comenzi de 79 BGN sau mai mult, livrarea este GRATUITĂ pentru Bulgaria!"
   },
   "terms": {
     "title": "Termeni și Condiții",

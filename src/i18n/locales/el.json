@@ -105,7 +105,9 @@
     "itemsInCart": "{{count}} προϊόν στο καλάθι σας",
     "itemsInCart_plural": "{{count}} προϊόντα στο καλάθι σας",
     "total": "Σύνολο",
-    "checkout": "Ολοκλήρωση"
+    "checkout": "Ολοκλήρωση",
+    "freeShippingBanner": "{{amount}} BGN ακόμα για δωρεάν αποστολή!",
+    "freeShippingUnlocked": "🎉 Έχετε δωρεάν αποστολή!"
   },
   "checkout": {
     "title": "Ολοκλήρωση Παραγγελίας",
@@ -359,13 +361,16 @@
     "timeTitle": "Χρόνος Παράδοσης",
     "timeDesc": "Οι παραδόσεις πραγματοποιούνται μέσω των υπηρεσιών courier Speedy και Econt. Για παραγγελίες που λαμβάνονται έως τις 13:30 σε εργάσιμη ημέρα, η παράδοση γίνεται εντός 2 εργάσιμων ημερών.",
     "pricesTitle": "Τιμές Παράδοσης",
-    "under70": "Από 0€ έως 35,79€:",
-    "speedyOffice": "Σε γραφείο Speedy - 3,06€",
-    "ekontOffice": "Σε γραφείο Econt - 3,32€",
-    "homeAddress": "Σε προσωπική διεύθυνση - 3,57€",
-    "over70": "Για αγορές άνω των 38,35€:",
-    "freeOffice": "ΔΩΡΕΑΝ σε γραφείο",
-    "freeAddress": "ΔΩΡΕΑΝ σε διεύθυνση"
+    "forBulgaria": "Για Βουλγαρία",
+    "bulgariaPartners": "Συνεργαζόμαστε με τις υπηρεσίες courier ECONT και MDA.",
+    "econtOfficeNew": "Σε γραφείο ECONT",
+    "econtAddress": "Σε διεύθυνση με ECONT",
+    "mdaAutomat": "Σε αυτόματο MDA",
+    "forAbroad": "Διεθνώς",
+    "greece": "Ελλάδα",
+    "romania": "Ρουμανία",
+    "freeShipping": "Δωρεάν Αποστολή",
+    "freeShippingDesc": "Για παραγγελίες από 79 BGN και άνω, η αποστολή είναι ΔΩΡΕΑΝ για τη Βουλγαρία!"
   },
   "terms": {
     "title": "Όροι και Προϋποθέσεις",
