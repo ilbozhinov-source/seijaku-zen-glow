@@ -136,6 +136,7 @@
     "searchOffice": "Caută birou după nume sau adresă...",
     "noOfficesFound": "Nu s-au găsit birouri",
     "easyboxInfo": "Veți primi un SMS cu codul de acces după expediere",
+    "easyboxNotAvailableWithCOD": "Livrarea la automat nu este disponibilă cu plată la livrare. Selectați altă metodă.",
     "paymentMethod": "Metodă de Plată",
     "cashOnDelivery": "Plată la Livrare",
     "cardPayment": "Plată cu Card",

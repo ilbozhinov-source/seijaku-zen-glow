@@ -137,6 +137,7 @@
     "noOfficesFound": "Няма намерени офиси",
     "easyboxInfo": "Ще получите SMS с код за достъп до шкафчето след изпращане на поръчката",
     "easyboxRequired": "Моля, изберете Sameday автомат за получаване на пратката.",
+    "easyboxNotAvailableWithCOD": "Доставката до автомат не е достъпна при наложен платеж. Моля, изберете друг метод.",
     "selectEasybox": "Изберете Sameday автомат",
     "selectEasyboxDesc": "Изберете автомат за получаване на вашата поръчка",
     "selectEasyboxButton": "Изберете Sameday автомат...",

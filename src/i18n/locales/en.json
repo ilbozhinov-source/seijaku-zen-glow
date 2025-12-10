@@ -137,6 +137,7 @@
     "noOfficesFound": "No offices found",
     "easyboxInfo": "You will receive an SMS with access code after shipping",
     "easyboxRequired": "Please select a Sameday locker for delivery.",
+    "easyboxNotAvailableWithCOD": "Locker delivery is not available with Cash on Delivery. Please select another method.",
     "selectEasybox": "Select Sameday Locker",
     "selectEasyboxDesc": "Select a locker for your order delivery",
     "selectEasyboxButton": "Select Sameday locker...",

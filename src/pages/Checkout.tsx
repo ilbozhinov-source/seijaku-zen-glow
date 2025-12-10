@@ -248,9 +248,18 @@ const Checkout = () => {
   const fullPhoneNumber = phoneConfig ? `${phoneConfig.code}${formData.phoneNumber}` : formData.phoneNumber;
 
   // Get available shipping methods for current country
-  const availableShippingMethods = formData.shippingCountry 
+  const allShippingMethods = formData.shippingCountry 
     ? SHIPPING_METHODS[formData.shippingCountry] || []
     : [];
+
+  // Filter shipping methods based on payment method
+  // COD does not support easybox/automat delivery (only office and address)
+  const availableShippingMethods = useMemo(() => {
+    if (formData.paymentMethod === 'cod') {
+      return allShippingMethods.filter(m => m.type === 'office' || m.type === 'address');
+    }
+    return allShippingMethods;
+  }, [allShippingMethods, formData.paymentMethod]);
 
   // Get selected shipping method
   const selectedShippingMethod = useMemo(() => {
@@ -342,6 +351,26 @@ const Checkout = () => {
     // Reset easybox selection when method changes
     setSelectedEasybox(null);
   }, []);
+
+  // Handle payment method change - reset easybox if switching to COD
+  const handlePaymentMethodChange = useCallback((value: string) => {
+    // Check if current shipping method is easybox and switching to COD
+    const currentMethod = allShippingMethods.find(m => m.id === formData.shippingMethodId);
+    
+    if (value === 'cod' && currentMethod?.type === 'easybox') {
+      // Reset shipping method and show warning
+      setFormData(prev => ({ 
+        ...prev, 
+        paymentMethod: value,
+        shippingMethodId: '',
+        shippingOffice: '',
+      }));
+      setSelectedEasybox(null);
+      toast.error(t('checkout.easyboxNotAvailableWithCOD'));
+    } else {
+      setFormData(prev => ({ ...prev, paymentMethod: value }));
+    }
+  }, [allShippingMethods, formData.shippingMethodId, t]);
 
   // Handle easybox selection
   const handleEasyboxSelect = useCallback((box: { id: string; label: string }) => {
@@ -897,7 +926,7 @@ const Checkout = () => {
                   <Label>{t('checkout.paymentMethod')} *</Label>
                   <RadioGroup
                     value={formData.paymentMethod}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, paymentMethod: value }))}
+                    onValueChange={handlePaymentMethodChange}
                     className="space-y-3"
                   >
                     <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
