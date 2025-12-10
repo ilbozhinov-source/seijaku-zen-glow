@@ -6,6 +6,7 @@ import { useCartStore } from '@/stores/cartStore';
 import { supabase } from '@/integrations/supabase/client';
 
 interface OrderFulfillmentData {
+  order_number: string | null;
   tracking_number: string | null;
   sent_to_fulfillment: boolean | null;
   fulfillment_error: string | null;
@@ -28,7 +29,7 @@ const CodSuccess = () => {
       if (orderId) {
         const { data } = await supabase
           .from('orders')
-          .select('tracking_number, sent_to_fulfillment, fulfillment_error')
+          .select('order_number, tracking_number, sent_to_fulfillment, fulfillment_error')
           .eq('id', orderId)
           .maybeSingle();
         
@@ -61,9 +62,9 @@ const CodSuccess = () => {
           Благодарим ви за поръчката. Ще платите при доставка.
         </p>
         
-        {orderId && (
+        {(orderData?.order_number || orderId) && (
           <p className="text-sm text-muted-foreground">
-            Номер на поръчка: <span className="font-mono font-medium">{orderId.slice(0, 8)}</span>
+            Номер на поръчка: <span className="font-mono font-medium">{orderData?.order_number || orderId?.slice(0, 8)}</span>
           </p>
         )}
 

@@ -57,10 +57,16 @@ serve(async (req) => {
       postalCode = '';
     }
 
+    // Generate order number (first 8 chars of UUID)
+    const orderId = crypto.randomUUID();
+    const orderNumber = orderId.slice(0, 8);
+
     // Create order first
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
+        id: orderId,
+        order_number: orderNumber,
         items: items,
         total_amount: totalAmount,
         currency: currency,

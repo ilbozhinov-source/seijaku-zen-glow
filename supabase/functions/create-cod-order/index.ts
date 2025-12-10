@@ -259,10 +259,16 @@ serve(async (req) => {
       return sum + (parseFloat(item.price.amount) * item.quantity);
     }, 0);
 
+    // Generate order number (first 8 chars of UUID)
+    const orderId = crypto.randomUUID();
+    const orderNumber = orderId.slice(0, 8);
+
     // Create order
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
+        id: orderId,
+        order_number: orderNumber,
         items: items,
         total_amount: totalAmount,
         currency: 'BGN',
@@ -305,6 +311,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       orderId: order.id,
+      orderNumber: order.order_number,
       status: 'cod_pending',
       trackingNumber: fulfillmentResult.trackingNumber || null,
       fulfillmentOrderId: fulfillmentResult.fulfillmentOrderId || null,
