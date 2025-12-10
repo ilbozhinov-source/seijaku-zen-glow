@@ -10,9 +10,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { ShoppingCart, Minus, Plus, Trash2, ArrowRight } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Trash2, ArrowRight, Truck } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
 import { useTranslation } from 'react-i18next';
+import { Progress } from "@/components/ui/progress";
+
+const FREE_SHIPPING_THRESHOLD = 79;
 
 export const CartDrawer = () => {
   const { t } = useTranslation();
@@ -22,6 +25,8 @@ export const CartDrawer = () => {
   
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
+  const amountUntilFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - totalPrice);
+  const freeShippingProgress = Math.min(100, (totalPrice / FREE_SHIPPING_THRESHOLD) * 100);
 
   const handleCheckout = () => {
     setIsOpen(false);
@@ -59,6 +64,23 @@ export const CartDrawer = () => {
             </div>
           ) : (
             <>
+              {/* Free Shipping Banner */}
+              <div className="mb-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Truck className="h-4 w-4 text-primary" />
+                  {amountUntilFreeShipping > 0 ? (
+                    <span className="text-sm">
+                      {t('cart.freeShippingBanner', { amount: Math.round(amountUntilFreeShipping) })}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-green-600 font-medium">
+                      {t('cart.freeShippingUnlocked')}
+                    </span>
+                  )}
+                </div>
+                <Progress value={freeShippingProgress} className="h-2" />
+              </div>
+
               <div className="flex-1 overflow-y-auto pr-2 min-h-0">
                 <div className="space-y-4">
                   {items.map((item) => (
