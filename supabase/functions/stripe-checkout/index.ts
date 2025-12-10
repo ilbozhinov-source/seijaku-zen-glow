@@ -40,13 +40,30 @@ serve(async (req) => {
       return sum + (parseFloat(item.price.amount) * item.quantity);
     }, 0);
 
+    // Determine currency based on country
+    const country = customer?.shippingCountryCode || 'BG';
+    let currency = 'BGN';
+    if (country === 'GR') currency = 'EUR';
+    if (country === 'RO') currency = 'RON';
+
+    // For Sameday easybox, set address from box label
+    let shippingAddress = customer?.address;
+    let shippingCity = customer?.city;
+    let postalCode = customer?.postalCode;
+    
+    if (customer?.samedayBoxId && customer?.samedayBoxLabel) {
+      shippingAddress = customer.samedayBoxLabel;
+      shippingCity = '';
+      postalCode = '';
+    }
+
     // Create order first
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
         items: items,
         total_amount: totalAmount,
-        currency: 'BGN',
+        currency: currency,
         payment_method: 'card',
         status: 'pending',
         customer_name: customer?.name,
@@ -54,10 +71,11 @@ serve(async (req) => {
         customer_phone: customer?.phone, // Full phone with country code
         phone_country_code: customer?.phoneCountryCode || null,
         phone_number: customer?.phoneNumber || null,
-        shipping_address: customer?.address,
-        shipping_city: customer?.city,
+        shipping_address: shippingAddress,
+        shipping_city: shippingCity,
+        postal_code: postalCode,
         // Shipping country info
-        shipping_country: customer?.shippingCountryCode,
+        shipping_country: country,
         shipping_country_name: customer?.shippingCountryName,
         // Shipping method and pricing
         shipping_method: customer?.shippingMethod,
@@ -86,12 +104,12 @@ serve(async (req) => {
     // Create line items for Stripe
     const lineItems = items.map((item: any) => ({
       price_data: {
-        currency: 'bgn',
+        currency: currency.toLowerCase(),
         product_data: {
           name: item.productTitle || item.product?.title || 'Продукт',
           description: item.variantTitle || undefined,
         },
-        unit_amount: Math.round(parseFloat(item.price.amount) * 100), // Convert to stotinki
+        unit_amount: Math.round(parseFloat(item.price.amount) * 100), // Convert to smallest unit
       },
       quantity: item.quantity,
     }));
