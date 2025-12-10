@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Loader2, Users, Shield, Package, LayoutDashboard, Settings, TrendingUp, ShoppingCart, UserCheck, Eye, Download, X, Box, Truck } from 'lucide-react';
+import { ArrowLeft, Loader2, Users, Shield, Package, LayoutDashboard, Settings, TrendingUp, ShoppingCart, UserCheck, Eye, Download, X, Box, Truck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ProductsManager from '@/components/admin/ProductsManager';
@@ -80,6 +80,9 @@ const Admin = () => {
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [currentOrdersPage, setCurrentOrdersPage] = useState(1);
+  
+  const ORDERS_PER_PAGE = 10;
 
   const filteredOrders = orders.filter(order => {
     if (searchQuery) {
@@ -101,6 +104,18 @@ const Admin = () => {
     }
     return true;
   });
+
+  // Pagination calculations
+  const totalOrdersPages = Math.ceil(filteredOrders.length / ORDERS_PER_PAGE);
+  const paginatedOrders = filteredOrders.slice(
+    (currentOrdersPage - 1) * ORDERS_PER_PAGE,
+    currentOrdersPage * ORDERS_PER_PAGE
+  );
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentOrdersPage(1);
+  }, [statusFilter, dateFrom, dateTo, searchQuery]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -518,96 +533,174 @@ const Admin = () => {
                 ) : filteredOrders.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">Няма поръчки, отговарящи на филтрите</p>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>№</TableHead>
-                          <TableHead>Клиент</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Телефон</TableHead>
-                          <TableHead>Държава</TableHead>
-                          <TableHead>Адрес</TableHead>
-                          <TableHead>Продукти</TableHead>
-                          <TableHead>Доставка</TableHead>
-                          <TableHead>Общо</TableHead>
-                          <TableHead>Плащане</TableHead>
-                          <TableHead>Tracking</TableHead>
-                          <TableHead>Статус</TableHead>
-                          <TableHead>Дата</TableHead>
-                          <TableHead>Действия</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredOrders.map((order) => (
-                          <TableRow key={order.id}>
-                            <TableCell className="font-mono text-xs">{order.order_number || order.id.slice(0, 8)}</TableCell>
-                            <TableCell className="font-medium">{order.customer_name || '-'}</TableCell>
-                            <TableCell>{order.customer_email || '-'}</TableCell>
-                            <TableCell>{order.customer_phone || '-'}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">
-                                {countryLabels[order.shipping_country || ''] || order.shipping_country || '-'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="max-w-[150px] truncate">
-                              {order.shipping_city}, {order.shipping_address}
-                            </TableCell>
-                            <TableCell>{Number(order.total_amount).toFixed(2)} лв.</TableCell>
-                            <TableCell>{Number(order.shipping_price || 0).toFixed(2)}</TableCell>
-                            <TableCell className="font-semibold">
-                              {Number(order.total_with_shipping || order.total_amount).toFixed(2)} лв.
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">
-                                {order.payment_method === 'cod' ? 'НП' : 'Карта'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {order.tracking_number ? (
-                                <span className="font-mono text-xs bg-primary/10 px-2 py-1 rounded">{order.tracking_number}</span>
-                              ) : '-'}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={statusColors[order.status] || ''}>
-                                {statusLabels[order.status] || order.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {new Date(order.created_at).toLocaleDateString('bg-BG')}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setSelectedOrder(order)}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Select
-                                  value={order.status}
-                                  onValueChange={(value) => updateOrderStatus(order.id, value)}
-                                >
-                                  <SelectTrigger className="w-[140px]">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="pending">Изчакваща</SelectItem>
-                                    <SelectItem value="paid">Платена</SelectItem>
-                                    <SelectItem value="cod_pending">Наложен платеж</SelectItem>
-                                    <SelectItem value="shipped">Изпратена</SelectItem>
-                                    <SelectItem value="delivered">Доставена</SelectItem>
-                                    <SelectItem value="cancelled">Отказана</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </TableCell>
+                  <>
+                    {/* Top scrollbar */}
+                    <div 
+                      className="overflow-x-auto mb-2"
+                      onScroll={(e) => {
+                        const bottomScroll = document.getElementById('orders-table-scroll');
+                        if (bottomScroll) {
+                          bottomScroll.scrollLeft = e.currentTarget.scrollLeft;
+                        }
+                      }}
+                    >
+                      <div style={{ width: '1600px', height: '12px' }} />
+                    </div>
+                    
+                    {/* Table with bottom scrollbar */}
+                    <div 
+                      id="orders-table-scroll"
+                      className="overflow-x-auto"
+                      onScroll={(e) => {
+                        const topScroll = e.currentTarget.previousElementSibling as HTMLElement;
+                        if (topScroll) {
+                          topScroll.scrollLeft = e.currentTarget.scrollLeft;
+                        }
+                      }}
+                    >
+                      <Table style={{ minWidth: '1600px' }}>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>№</TableHead>
+                            <TableHead>Клиент</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Телефон</TableHead>
+                            <TableHead>Държава</TableHead>
+                            <TableHead>Адрес</TableHead>
+                            <TableHead>Продукти</TableHead>
+                            <TableHead>Доставка</TableHead>
+                            <TableHead>Общо</TableHead>
+                            <TableHead>Плащане</TableHead>
+                            <TableHead>Tracking</TableHead>
+                            <TableHead>Статус</TableHead>
+                            <TableHead>Дата</TableHead>
+                            <TableHead>Действия</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedOrders.map((order) => (
+                            <TableRow key={order.id}>
+                              <TableCell className="font-mono text-xs">{order.order_number || order.id.slice(0, 8)}</TableCell>
+                              <TableCell className="font-medium">{order.customer_name || '-'}</TableCell>
+                              <TableCell>{order.customer_email || '-'}</TableCell>
+                              <TableCell>{order.customer_phone || '-'}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline">
+                                  {countryLabels[order.shipping_country || ''] || order.shipping_country || '-'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="max-w-[150px] truncate">
+                                {order.shipping_city}, {order.shipping_address}
+                              </TableCell>
+                              <TableCell>{Number(order.total_amount).toFixed(2)} лв.</TableCell>
+                              <TableCell>{Number(order.shipping_price || 0).toFixed(2)}</TableCell>
+                              <TableCell className="font-semibold">
+                                {Number(order.total_with_shipping || order.total_amount).toFixed(2)} лв.
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="secondary">
+                                  {order.payment_method === 'cod' ? 'НП' : 'Карта'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {order.tracking_number ? (
+                                  <span className="font-mono text-xs bg-primary/10 px-2 py-1 rounded">{order.tracking_number}</span>
+                                ) : '-'}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className={statusColors[order.status] || ''}>
+                                  {statusLabels[order.status] || order.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {new Date(order.created_at).toLocaleDateString('bg-BG')}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setSelectedOrder(order)}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Select
+                                    value={order.status}
+                                    onValueChange={(value) => updateOrderStatus(order.id, value)}
+                                  >
+                                    <SelectTrigger className="w-[140px]">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="pending">Изчакваща</SelectItem>
+                                      <SelectItem value="paid">Платена</SelectItem>
+                                      <SelectItem value="cod_pending">Наложен платеж</SelectItem>
+                                      <SelectItem value="shipped">Изпратена</SelectItem>
+                                      <SelectItem value="delivered">Доставена</SelectItem>
+                                      <SelectItem value="cancelled">Отказана</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Pagination */}
+                    {totalOrdersPages > 1 && (
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                        <p className="text-sm text-muted-foreground">
+                          Показване {((currentOrdersPage - 1) * ORDERS_PER_PAGE) + 1} - {Math.min(currentOrdersPage * ORDERS_PER_PAGE, filteredOrders.length)} от {filteredOrders.length} поръчки
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentOrdersPage(p => Math.max(1, p - 1))}
+                            disabled={currentOrdersPage === 1}
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                            Назад
+                          </Button>
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: totalOrdersPages }, (_, i) => i + 1)
+                              .filter(page => {
+                                if (totalOrdersPages <= 7) return true;
+                                if (page === 1 || page === totalOrdersPages) return true;
+                                if (Math.abs(page - currentOrdersPage) <= 1) return true;
+                                return false;
+                              })
+                              .map((page, idx, arr) => (
+                                <span key={page} className="flex items-center">
+                                  {idx > 0 && arr[idx - 1] !== page - 1 && (
+                                    <span className="px-2 text-muted-foreground">...</span>
+                                  )}
+                                  <Button
+                                    variant={currentOrdersPage === page ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => setCurrentOrdersPage(page)}
+                                    className="w-9"
+                                  >
+                                    {page}
+                                  </Button>
+                                </span>
+                              ))}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentOrdersPage(p => Math.min(totalOrdersPages, p + 1))}
+                            disabled={currentOrdersPage === totalOrdersPages}
+                          >
+                            Напред
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
