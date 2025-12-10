@@ -100,7 +100,6 @@ const CodSuccess = () => {
           <p className="text-sm font-medium">Какво следва:</p>
           <ul className="text-sm text-muted-foreground space-y-1">
             <li>• Ще получите имейл с потвърждение</li>
-            <li>• Ще ви се обадим за потвърждение на доставката</li>
             <li>• Плащате на куриера при получаване</li>
           </ul>
         </div>
