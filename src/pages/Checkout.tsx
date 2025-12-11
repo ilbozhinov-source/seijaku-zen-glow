@@ -39,11 +39,13 @@ const convertToDisplayCurrency = (amountBGN: number, country: string): number =>
 };
 
 const formatPrice = (amount: number, country: string): string => {
-  const symbol = getCurrencySymbol(country);
   if (country === 'BG') {
-    return `${Math.round(amount)} ${symbol}`;
+    const eurAmount = amount / BGN_TO_EUR_RATE;
+    return `${Math.round(amount)} лв. (≈ ${eurAmount.toFixed(2)} €)`;
   }
-  return `${amount.toFixed(2)} ${symbol}`;
+  // GR and RO: show only EUR
+  const eurAmount = amount / BGN_TO_EUR_RATE;
+  return `${eurAmount.toFixed(2)} €`;
 };
 
 // Phone country codes and validation rules
