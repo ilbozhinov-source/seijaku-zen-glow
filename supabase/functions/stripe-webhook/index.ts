@@ -23,7 +23,7 @@ function mapCourierService(courierCode: string | undefined, shippingMethod: stri
   }
   
   if (country === 'GR') {
-    return { courier: 'SpeedX', service: 'address' };
+    return { courier: 'Speedex', service: 'address' };
   }
   
   if (country === 'RO') {
@@ -53,7 +53,7 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
 
     // Determine courier based on country and shipping method
     let courier = 'Econt';
-    if (country === 'GR') courier = 'SpeedX';
+    if (country === 'GR') courier = 'Speedex';
     else if (country === 'RO') courier = 'FAN';
     else if (order.courier_name) courier = order.courier_name;
     else if (order.shipping_method?.includes('sameday')) courier = 'Sameday';
