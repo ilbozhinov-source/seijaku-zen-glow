@@ -17,7 +17,8 @@ import { Progress } from "@/components/ui/progress";
 import { 
   formatPriceWithCurrency, 
   FREE_SHIPPING_THRESHOLD_BG, 
-  EUR_PRICE_GR_RO 
+  EUR_PRICE_GR,
+  RON_PRICE_RO
 } from "@/lib/pricing";
 
 export const CartDrawer = () => {
@@ -44,9 +45,11 @@ export const CartDrawer = () => {
   
   // Calculate actual total for display based on country
   const getDisplayTotal = () => {
-    if (selectedCountry === 'GR' || selectedCountry === 'RO') {
-      // Count items and multiply by fixed EUR price
-      return items.reduce((sum, item) => sum + (EUR_PRICE_GR_RO * item.quantity), 0);
+    if (selectedCountry === 'GR') {
+      return items.reduce((sum, item) => sum + (EUR_PRICE_GR * item.quantity), 0);
+    }
+    if (selectedCountry === 'RO') {
+      return items.reduce((sum, item) => sum + (RON_PRICE_RO * item.quantity), 0);
     }
     return totalPriceBGN;
   };
@@ -130,9 +133,7 @@ export const CartDrawer = () => {
                           {item.selectedOptions.map(option => option.value).join(' • ')}
                         </p>
                         <p className="font-semibold text-sm">
-                          {selectedCountry === 'GR' || selectedCountry === 'RO'
-                            ? `${EUR_PRICE_GR_RO.toFixed(2)} €`
-                            : formatPriceWithCurrency(parseFloat(item.price.amount), selectedCountry)}
+                          {formatPriceWithCurrency(parseFloat(item.price.amount), selectedCountry)}
                         </p>
                       </div>
                       
@@ -176,8 +177,10 @@ export const CartDrawer = () => {
                   <span className="text-lg font-semibold">{t('cart.total')}</span>
                   <div className="text-right">
                     <span className="text-xl font-bold block">
-                      {selectedCountry === 'GR' || selectedCountry === 'RO' 
+                      {selectedCountry === 'GR' 
                         ? `${displayTotal.toFixed(2)} €`
+                        : selectedCountry === 'RO'
+                        ? `${displayTotal.toFixed(2)} lei (≈ ${(displayTotal / 4.97).toFixed(2)} €)`
                         : formatPriceWithCurrency(totalPriceBGN, selectedCountry)}
                     </span>
                   </div>

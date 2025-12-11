@@ -7,7 +7,7 @@ import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
-import { EUR_PRICE_GR_RO, BGN_TO_EUR_RATE } from "@/lib/pricing";
+import { EUR_PRICE_GR, RON_PRICE_RO, EUR_PRICE_RO, BGN_TO_EUR_RATE } from "@/lib/pricing";
 
 const Products = () => {
   const { t } = useTranslation();
@@ -110,10 +110,19 @@ const Products = () => {
                   </p>
 
                   <div className="flex flex-col gap-1 items-center text-center">
-                    {selectedCountry === 'GR' || selectedCountry === 'RO' ? (
+                    {selectedCountry === 'GR' ? (
                       <span className="text-2xl font-bold text-primary">
-                        {EUR_PRICE_GR_RO.toFixed(2)} €
+                        {EUR_PRICE_GR.toFixed(2)} €
                       </span>
+                    ) : selectedCountry === 'RO' ? (
+                      <>
+                        <span className="text-2xl font-bold text-primary">
+                          {RON_PRICE_RO.toFixed(2)} lei
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          ≈ {EUR_PRICE_RO.toFixed(2)} €
+                        </span>
+                      </>
                     ) : (
                       <>
                         <span className="text-2xl font-bold text-primary">

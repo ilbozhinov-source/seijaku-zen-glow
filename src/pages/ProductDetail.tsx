@@ -10,7 +10,7 @@ import { ProductSchema } from "@/components/ProductSchema";
 import { BreadcrumbSchema } from "@/components/BreadcrumbSchema";
 import { useSEO } from "@/hooks/useSEO";
 import { useTranslation } from 'react-i18next';
-import { EUR_PRICE_GR_RO, BGN_TO_EUR_RATE } from "@/lib/pricing";
+import { EUR_PRICE_GR, RON_PRICE_RO, EUR_PRICE_RO, BGN_TO_EUR_RATE } from "@/lib/pricing";
 
 const ProductDetail = () => {
   const { t } = useTranslation();
@@ -135,10 +135,19 @@ const ProductDetail = () => {
                     {t(product.title)}
                   </h1>
                   <div>
-                    {selectedCountry === 'GR' || selectedCountry === 'RO' ? (
+                    {selectedCountry === 'GR' ? (
                       <p className="text-2xl font-bold text-primary">
-                        {EUR_PRICE_GR_RO.toFixed(2)} €
+                        {EUR_PRICE_GR.toFixed(2)} €
                       </p>
+                    ) : selectedCountry === 'RO' ? (
+                      <>
+                        <p className="text-2xl font-bold text-primary">
+                          {RON_PRICE_RO.toFixed(2)} lei
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          ≈ {EUR_PRICE_RO.toFixed(2)} €
+                        </p>
+                      </>
                     ) : (
                       <>
                         <p className="text-2xl font-bold text-primary">
