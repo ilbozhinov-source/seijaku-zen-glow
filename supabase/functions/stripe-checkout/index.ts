@@ -158,6 +158,7 @@ serve(async (req) => {
       customer_email: customer?.email,
       metadata: {
         order_id: order.id,
+        order_number: orderNumber,
       },
     });
 
