@@ -12,7 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Loader2, Users, Shield, Package, LayoutDashboard, Settings, TrendingUp, ShoppingCart, UserCheck, Eye, Download, X, Box, Truck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Loader2, Users, Shield, Package, LayoutDashboard, Settings, TrendingUp, ShoppingCart, UserCheck, Eye, Download, X, Box, Truck, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ProductsManager from '@/components/admin/ProductsManager';
@@ -177,6 +178,20 @@ const Admin = () => {
       toast.error('Грешка при обновяване на статуса');
     } else {
       toast.success('Статусът е обновен');
+      fetchOrders();
+    }
+  };
+
+  const deleteOrder = async (orderId: string) => {
+    const { error } = await supabase
+      .from('orders')
+      .delete()
+      .eq('id', orderId);
+
+    if (error) {
+      toast.error('Грешка при изтриване на поръчката');
+    } else {
+      toast.success('Поръчката е изтрита');
       fetchOrders();
     }
   };
@@ -534,30 +549,7 @@ const Admin = () => {
                   <p className="text-center text-muted-foreground py-8">Няма поръчки, отговарящи на филтрите</p>
                 ) : (
                   <>
-                    {/* Top scrollbar */}
-                    <div 
-                      className="overflow-x-auto mb-2"
-                      onScroll={(e) => {
-                        const bottomScroll = document.getElementById('orders-table-scroll');
-                        if (bottomScroll) {
-                          bottomScroll.scrollLeft = e.currentTarget.scrollLeft;
-                        }
-                      }}
-                    >
-                      <div style={{ width: '1600px', height: '12px' }} />
-                    </div>
-                    
-                    {/* Table with bottom scrollbar */}
-                    <div 
-                      id="orders-table-scroll"
-                      className="overflow-x-auto"
-                      onScroll={(e) => {
-                        const topScroll = e.currentTarget.previousElementSibling as HTMLElement;
-                        if (topScroll) {
-                          topScroll.scrollLeft = e.currentTarget.scrollLeft;
-                        }
-                      }}
-                    >
+                    <div className="overflow-x-auto">
                       <Table style={{ minWidth: '1600px' }}>
                         <TableHeader>
                           <TableRow>
@@ -640,6 +632,27 @@ const Admin = () => {
                                       <SelectItem value="cancelled">Отказана</SelectItem>
                                     </SelectContent>
                                   </Select>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Изтриване на поръчка</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Сигурни ли сте, че искате да изтриете тази поръчка? Това действие е необратимо.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Отказ</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => deleteOrder(order.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                          Изтрий
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
                                 </div>
                               </TableCell>
                             </TableRow>
