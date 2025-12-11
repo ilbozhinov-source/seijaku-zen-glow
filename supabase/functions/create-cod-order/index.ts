@@ -99,13 +99,15 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
     const codAmount = order.total_with_shipping || (productsTotal + (order.shipping_price || 0));
 
     // Build payload according to NextLevel API structure (same as test that works!)
+    // Use short order_number (first 8 chars of UUID) for both order_id and ref to match in NextLevel
+    const shortRef = order.order_number || order.id.substring(0, 8);
     const payload = {
-      order_id: order.id,
+      order_id: shortRef,
       cod: codAmount, // COD payment - customer pays this on delivery
       price: productsTotal,
       currency: currency,
       shipping_price: order.shipping_price ? order.shipping_price.toFixed(2) : "0.00",
-      ref: order.order_number || order.id, // Use our order_number for tracking
+      ref: shortRef,
       courier: courier,
       discount_type: null,
       discount_value: null,

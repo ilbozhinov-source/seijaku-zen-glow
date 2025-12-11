@@ -97,13 +97,15 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
       : new Date().toISOString().replace('T', ' ').substring(0, 19);
 
     // Build payload according to NextLevel API structure
+    // Use short order_number (first 8 chars of UUID) for both order_id and ref to match in NextLevel
+    const shortRef = order.order_number || order.id.substring(0, 8);
     const payload = {
-      order_id: order.id,
+      order_id: shortRef,
       cod: 0, // Card payment - already paid, no COD
       price: productsTotal,
       currency: currency,
       shipping_price: order.shipping_price ? order.shipping_price.toFixed(2) : "0.00",
-      ref: order.order_number || order.id, // Use our order_number for tracking
+      ref: shortRef,
       courier: courier,
       discount_type: null,
       discount_value: null,
