@@ -191,12 +191,15 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
+    // Use info@gomatcha.bg as the from address
+    const fromEmail = "info@gomatcha.bg";
+
     // Send email to business
     await client.send({
-      from: smtpUser,
+      from: fromEmail,
       to: "info@gomatcha.bg",
-      subject: `🍵 Нова поръчка от ${customer.firstName} ${customer.lastName} - ${Math.round(total)} лв.`,
-      content: `Нова поръчка от ${customer.firstName} ${customer.lastName}\n\nКонтакт:\nEmail: ${customer.email}\nТелефон: ${customer.phone}\n\nАдрес:\n${shipping.address}\n${shipping.city}, ${shipping.postalCode}\n\nПродукти:\n${itemsText}\n\nОбща сума: ${Math.round(total)} лв.\nМетод на плащане: ${paymentMethodText}`,
+      subject: `Nova poruchka ot ${customer.firstName} ${customer.lastName} - ${Math.round(total)} lv.`,
+      content: `Nova poruchka ot ${customer.firstName} ${customer.lastName}\n\nKontakt:\nEmail: ${customer.email}\nTelefon: ${customer.phone}\n\nAdres:\n${shipping.address}\n${shipping.city}, ${shipping.postalCode}\n\nProdukti:\n${itemsText}\n\nObshta suma: ${Math.round(total)} lv.\nMetod na plashtane: ${paymentMethodText}`,
       html: businessEmailHtml,
     });
 
@@ -204,10 +207,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send confirmation email to customer
     await client.send({
-      from: smtpUser,
+      from: fromEmail,
       to: customer.email,
-      subject: "🍵 Потвърждение на поръчка - SEIJAKU",
-      content: `Здравей, ${customer.firstName}!\n\nБлагодарим за поръчката!\n\nПродукти:\n${itemsText}\n\nОбща сума: ${Math.round(total)} лв.\nМетод на плащане: ${paymentMethodText}\n\nАдрес за доставка:\n${shipping.address}\n${shipping.city}, ${shipping.postalCode}\n\nЩе се свържем с теб, когато поръчката е изпратена.\n\nС уважение,\nЕкипът на SEIJAKU`,
+      subject: "Potvarzhdenie na poruchka - SEIJAKU",
+      content: `Zdravey, ${customer.firstName}!\n\nBlagodarim za poruchkata!\n\nProdukti:\n${itemsText}\n\nObshta suma: ${Math.round(total)} lv.\nMetod na plashtane: ${paymentMethodText}\n\nAdres za dostavka:\n${shipping.address}\n${shipping.city}, ${shipping.postalCode}\n\nShte se svarjem s teb, kogato poruchkata e izpratena.\n\nS uvajenie,\nEkipat na SEIJAKU`,
       html: customerEmailHtml,
     });
 
