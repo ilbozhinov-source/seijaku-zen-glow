@@ -14,20 +14,11 @@ import { ShoppingCart, Minus, Plus, Trash2, ArrowRight, Truck } from "lucide-rea
 import { useCartStore } from "@/stores/cartStore";
 import { useTranslation } from 'react-i18next';
 import { Progress } from "@/components/ui/progress";
-
-const FREE_SHIPPING_THRESHOLD = 79;
-const BGN_TO_EUR_RATE = 1.95583;
-
-// Format price based on country
-const formatPriceWithCurrency = (amountBGN: number, country: string): string => {
-  if (country === 'BG') {
-    const eurAmount = amountBGN / BGN_TO_EUR_RATE;
-    return `${Math.round(amountBGN)} лв. (≈ ${eurAmount.toFixed(2)} €)`;
-  }
-  // GR and RO: show only EUR
-  const eurAmount = amountBGN / BGN_TO_EUR_RATE;
-  return `${eurAmount.toFixed(2)} €`;
-};
+import { 
+  formatPriceWithCurrency, 
+  FREE_SHIPPING_THRESHOLD_BG, 
+  EUR_PRICE_GR_RO 
+} from "@/lib/pricing";
 
 export const CartDrawer = () => {
   const { t } = useTranslation();
@@ -49,9 +40,20 @@ export const CartDrawer = () => {
   }, [isOpen]); // Re-check when drawer opens
   
   const totalItems = getTotalItems();
-  const totalPrice = getTotalPrice();
-  const amountUntilFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - totalPrice);
-  const freeShippingProgress = Math.min(100, (totalPrice / FREE_SHIPPING_THRESHOLD) * 100);
+  const totalPriceBGN = getTotalPrice();
+  
+  // Calculate actual total for display based on country
+  const getDisplayTotal = () => {
+    if (selectedCountry === 'GR' || selectedCountry === 'RO') {
+      // Count items and multiply by fixed EUR price
+      return items.reduce((sum, item) => sum + (EUR_PRICE_GR_RO * item.quantity), 0);
+    }
+    return totalPriceBGN;
+  };
+  
+  const displayTotal = getDisplayTotal();
+  const amountUntilFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD_BG - totalPriceBGN);
+  const freeShippingProgress = Math.min(100, (totalPriceBGN / FREE_SHIPPING_THRESHOLD_BG) * 100);
 
   const handleCheckout = () => {
     setIsOpen(false);
@@ -128,7 +130,9 @@ export const CartDrawer = () => {
                           {item.selectedOptions.map(option => option.value).join(' • ')}
                         </p>
                         <p className="font-semibold text-sm">
-                          {formatPriceWithCurrency(parseFloat(item.price.amount), selectedCountry)}
+                          {selectedCountry === 'GR' || selectedCountry === 'RO'
+                            ? `${EUR_PRICE_GR_RO.toFixed(2)} €`
+                            : formatPriceWithCurrency(parseFloat(item.price.amount), selectedCountry)}
                         </p>
                       </div>
                       
@@ -172,7 +176,9 @@ export const CartDrawer = () => {
                   <span className="text-lg font-semibold">{t('cart.total')}</span>
                   <div className="text-right">
                     <span className="text-xl font-bold block">
-                      {formatPriceWithCurrency(totalPrice, selectedCountry)}
+                      {selectedCountry === 'GR' || selectedCountry === 'RO' 
+                        ? `${displayTotal.toFixed(2)} €`
+                        : formatPriceWithCurrency(totalPriceBGN, selectedCountry)}
                     </span>
                   </div>
                 </div>

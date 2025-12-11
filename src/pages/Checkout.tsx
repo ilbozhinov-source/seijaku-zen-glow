@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils';
 import Footer from '@/components/Footer';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
 import { SamedayBoxSelector } from '@/components/SamedayBoxSelector';
+import { EUR_PRICE_GR_RO } from '@/lib/pricing';
+
 // Supported shipping countries - only these three
 const SUPPORTED_SHIPPING_COUNTRIES = [
   { code: 'BG', name: 'Bulgaria' },
@@ -33,8 +35,10 @@ const getCurrencySymbol = (country: string): string => {
   return country === 'BG' ? 'лв.' : '€';
 };
 
+// For GR and RO, we use fixed EUR price instead of converting
 const convertToDisplayCurrency = (amountBGN: number, country: string): number => {
   if (country === 'BG') return amountBGN;
+  // Not used for product prices in GR/RO - they use fixed price
   return amountBGN / BGN_TO_EUR_RATE;
 };
 
@@ -44,8 +48,7 @@ const formatPrice = (amount: number, country: string): string => {
     return `${Math.round(amount)} лв. (≈ ${eurAmount.toFixed(2)} €)`;
   }
   // GR and RO: show only EUR
-  const eurAmount = amount / BGN_TO_EUR_RATE;
-  return `${eurAmount.toFixed(2)} €`;
+  return `${amount.toFixed(2)} €`;
 };
 
 // Phone country codes and validation rules
@@ -406,6 +409,16 @@ const Checkout = () => {
   const FREE_SHIPPING_THRESHOLD_BGN = 79;
   const baseShippingPrice = selectedShippingMethod?.price || 0;
   
+  // Calculate products total for display based on country
+  // GR and RO use fixed EUR price per item
+  const getProductsTotalDisplay = () => {
+    if (formData.shippingCountry === 'GR' || formData.shippingCountry === 'RO') {
+      return items.reduce((sum, item) => sum + (EUR_PRICE_GR_RO * item.quantity), 0);
+    }
+    return productsTotalBGN;
+  };
+  const productsTotalDisplay = getProductsTotalDisplay();
+  
   // Free shipping progress (only for Bulgaria)
   const amountUntilFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD_BGN - productsTotalBGN);
   const freeShippingProgress = Math.min(100, (productsTotalBGN / FREE_SHIPPING_THRESHOLD_BGN) * 100);
@@ -417,9 +430,6 @@ const Checkout = () => {
   // Display currency based on country
   const displayCurrency = formData.shippingCountry === 'BG' ? 'BGN' : 'EUR';
   const displayCurrencyLabel = getCurrencySymbol(formData.shippingCountry);
-  
-  // Convert products total to display currency
-  const productsTotalDisplay = convertToDisplayCurrency(productsTotalBGN, formData.shippingCountry);
   
   // Total with shipping in display currency
   const totalWithShipping = productsTotalDisplay + shippingPrice;
@@ -1092,10 +1102,9 @@ const Checkout = () => {
                     
                     <div className="text-right flex-shrink-0">
                       <p className="font-semibold">
-                        {formatPrice(
-                          convertToDisplayCurrency(parseFloat(item.price.amount) * item.quantity, formData.shippingCountry),
-                          formData.shippingCountry
-                        )}
+                        {formData.shippingCountry === 'GR' || formData.shippingCountry === 'RO'
+                          ? `${(EUR_PRICE_GR_RO * item.quantity).toFixed(2)} €`
+                          : formatPrice(parseFloat(item.price.amount) * item.quantity, formData.shippingCountry)}
                       </p>
                     </div>
                   </div>
