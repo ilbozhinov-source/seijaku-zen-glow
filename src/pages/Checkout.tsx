@@ -9,7 +9,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCartStore } from '@/stores/cartStore';
-import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag, Search, Check, Phone, Truck, Package, Edit2 } from 'lucide-react';
+import { ArrowLeft, Loader2, CreditCard, Banknote, ShoppingBag, Search, Check, Phone, Truck, Package, Edit2, Minus, Plus, Trash2 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
@@ -233,7 +234,7 @@ const OfficeCombobox = ({ offices, value, onChange, loading, error, t }: OfficeC
 const Checkout = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { items, getTotalPrice } = useCartStore();
+  const { items, getTotalPrice, updateQuantity, removeItem } = useCartStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [geoLoaded, setGeoLoaded] = useState(false);
   
@@ -402,6 +403,10 @@ const Checkout = () => {
   const productsTotalBGN = getTotalPrice(); // Always in BGN from cart
   const FREE_SHIPPING_THRESHOLD_BGN = 79;
   const baseShippingPrice = selectedShippingMethod?.price || 0;
+  
+  // Free shipping progress (only for Bulgaria)
+  const amountUntilFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD_BGN - productsTotalBGN);
+  const freeShippingProgress = Math.min(100, (productsTotalBGN / FREE_SHIPPING_THRESHOLD_BGN) * 100);
   
   // Free shipping for Bulgaria when order is 79 BGN or more
   const isFreeShipping = formData.shippingCountry === 'BG' && productsTotalBGN >= FREE_SHIPPING_THRESHOLD_BGN;
@@ -1012,9 +1017,28 @@ const Checkout = () => {
             <Card className="p-6 md:p-8 h-fit">
               <h2 className="text-xl font-semibold mb-6">{t('checkout.orderSummary')}</h2>
               
+              {/* Free Shipping Banner - Only for Bulgaria */}
+              {formData.shippingCountry === 'BG' && (
+                <div className="mb-6 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Truck className="h-4 w-4 text-primary" />
+                    {amountUntilFreeShipping > 0 ? (
+                      <span className="text-sm">
+                        {t('cart.freeShippingBanner', { amount: Math.round(amountUntilFreeShipping) })}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-green-600 font-medium">
+                        {t('cart.freeShippingUnlocked')}
+                      </span>
+                    )}
+                  </div>
+                  <Progress value={freeShippingProgress} className="h-2" />
+                </div>
+              )}
+              
               <div className="space-y-4 mb-6">
                 {items.map((item) => (
-                  <div key={item.variantId} className="flex gap-4">
+                  <div key={item.variantId} className="flex gap-4 p-2 border rounded-lg">
                     <div className="w-16 h-16 bg-secondary/20 rounded-md overflow-hidden flex-shrink-0">
                       {item.product.images?.[0] && (
                         <img
@@ -1030,12 +1054,41 @@ const Checkout = () => {
                       <p className="text-sm text-muted-foreground">
                         {item.selectedOptions.map(option => option.value).join(' • ')}
                       </p>
-                      <p className="text-sm text-muted-foreground">
-                        {t('checkout.quantity')}: {item.quantity}
-                      </p>
+                      
+                      {/* Quantity Controls */}
+                      <div className="flex items-center gap-2 mt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 ml-auto text-muted-foreground hover:text-destructive"
+                          onClick={() => removeItem(item.variantId)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     
-                    <div className="text-right">
+                    <div className="text-right flex-shrink-0">
                       <p className="font-semibold">
                         {formatPrice(
                           convertToDisplayCurrency(parseFloat(item.price.amount) * item.quantity, formData.shippingCountry),
