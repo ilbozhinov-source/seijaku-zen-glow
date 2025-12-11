@@ -99,6 +99,17 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
     // Build payload according to NextLevel API structure
     // Use short order_number (first 8 chars of UUID) for both order_id and ref to match in NextLevel
     const shortRef = order.order_number || order.id.substring(0, 8);
+
+    // For Sameday easybox orders, extract city from address if shipping_city is empty
+    // Address format: "София, ул. Акад Б. Стефанов 12 — еasybox Фантастико Ф22"
+    let place = order.shipping_city || '';
+    if (!place && order.shipping_address && order.shipping_method?.includes('sameday')) {
+      const addressParts = order.shipping_address.split(',');
+      if (addressParts.length > 0) {
+        place = addressParts[0].trim();
+      }
+    }
+
     const payload = {
       order_id: shortRef,
       cod: 0, // Card payment - already paid, no COD
@@ -117,8 +128,8 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
         office_id: order.courier_office_id ? parseInt(order.courier_office_id) : null,
         country: country,
         email: order.customer_email || '',
-        place: order.shipping_city || '',
-        post_code: order.postal_code || '',
+        place: place,
+        post_code: order.postal_code || '1000', // Default postal code if empty
         street: order.shipping_address || '',
         street_no: null,
         complex: null,
