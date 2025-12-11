@@ -61,12 +61,12 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
     // Calculate products subtotal (price without shipping)
     const items = Array.isArray(order.items) ? order.items : [];
     let productsTotal = 0;
-    const products = items.map((item: any, index: number) => {
+    const products = items.map((item: any) => {
       const unitPrice = parseFloat(item.price?.amount || item.price || '0');
       const quantity = item.quantity || 1;
       productsTotal += unitPrice * quantity;
       return {
-        sku: item.sku || item.variantId || `SKU-${index + 1}`,
+        sku: '3800503047000', // Barcode for SEIJAKU Matcha
         name: `${item.productTitle || item.title || 'Product'} ${item.variantTitle ? `- ${item.variantTitle}` : ''}`.trim(),
         quantity: quantity,
         unit_price: unitPrice,
@@ -90,7 +90,7 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
       price: productsTotal,
       currency: currency,
       shipping_price: order.shipping_price ? order.shipping_price.toFixed(2) : "0.00",
-      ref: order.id,
+      ref: order.order_number || order.id, // Use our order_number for tracking
       courier: courier,
       discount_type: null,
       discount_value: null,
