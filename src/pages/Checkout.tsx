@@ -24,6 +24,27 @@ const SUPPORTED_SHIPPING_COUNTRIES = [
   { code: 'RO', name: 'Romania' },
 ] as const;
 
+// Currency conversion rate: 1 EUR = 1.95583 BGN
+const BGN_TO_EUR_RATE = 1.95583;
+
+// Currency display helpers
+const getCurrencySymbol = (country: string): string => {
+  return country === 'BG' ? 'лв.' : '€';
+};
+
+const convertToDisplayCurrency = (amountBGN: number, country: string): number => {
+  if (country === 'BG') return amountBGN;
+  return amountBGN / BGN_TO_EUR_RATE;
+};
+
+const formatPrice = (amount: number, country: string): string => {
+  const symbol = getCurrencySymbol(country);
+  if (country === 'BG') {
+    return `${Math.round(amount)} ${symbol}`;
+  }
+  return `${amount.toFixed(2)} ${symbol}`;
+};
+
 // Phone country codes and validation rules
 const PHONE_CONFIG: Record<string, { code: string; minLength: number; maxLength: number; placeholder: string }> = {
   BG: { code: '+359', minLength: 9, maxLength: 9, placeholder: '888123456' },
@@ -378,15 +399,23 @@ const Checkout = () => {
     setShowEasyboxModal(false);
   }, []);
 
-  const productsTotal = getTotalPrice();
+  const productsTotalBGN = getTotalPrice(); // Always in BGN from cart
   const FREE_SHIPPING_THRESHOLD_BGN = 79;
   const baseShippingPrice = selectedShippingMethod?.price || 0;
-  const shippingCurrency = selectedShippingMethod?.currency || 'BGN';
-  const shippingCurrencyLabel = selectedShippingMethod?.currencyLabel || 'лв.';
+  
   // Free shipping for Bulgaria when order is 79 BGN or more
-  const isFreeShipping = formData.shippingCountry === 'BG' && productsTotal >= FREE_SHIPPING_THRESHOLD_BGN;
+  const isFreeShipping = formData.shippingCountry === 'BG' && productsTotalBGN >= FREE_SHIPPING_THRESHOLD_BGN;
   const shippingPrice = isFreeShipping ? 0 : baseShippingPrice;
-  const totalWithShipping = productsTotal + shippingPrice;
+  
+  // Display currency based on country
+  const displayCurrency = formData.shippingCountry === 'BG' ? 'BGN' : 'EUR';
+  const displayCurrencyLabel = getCurrencySymbol(formData.shippingCountry);
+  
+  // Convert products total to display currency
+  const productsTotalDisplay = convertToDisplayCurrency(productsTotalBGN, formData.shippingCountry);
+  
+  // Total with shipping in display currency
+  const totalWithShipping = productsTotalDisplay + shippingPrice;
 
   // Fetch offices when method requires office selection
   useEffect(() => {
@@ -564,7 +593,7 @@ const Checkout = () => {
         shippingMethodType: selectedShippingMethod?.type || 'address',
         // Pricing
         shippingPrice: shippingPrice,
-        shippingCurrency: shippingCurrency,
+        shippingCurrency: displayCurrency,
         totalWithShipping: totalWithShipping,
         // Courier info
         courierName: selectedShippingMethod?.courierName || null,
@@ -645,11 +674,11 @@ const Checkout = () => {
               quantity: item.quantity,
               price: parseFloat(item.price.amount),
             })),
-            total: productsTotal,
+            total: productsTotalDisplay,
             shippingPrice: shippingPrice,
-            shippingCurrency: shippingCurrency,
+            shippingCurrency: displayCurrency,
             totalWithShipping: totalWithShipping,
-            currency: shippingCurrency,
+            currency: displayCurrency,
           },
         });
 
@@ -1008,7 +1037,10 @@ const Checkout = () => {
                     
                     <div className="text-right">
                       <p className="font-semibold">
-                        {t('products.priceBGN', { price: Math.round(parseFloat(item.price.amount) * item.quantity) })}
+                        {formatPrice(
+                          convertToDisplayCurrency(parseFloat(item.price.amount) * item.quantity, formData.shippingCountry),
+                          formData.shippingCountry
+                        )}
                       </p>
                     </div>
                   </div>
@@ -1019,7 +1051,7 @@ const Checkout = () => {
                 {/* Products subtotal */}
                 <div className="flex justify-between text-muted-foreground">
                   <span>{t('checkout.subtotal')}</span>
-                  <span>{t('products.priceBGN', { price: Math.round(productsTotal) })}</span>
+                  <span>{formatPrice(productsTotalDisplay, formData.shippingCountry)}</span>
                 </div>
                 
                 {/* Shipping price */}
@@ -1029,7 +1061,7 @@ const Checkout = () => {
                     isFreeShipping ? (
                       <span className="text-green-600 font-medium">{t('checkout.freeShipping')}</span>
                     ) : (
-                      <span>{shippingPrice.toFixed(2)} {shippingCurrencyLabel}</span>
+                      <span>{shippingPrice.toFixed(2)} {displayCurrencyLabel}</span>
                     )
                   ) : (
                     <span className="text-sm italic">{t('checkout.selectShippingMethod')}</span>
@@ -1041,19 +1073,9 @@ const Checkout = () => {
                   <span>{t('checkout.total')}</span>
                   <div className="text-right">
                     {selectedShippingMethod ? (
-                      <>
-                        <span className="block">
-                          {shippingCurrency === 'BGN' 
-                            ? t('products.priceBGN', { price: Math.round(totalWithShipping) })
-                            : `${totalWithShipping.toFixed(2)} ${shippingCurrencyLabel}`
-                          }
-                        </span>
-                        {shippingCurrency === 'BGN' && (
-                          <span className="text-sm text-muted-foreground font-normal">
-                            {t('products.priceEUR', { price: (totalWithShipping / 1.9553).toFixed(2) })}
-                          </span>
-                        )}
-                      </>
+                      <span className="block">
+                        {formatPrice(totalWithShipping, formData.shippingCountry)}
+                      </span>
                     ) : (
                       <span className="text-muted-foreground">{t('checkout.selectShippingForTotal')}</span>
                     )}
