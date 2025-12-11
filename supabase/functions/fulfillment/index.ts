@@ -283,13 +283,15 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{
   });
 
   // Build the payload according to NextLevel API exact structure
+  // Use short order_number (first 8 chars of UUID) for both order_id and ref to match in NextLevel
+  const shortRef = order.orderNumber || order.orderId.substring(0, 8);
   const payload = {
-    order_id: order.orderId,
+    order_id: shortRef,
     cod: codAmount,
     price: productsPrice,
     currency: currency,
     shipping_price: shippingPriceFormatted,
-    ref: order.orderNumber || order.orderId, // Use our order_number for tracking
+    ref: shortRef,
     courier: courier,
     discount_type: null,
     discount_value: null,
