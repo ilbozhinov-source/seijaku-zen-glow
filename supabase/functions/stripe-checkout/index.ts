@@ -35,16 +35,24 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Calculate total
-    const totalAmount = items.reduce((sum: number, item: any) => {
-      return sum + (parseFloat(item.price.amount) * item.quantity);
-    }, 0);
-
     // Determine currency based on country
     const country = customer?.shippingCountryCode || 'BG';
     let currency = 'BGN';
     if (country === 'GR') currency = 'EUR';
-    if (country === 'RO') currency = 'RON';
+    if (country === 'RO') currency = 'EUR'; // Romania also uses EUR for our pricing
+
+    // Fixed EUR price for Greece and Romania
+    const EUR_PRICE = 14.99;
+
+    // Calculate total based on country
+    // For GR/RO: use fixed EUR price
+    // For BG: use BGN price from cart
+    const totalAmount = items.reduce((sum: number, item: any) => {
+      if (country === 'GR' || country === 'RO') {
+        return sum + (EUR_PRICE * item.quantity);
+      }
+      return sum + (parseFloat(item.price.amount) * item.quantity);
+    }, 0);
 
     // For Sameday easybox, set address from box label
     let shippingAddress = customer?.address;
@@ -56,6 +64,10 @@ serve(async (req) => {
       shippingCity = '';
       postalCode = '';
     }
+
+    // Calculate total with shipping
+    const shippingPrice = customer?.shippingPrice || 0;
+    const totalWithShipping = totalAmount + shippingPrice;
 
     // Generate order number (first 8 chars of UUID)
     const orderId = crypto.randomUUID();
@@ -85,8 +97,8 @@ serve(async (req) => {
         shipping_country_name: customer?.shippingCountryName,
         // Shipping method and pricing
         shipping_method: customer?.shippingMethod,
-        shipping_price: customer?.shippingPrice || 0,
-        total_with_shipping: customer?.totalWithShipping || totalAmount,
+        shipping_price: shippingPrice,
+        total_with_shipping: totalWithShipping,
         // Courier info
         courier_name: customer?.courierName || null,
         courier_code: customer?.courierCode || null,
@@ -107,7 +119,7 @@ serve(async (req) => {
 
     console.log('Order created:', order.id);
 
-    // Create line items for Stripe
+    // Create line items for Stripe with correct pricing per country
     const lineItems = items.map((item: any) => ({
       price_data: {
         currency: currency.toLowerCase(),
@@ -115,7 +127,8 @@ serve(async (req) => {
           name: item.productTitle || item.product?.title || 'Продукт',
           description: item.variantTitle || undefined,
         },
-        unit_amount: Math.round(parseFloat(item.price.amount) * 100), // Convert to smallest unit
+        // Use fixed EUR price for GR/RO, BGN price for BG
+        unit_amount: Math.round((country === 'GR' || country === 'RO' ? EUR_PRICE : parseFloat(item.price.amount)) * 100),
       },
       quantity: item.quantity,
     }));

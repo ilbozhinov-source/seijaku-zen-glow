@@ -10,6 +10,7 @@ import { ProductSchema } from "@/components/ProductSchema";
 import { BreadcrumbSchema } from "@/components/BreadcrumbSchema";
 import { useSEO } from "@/hooks/useSEO";
 import { useTranslation } from 'react-i18next';
+import { EUR_PRICE_GR_RO, BGN_TO_EUR_RATE } from "@/lib/pricing";
 
 const ProductDetail = () => {
   const { t } = useTranslation();
@@ -17,9 +18,21 @@ const ProductDetail = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
+  const [selectedCountry, setSelectedCountry] = useState('BG');
   const addItem = useCartStore(state => state.addItem);
   
   useSEO();
+
+  // Read country from cookie on mount
+  useEffect(() => {
+    const getCookie = (name: string): string | null => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+      return null;
+    };
+    setSelectedCountry(getCookie('country') || 'BG');
+  }, []);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -122,12 +135,20 @@ const ProductDetail = () => {
                     {t(product.title)}
                   </h1>
                   <div>
-                    <p className="text-2xl font-bold text-primary">
-                      {t('products.priceBGN', { price: Math.round(parseFloat(selectedVariant.price.amount)) })}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {t('products.priceEUR', { price: (parseFloat(selectedVariant.price.amount) / 1.9553).toFixed(2) })}
-                    </p>
+                    {selectedCountry === 'GR' || selectedCountry === 'RO' ? (
+                      <p className="text-2xl font-bold text-primary">
+                        {EUR_PRICE_GR_RO.toFixed(2)} €
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold text-primary">
+                          {t('products.priceBGN', { price: Math.round(parseFloat(selectedVariant.price.amount)) })}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {t('products.priceEUR', { price: (parseFloat(selectedVariant.price.amount) / BGN_TO_EUR_RATE).toFixed(2) })}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
 

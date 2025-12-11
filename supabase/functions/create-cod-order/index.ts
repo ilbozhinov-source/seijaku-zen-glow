@@ -52,7 +52,10 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
     const country = order.shipping_country || 'BG';
     let currency = 'BGN';
     if (country === 'GR') currency = 'EUR';
-    if (country === 'RO') currency = 'RON';
+    if (country === 'RO') currency = 'EUR'; // Romania also uses EUR for our pricing
+
+    // Fixed EUR price for Greece and Romania
+    const EUR_PRICE = 14.99;
 
     // Map courier based on country and shipping method
     const { courier } = mapCourierService(order.courier_code, order.shipping_method, country);
@@ -61,8 +64,11 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
     const items = Array.isArray(order.items) ? order.items : [];
     let productsTotal = 0;
     const products = items.map((item: any) => {
-      const unitPrice = parseFloat(item.price?.amount || item.price || '0');
       const quantity = item.quantity || 1;
+      // Use fixed EUR price for GR/RO, BGN price for BG
+      const unitPrice = (country === 'GR' || country === 'RO') 
+        ? EUR_PRICE 
+        : parseFloat(item.price?.amount || item.price || '0');
       productsTotal += unitPrice * quantity;
       return {
         sku: '3800503047000', // Barcode for SEIJAKU Matcha
@@ -254,14 +260,32 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Calculate total
+    // Determine country and currency based on shipping
+    const country = customer?.shippingCountryCode || 'BG';
+    let currency = 'BGN';
+    if (country === 'GR') currency = 'EUR';
+    if (country === 'RO') currency = 'EUR'; // Romania also uses EUR for our pricing
+
+    // Fixed EUR price for Greece and Romania
+    const EUR_PRICE = 14.99;
+
+    // Calculate total based on country
+    // For GR/RO: use fixed EUR price
+    // For BG: use BGN price from cart
     const totalAmount = items.reduce((sum: number, item: any) => {
+      if (country === 'GR' || country === 'RO') {
+        return sum + (EUR_PRICE * item.quantity);
+      }
       return sum + (parseFloat(item.price.amount) * item.quantity);
     }, 0);
 
     // Generate order number (first 8 chars of UUID)
     const orderId = crypto.randomUUID();
     const orderNumber = orderId.slice(0, 8);
+
+    // Calculate total with shipping
+    const shippingPrice = customer?.shippingPrice || 0;
+    const totalWithShipping = totalAmount + shippingPrice;
 
     // Create order
     const { data: order, error: orderError } = await supabase
@@ -271,7 +295,7 @@ serve(async (req) => {
         order_number: orderNumber,
         items: items,
         total_amount: totalAmount,
-        currency: 'BGN',
+        currency: currency,
         payment_method: 'cod',
         status: 'cod_pending',
         customer_name: customer?.name,
@@ -285,8 +309,8 @@ serve(async (req) => {
         shipping_country: customer?.shippingCountryCode,
         shipping_country_name: customer?.shippingCountryName,
         shipping_method: customer?.shippingMethod,
-        shipping_price: customer?.shippingPrice || 0,
-        total_with_shipping: customer?.totalWithShipping || totalAmount,
+        shipping_price: shippingPrice,
+        total_with_shipping: totalWithShipping,
         courier_name: customer?.courierName || null,
         courier_code: customer?.courierCode || null,
         courier_office_id: customer?.courierOfficeId || null,

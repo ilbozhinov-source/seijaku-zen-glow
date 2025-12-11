@@ -7,12 +7,25 @@ import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
+import { EUR_PRICE_GR_RO, BGN_TO_EUR_RATE } from "@/lib/pricing";
 
 const Products = () => {
   const { t } = useTranslation();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCountry, setSelectedCountry] = useState('BG');
   const addItem = useCartStore(state => state.addItem);
+
+  // Read country from cookie on mount
+  useEffect(() => {
+    const getCookie = (name: string): string | null => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+      return null;
+    };
+    setSelectedCountry(getCookie('country') || 'BG');
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -97,12 +110,20 @@ const Products = () => {
                   </p>
 
                   <div className="flex flex-col gap-1 items-center text-center">
-                    <span className="text-2xl font-bold text-primary">
-                      {t('products.priceBGN', { price: Math.round(parseFloat(product.priceRange.minVariantPrice.amount)) })}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {t('products.priceEUR', { price: (parseFloat(product.priceRange.minVariantPrice.amount) / 1.9553).toFixed(2) })}
-                    </span>
+                    {selectedCountry === 'GR' || selectedCountry === 'RO' ? (
+                      <span className="text-2xl font-bold text-primary">
+                        {EUR_PRICE_GR_RO.toFixed(2)} €
+                      </span>
+                    ) : (
+                      <>
+                        <span className="text-2xl font-bold text-primary">
+                          {t('products.priceBGN', { price: Math.round(parseFloat(product.priceRange.minVariantPrice.amount)) })}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {t('products.priceEUR', { price: (parseFloat(product.priceRange.minVariantPrice.amount) / BGN_TO_EUR_RATE).toFixed(2) })}
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   <Button 
