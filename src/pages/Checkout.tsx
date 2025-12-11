@@ -1138,8 +1138,12 @@ const Checkout = () => {
                   {selectedShippingMethod ? (
                     isFreeShipping ? (
                       <span className="text-green-600 font-medium">{t('checkout.freeShipping')}</span>
+                    ) : formData.shippingCountry === 'RO' ? (
+                      <span>{shippingPrice.toFixed(2)} lei (≈ {(shippingPrice / EUR_TO_RON_RATE).toFixed(2)} €)</span>
+                    ) : formData.shippingCountry === 'BG' ? (
+                      <span>{shippingPrice.toFixed(2)} лв. (≈ {(shippingPrice / BGN_TO_EUR_RATE).toFixed(2)} €)</span>
                     ) : (
-                      <span>{shippingPrice.toFixed(2)} {displayCurrencyLabel}</span>
+                      <span>{shippingPrice.toFixed(2)} €</span>
                     )
                   ) : (
                     <span className="text-sm italic">{t('checkout.selectShippingMethod')}</span>
