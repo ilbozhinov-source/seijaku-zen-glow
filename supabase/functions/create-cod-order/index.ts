@@ -263,12 +263,6 @@ serve(async (req) => {
     const orderId = crypto.randomUUID();
     const orderNumber = orderId.slice(0, 8);
 
-    // Determine currency based on country
-    const shippingCountry = customer?.shippingCountryCode || 'BG';
-    let orderCurrency = 'BGN';
-    if (shippingCountry === 'GR') orderCurrency = 'EUR';
-    if (shippingCountry === 'RO') orderCurrency = 'RON';
-
     // Create order
     const { data: order, error: orderError } = await supabase
       .from('orders')
@@ -277,7 +271,7 @@ serve(async (req) => {
         order_number: orderNumber,
         items: items,
         total_amount: totalAmount,
-        currency: orderCurrency,
+        currency: 'BGN',
         payment_method: 'cod',
         status: 'cod_pending',
         customer_name: customer?.name,
