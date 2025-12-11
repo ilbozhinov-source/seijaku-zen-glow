@@ -19,6 +19,7 @@ interface OrderItem {
 
 interface FulfillmentOrder {
   orderId: string;
+  orderNumber?: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
@@ -243,8 +244,8 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{
   const createdAt = now.toISOString().replace('T', ' ').substring(0, 19);
 
   // Prepare products array for NextLevel API
-  const products = order.items.map((item, index) => ({
-    sku: item.sku || `MATCHA-${order.shippingCountry}-${index + 1}`,
+  const products = order.items.map((item) => ({
+    sku: '3800503047000', // Barcode for SEIJAKU Matcha
     name: item.variantTitle 
       ? `${item.productTitle} - ${item.variantTitle}`.trim()
       : item.productTitle,
@@ -264,7 +265,7 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{
     price: productsPrice,
     currency: currency,
     shipping_price: shippingPriceFormatted,
-    ref: order.orderId,
+    ref: order.orderNumber || order.orderId, // Use our order_number for tracking
     courier: courier,
     discount_type: null,
     discount_value: null,
@@ -527,6 +528,7 @@ serve(async (req) => {
 
       const fulfillmentOrder: FulfillmentOrder = {
         orderId: order.id,
+        orderNumber: order.order_number || undefined,
         customerName: order.customer_name || '',
         customerEmail: order.customer_email || '',
         customerPhone: order.customer_phone || '',
