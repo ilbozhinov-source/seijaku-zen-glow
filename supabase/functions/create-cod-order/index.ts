@@ -52,10 +52,12 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
     const country = order.shipping_country || 'BG';
     let currency = 'BGN';
     if (country === 'GR') currency = 'EUR';
-    if (country === 'RO') currency = 'EUR'; // Romania also uses EUR for our pricing
+    if (country === 'RO') currency = 'RON';
 
-    // Fixed EUR price for Greece and Romania
+    // Fixed prices for Greece and Romania
     const EUR_PRICE = 14.99;
+    const EUR_TO_RON_RATE = 4.97;
+    const RON_PRICE = Math.round(EUR_PRICE * EUR_TO_RON_RATE * 100) / 100;
 
     // Map courier based on country and shipping method
     const { courier } = mapCourierService(order.courier_code, order.shipping_method, country);
@@ -65,10 +67,15 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
     let productsTotal = 0;
     const products = items.map((item: any) => {
       const quantity = item.quantity || 1;
-      // Use fixed EUR price for GR/RO, BGN price for BG
-      const unitPrice = (country === 'GR' || country === 'RO') 
-        ? EUR_PRICE 
-        : parseFloat(item.price?.amount || item.price || '0');
+      // Use fixed price based on country
+      let unitPrice: number;
+      if (country === 'GR') {
+        unitPrice = EUR_PRICE;
+      } else if (country === 'RO') {
+        unitPrice = RON_PRICE;
+      } else {
+        unitPrice = parseFloat(item.price?.amount || item.price || '0');
+      }
       productsTotal += unitPrice * quantity;
       return {
         sku: '3800503047000', // Barcode for SEIJAKU Matcha
@@ -264,17 +271,21 @@ serve(async (req) => {
     const country = customer?.shippingCountryCode || 'BG';
     let currency = 'BGN';
     if (country === 'GR') currency = 'EUR';
-    if (country === 'RO') currency = 'EUR'; // Romania also uses EUR for our pricing
+    if (country === 'RO') currency = 'RON';
 
-    // Fixed EUR price for Greece and Romania
+    // Fixed prices for Greece and Romania
     const EUR_PRICE = 14.99;
+    const EUR_TO_RON_RATE = 4.97;
+    const RON_PRICE = Math.round(EUR_PRICE * EUR_TO_RON_RATE * 100) / 100;
 
     // Calculate total based on country
-    // For GR/RO: use fixed EUR price
-    // For BG: use BGN price from cart
+    // GR: fixed EUR price, RO: fixed RON price, BG: BGN price from cart
     const totalAmount = items.reduce((sum: number, item: any) => {
-      if (country === 'GR' || country === 'RO') {
+      if (country === 'GR') {
         return sum + (EUR_PRICE * item.quantity);
+      }
+      if (country === 'RO') {
+        return sum + (RON_PRICE * item.quantity);
       }
       return sum + (parseFloat(item.price.amount) * item.quantity);
     }, 0);

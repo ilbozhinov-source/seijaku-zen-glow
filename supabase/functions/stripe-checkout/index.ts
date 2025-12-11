@@ -39,17 +39,21 @@ serve(async (req) => {
     const country = customer?.shippingCountryCode || 'BG';
     let currency = 'BGN';
     if (country === 'GR') currency = 'EUR';
-    if (country === 'RO') currency = 'EUR'; // Romania also uses EUR for our pricing
+    if (country === 'RO') currency = 'RON';
 
-    // Fixed EUR price for Greece and Romania
+    // Fixed prices for Greece and Romania
     const EUR_PRICE = 14.99;
+    const EUR_TO_RON_RATE = 4.97;
+    const RON_PRICE = Math.round(EUR_PRICE * EUR_TO_RON_RATE * 100) / 100;
 
     // Calculate total based on country
-    // For GR/RO: use fixed EUR price
-    // For BG: use BGN price from cart
+    // GR: fixed EUR price, RO: fixed RON price, BG: BGN price from cart
     const totalAmount = items.reduce((sum: number, item: any) => {
-      if (country === 'GR' || country === 'RO') {
+      if (country === 'GR') {
         return sum + (EUR_PRICE * item.quantity);
+      }
+      if (country === 'RO') {
+        return sum + (RON_PRICE * item.quantity);
       }
       return sum + (parseFloat(item.price.amount) * item.quantity);
     }, 0);
@@ -120,18 +124,29 @@ serve(async (req) => {
     console.log('Order created:', order.id);
 
     // Create line items for Stripe with correct pricing per country
-    const lineItems = items.map((item: any) => ({
-      price_data: {
-        currency: currency.toLowerCase(),
-        product_data: {
-          name: item.productTitle || item.product?.title || 'Продукт',
-          description: item.variantTitle || undefined,
+    const lineItems = items.map((item: any) => {
+      // Determine unit price based on country
+      let unitPrice: number;
+      if (country === 'GR') {
+        unitPrice = EUR_PRICE;
+      } else if (country === 'RO') {
+        unitPrice = RON_PRICE;
+      } else {
+        unitPrice = parseFloat(item.price.amount);
+      }
+      
+      return {
+        price_data: {
+          currency: currency.toLowerCase(),
+          product_data: {
+            name: item.productTitle || item.product?.title || 'Продукт',
+            description: item.variantTitle || undefined,
+          },
+          unit_amount: Math.round(unitPrice * 100),
         },
-        // Use fixed EUR price for GR/RO, BGN price for BG
-        unit_amount: Math.round((country === 'GR' || country === 'RO' ? EUR_PRICE : parseFloat(item.price.amount)) * 100),
-      },
-      quantity: item.quantity,
-    }));
+        quantity: item.quantity,
+      };
+    });
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({

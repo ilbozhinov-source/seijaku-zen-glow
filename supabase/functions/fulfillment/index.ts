@@ -214,9 +214,22 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{
   // Map courier based on country
   const { courier } = mapCourierService(order.courierCode, order.shippingMethod, order.shippingCountry);
 
-  // Calculate products price (sum of unit_price * quantity)
+  // Fixed prices for Greece and Romania
+  const EUR_PRICE = 14.99;
+  const EUR_TO_RON_RATE = 4.97;
+  const RON_PRICE = Math.round(EUR_PRICE * EUR_TO_RON_RATE * 100) / 100;
+
+  // Calculate products price based on country
   const productsPrice = order.items.reduce((sum, item) => {
-    return sum + (parseFloat(item.price.amount) * item.quantity);
+    let unitPrice: number;
+    if (order.shippingCountry === 'GR') {
+      unitPrice = EUR_PRICE;
+    } else if (order.shippingCountry === 'RO') {
+      unitPrice = RON_PRICE;
+    } else {
+      unitPrice = parseFloat(item.price.amount);
+    }
+    return sum + (unitPrice * item.quantity);
   }, 0);
 
   // Map currency based on country
@@ -243,20 +256,31 @@ async function sendOrderToFulfillment(order: FulfillmentOrder): Promise<{
   const now = new Date();
   const createdAt = now.toISOString().replace('T', ' ').substring(0, 19);
 
-  // Prepare products array for NextLevel API
-  const products = order.items.map((item) => ({
-    sku: '3800503047000', // Barcode for SEIJAKU Matcha
-    name: item.variantTitle 
-      ? `${item.productTitle} - ${item.variantTitle}`.trim()
-      : item.productTitle,
-    quantity: item.quantity,
-    unit_price: parseFloat(item.price.amount),
-    variant: item.variantTitle || null,
-    is_digital: null,
-    weight: 0.05, // 30g matcha = 0.03kg, with packaging ~0.05kg
-    discount_type: null,
-    discount_value: null,
-  }));
+  // Prepare products array for NextLevel API with country-specific pricing
+  const products = order.items.map((item) => {
+    let unitPrice: number;
+    if (order.shippingCountry === 'GR') {
+      unitPrice = EUR_PRICE;
+    } else if (order.shippingCountry === 'RO') {
+      unitPrice = RON_PRICE;
+    } else {
+      unitPrice = parseFloat(item.price.amount);
+    }
+    
+    return {
+      sku: '3800503047000', // Barcode for SEIJAKU Matcha
+      name: item.variantTitle 
+        ? `${item.productTitle} - ${item.variantTitle}`.trim()
+        : item.productTitle,
+      quantity: item.quantity,
+      unit_price: unitPrice,
+      variant: item.variantTitle || null,
+      is_digital: null,
+      weight: 0.05, // 30g matcha = 0.03kg, with packaging ~0.05kg
+      discount_type: null,
+      discount_value: null,
+    };
+  });
 
   // Build the payload according to NextLevel API exact structure
   const payload = {

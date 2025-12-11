@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 import Footer from '@/components/Footer';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
 import { SamedayBoxSelector } from '@/components/SamedayBoxSelector';
-import { EUR_PRICE_GR_RO } from '@/lib/pricing';
+import { EUR_PRICE_GR, RON_PRICE_RO, EUR_PRICE_RO, EUR_TO_RON_RATE } from '@/lib/pricing';
 
 // Supported shipping countries - only these three
 const SUPPORTED_SHIPPING_COUNTRIES = [
@@ -32,7 +32,9 @@ const BGN_TO_EUR_RATE = 1.95583;
 
 // Currency display helpers
 const getCurrencySymbol = (country: string): string => {
-  return country === 'BG' ? 'лв.' : '€';
+  if (country === 'BG') return 'лв.';
+  if (country === 'RO') return 'lei';
+  return '€';
 };
 
 // For GR and RO, we use fixed EUR price instead of converting
@@ -47,7 +49,11 @@ const formatPrice = (amount: number, country: string): string => {
     const eurAmount = amount / BGN_TO_EUR_RATE;
     return `${Math.round(amount)} лв. (≈ ${eurAmount.toFixed(2)} €)`;
   }
-  // GR and RO: show only EUR
+  if (country === 'RO') {
+    const eurAmount = amount / EUR_TO_RON_RATE;
+    return `${amount.toFixed(2)} lei (≈ ${eurAmount.toFixed(2)} €)`;
+  }
+  // GR: show only EUR
   return `${amount.toFixed(2)} €`;
 };
 
@@ -67,12 +73,15 @@ interface ShippingMethod {
   id: string;
   name: string;
   price: number;
-  currency: 'BGN' | 'EUR';
+  currency: 'BGN' | 'EUR' | 'RON';
   currencyLabel: string;
   courierCode: string;
   courierName: string;
   type: 'office' | 'address' | 'easybox';
 }
+
+// RON shipping price (4.00 EUR * 4.97 = ~19.88 RON)
+const RO_SHIPPING_RON = Math.round(4.00 * EUR_TO_RON_RATE * 100) / 100;
 
 // Shipping methods configuration by country
 const SHIPPING_METHODS: Record<string, ShippingMethod[]> = {
@@ -85,7 +94,7 @@ const SHIPPING_METHODS: Record<string, ShippingMethod[]> = {
     { id: 'speedex', name: 'Speedex', price: 4.00, currency: 'EUR', currencyLabel: '€', courierCode: 'SPEEDX', courierName: 'SpeedX', type: 'address' },
   ],
   RO: [
-    { id: 'fan', name: 'FAN Courier', price: 4.00, currency: 'EUR', currencyLabel: '€', courierCode: 'FAN', courierName: 'FAN', type: 'address' },
+    { id: 'fan', name: 'FAN Courier', price: RO_SHIPPING_RON, currency: 'RON', currencyLabel: 'lei', courierCode: 'FAN', courierName: 'FAN', type: 'address' },
   ],
 };
 
@@ -410,10 +419,13 @@ const Checkout = () => {
   const baseShippingPrice = selectedShippingMethod?.price || 0;
   
   // Calculate products total for display based on country
-  // GR and RO use fixed EUR price per item
+  // GR uses fixed EUR price, RO uses fixed RON price
   const getProductsTotalDisplay = () => {
-    if (formData.shippingCountry === 'GR' || formData.shippingCountry === 'RO') {
-      return items.reduce((sum, item) => sum + (EUR_PRICE_GR_RO * item.quantity), 0);
+    if (formData.shippingCountry === 'GR') {
+      return items.reduce((sum, item) => sum + (EUR_PRICE_GR * item.quantity), 0);
+    }
+    if (formData.shippingCountry === 'RO') {
+      return items.reduce((sum, item) => sum + (RON_PRICE_RO * item.quantity), 0);
     }
     return productsTotalBGN;
   };
@@ -1102,8 +1114,10 @@ const Checkout = () => {
                     
                     <div className="text-right flex-shrink-0">
                       <p className="font-semibold">
-                        {formData.shippingCountry === 'GR' || formData.shippingCountry === 'RO'
-                          ? `${(EUR_PRICE_GR_RO * item.quantity).toFixed(2)} €`
+                        {formData.shippingCountry === 'GR'
+                          ? `${(EUR_PRICE_GR * item.quantity).toFixed(2)} €`
+                          : formData.shippingCountry === 'RO'
+                          ? `${(RON_PRICE_RO * item.quantity).toFixed(2)} lei`
                           : formatPrice(parseFloat(item.price.amount) * item.quantity, formData.shippingCountry)}
                       </p>
                     </div>
