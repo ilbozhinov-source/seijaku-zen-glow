@@ -51,6 +51,11 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
     if (country === 'GR') currency = 'EUR';
     if (country === 'RO') currency = 'RON';
 
+    // Fixed prices for GR and RO markets
+    const EUR_PRICE = 14.99;
+    const EUR_TO_RON_RATE = 4.97;
+    const RON_PRICE = Math.round(EUR_PRICE * EUR_TO_RON_RATE * 100) / 100; // ~74.50 RON
+
     // Determine courier based on country and shipping method
     let courier = 'Econt';
     if (country === 'GR') courier = 'Speedex';
@@ -62,7 +67,15 @@ async function sendToFulfillment(order: any, supabase: any): Promise<{ success: 
     const items = Array.isArray(order.items) ? order.items : [];
     let productsTotal = 0;
     const products = items.map((item: any) => {
-      const unitPrice = parseFloat(item.price?.amount || item.price || '0');
+      // Use fixed prices for GR and RO, BGN price for BG
+      let unitPrice: number;
+      if (country === 'GR') {
+        unitPrice = EUR_PRICE;
+      } else if (country === 'RO') {
+        unitPrice = RON_PRICE;
+      } else {
+        unitPrice = parseFloat(item.price?.amount || item.price || '0');
+      }
       const quantity = item.quantity || 1;
       productsTotal += unitPrice * quantity;
       return {
