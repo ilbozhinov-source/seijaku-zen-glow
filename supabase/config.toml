@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.geo-ip]
 verify_jwt = false
+
+[functions.auth-email-hook]
+verify_jwt = false
