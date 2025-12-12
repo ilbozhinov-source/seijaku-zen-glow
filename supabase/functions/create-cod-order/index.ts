@@ -346,6 +346,53 @@ serve(async (req) => {
     // Send to fulfillment
     const fulfillmentResult = await sendToFulfillment(order, supabase);
 
+    // Send order confirmation emails
+    try {
+      const emailPayload = {
+        customer: {
+          firstName: customer?.name?.split(' ')[0] || 'Клиент',
+          lastName: customer?.name?.split(' ').slice(1).join(' ') || '',
+          email: customer?.email || '',
+          phone: customer?.phone || '',
+        },
+        shipping: {
+          address: customer?.address || '',
+          city: customer?.city || '',
+          postalCode: customer?.postalCode || '',
+        },
+        paymentMethod: 'cod',
+        items: items.map((item: any) => ({
+          title: item.productTitle || item.title || 'Product',
+          variant: item.variantTitle || '',
+          quantity: item.quantity || 1,
+          price: parseFloat(item.price?.amount || item.price || '0'),
+        })),
+        total: totalWithShipping,
+        currency: currency,
+      };
+
+      console.log('Sending order confirmation email for COD order:', order.id);
+      
+      const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-order-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify(emailPayload),
+      });
+
+      if (emailResponse.ok) {
+        console.log('Order confirmation email sent successfully for COD order:', order.id);
+      } else {
+        const emailError = await emailResponse.text();
+        console.error('Failed to send order confirmation email:', emailError);
+      }
+    } catch (emailError) {
+      console.error('Error sending order confirmation email:', emailError);
+      // Don't fail the order if email fails
+    }
+
     return new Response(JSON.stringify({ 
       orderId: order.id,
       orderNumber: order.order_number,

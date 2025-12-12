@@ -375,6 +375,57 @@ serve(async (req) => {
 
         if (!orderError && order) {
           await sendToFulfillment(order, supabase);
+
+          // Send order confirmation emails
+          try {
+            const items = Array.isArray(order.items) ? order.items : [];
+            const emailPayload = {
+              customer: {
+                firstName: order.customer_name?.split(' ')[0] || 'Клиент',
+                lastName: order.customer_name?.split(' ').slice(1).join(' ') || '',
+                email: order.customer_email || '',
+                phone: order.customer_phone || '',
+              },
+              shipping: {
+                address: order.shipping_address || '',
+                city: order.shipping_city || '',
+                postalCode: order.postal_code || '',
+              },
+              paymentMethod: 'card',
+              items: items.map((item: any) => ({
+                title: item.productTitle || item.title || 'Product',
+                variant: item.variantTitle || '',
+                quantity: item.quantity || 1,
+                price: parseFloat(item.price?.amount || item.price || '0'),
+              })),
+              total: order.total_with_shipping || order.total_amount,
+              currency: order.currency || 'BGN',
+            };
+
+            console.log('Sending order confirmation email for Stripe order:', order.id);
+            
+            const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+            const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+            
+            const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-order-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseServiceKey}`,
+              },
+              body: JSON.stringify(emailPayload),
+            });
+
+            if (emailResponse.ok) {
+              console.log('Order confirmation email sent successfully for Stripe order:', order.id);
+            } else {
+              const emailError = await emailResponse.text();
+              console.error('Failed to send order confirmation email:', emailError);
+            }
+          } catch (emailError) {
+            console.error('Error sending order confirmation email:', emailError);
+            // Don't fail the webhook if email fails
+          }
         }
       }
     }
