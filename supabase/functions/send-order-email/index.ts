@@ -32,17 +32,33 @@ interface OrderEmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log('=======================================================');
+  console.log('=== SEND-ORDER-EMAIL FUNCTION CALLED ===');
+  console.log('=======================================================');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Method:', req.method);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const orderData: OrderEmailRequest = await req.json();
-    console.log("Received order:", JSON.stringify(orderData, null, 2));
+    console.log("Received order data:", JSON.stringify(orderData, null, 2));
 
     const { customer, shipping, paymentMethod, items, total, currency } = orderData;
 
+    console.log('Customer email:', customer?.email);
+    console.log('Customer name:', customer?.firstName, customer?.lastName);
+    console.log('Items count:', items?.length);
+    console.log('Total:', total, currency);
+    console.log('Payment method:', paymentMethod);
+
     if (!customer?.email || !customer?.firstName || !items?.length) {
+      console.error('VALIDATION ERROR: Missing required fields');
+      console.error('- Email present:', !!customer?.email);
+      console.error('- FirstName present:', !!customer?.firstName);
+      console.error('- Items present:', !!items?.length);
       return new Response(
         JSON.stringify({ error: "Missing required order information" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -54,8 +70,17 @@ const handler = async (req: Request): Promise<Response> => {
     const smtpUser = Deno.env.get("SMTP_USER");
     const smtpPassword = Deno.env.get("SMTP_PASSWORD");
 
+    console.log('=== SMTP CONFIGURATION ===');
+    console.log('SMTP_HOST:', smtpHost);
+    console.log('SMTP_PORT:', smtpPort);
+    console.log('SMTP_USER:', smtpUser);
+    console.log('SMTP_PASSWORD configured:', !!smtpPassword);
+
     if (!smtpHost || !smtpUser || !smtpPassword) {
-      console.error("SMTP configuration missing");
+      console.error('SMTP CONFIGURATION ERROR: Missing credentials');
+      console.error('- SMTP_HOST:', !!smtpHost);
+      console.error('- SMTP_USER:', !!smtpUser);
+      console.error('- SMTP_PASSWORD:', !!smtpPassword);
       return new Response(
         JSON.stringify({ error: "Email service not configured" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -194,36 +219,63 @@ const handler = async (req: Request): Promise<Response> => {
     // Use info@gomatcha.bg as the from address
     const fromEmail = "info@gomatcha.bg";
 
-    // Send email to business
-    await client.send({
-      from: fromEmail,
-      to: "info@gomatcha.bg",
-      subject: `Nova poruchka ot ${customer.firstName} ${customer.lastName} - ${Math.round(total)} lv.`,
-      content: `Nova poruchka ot ${customer.firstName} ${customer.lastName}\n\nKontakt:\nEmail: ${customer.email}\nTelefon: ${customer.phone}\n\nAdres:\n${shipping.address}\n${shipping.city}, ${shipping.postalCode}\n\nProdukti:\n${itemsText}\n\nObshta suma: ${Math.round(total)} lv.\nMetod na plashtane: ${paymentMethodText}`,
-      html: businessEmailHtml,
-    });
+    console.log('=== SENDING BUSINESS EMAIL ===');
+    console.log('From:', fromEmail);
+    console.log('To: info@gomatcha.bg');
 
-    console.log("Business email sent successfully");
+    // Send email to business
+    try {
+      await client.send({
+        from: fromEmail,
+        to: "info@gomatcha.bg",
+        subject: `Nova poruchka ot ${customer.firstName} ${customer.lastName} - ${Math.round(total)} lv.`,
+        content: `Nova poruchka ot ${customer.firstName} ${customer.lastName}\n\nKontakt:\nEmail: ${customer.email}\nTelefon: ${customer.phone}\n\nAdres:\n${shipping.address}\n${shipping.city}, ${shipping.postalCode}\n\nProdukti:\n${itemsText}\n\nObshta suma: ${Math.round(total)} lv.\nMetod na plashtane: ${paymentMethodText}`,
+        html: businessEmailHtml,
+      });
+      console.log("SUCCESS: Business email sent to info@gomatcha.bg");
+    } catch (businessEmailError: any) {
+      console.error("ERROR: Failed to send business email:", businessEmailError.message);
+      throw businessEmailError;
+    }
+
+    console.log('=== SENDING CUSTOMER EMAIL ===');
+    console.log('From:', fromEmail);
+    console.log('To:', customer.email);
 
     // Send confirmation email to customer
-    await client.send({
-      from: fromEmail,
-      to: customer.email,
-      subject: "Potvarzhdenie na poruchka - SEIJAKU",
-      content: `Zdravey, ${customer.firstName}!\n\nBlagodarim za poruchkata!\n\nProdukti:\n${itemsText}\n\nObshta suma: ${Math.round(total)} lv.\nMetod na plashtane: ${paymentMethodText}\n\nAdres za dostavka:\n${shipping.address}\n${shipping.city}, ${shipping.postalCode}\n\nShte se svarjem s teb, kogato poruchkata e izpratena.\n\nS uvajenie,\nEkipat na SEIJAKU`,
-      html: customerEmailHtml,
-    });
-
-    console.log("Customer confirmation email sent successfully");
+    try {
+      await client.send({
+        from: fromEmail,
+        to: customer.email,
+        subject: "Potvarzhdenie na poruchka - SEIJAKU",
+        content: `Zdravey, ${customer.firstName}!\n\nBlagodarim za poruchkata!\n\nProdukti:\n${itemsText}\n\nObshta suma: ${Math.round(total)} lv.\nMetod na plashtane: ${paymentMethodText}\n\nAdres za dostavka:\n${shipping.address}\n${shipping.city}, ${shipping.postalCode}\n\nShte se svarjem s teb, kogato poruchkata e izpratena.\n\nS uvajenie,\nEkipat na SEIJAKU`,
+        html: customerEmailHtml,
+      });
+      console.log("SUCCESS: Customer email sent to", customer.email);
+    } catch (customerEmailError: any) {
+      console.error("ERROR: Failed to send customer email:", customerEmailError.message);
+      throw customerEmailError;
+    }
 
     await client.close();
+    console.log('SMTP connection closed');
+
+    console.log('=======================================================');
+    console.log('=== SEND-ORDER-EMAIL COMPLETED SUCCESSFULLY ===');
+    console.log('=======================================================');
 
     return new Response(
       JSON.stringify({ success: true, message: "Order received and emails sent" }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
-    console.error("Error processing order:", error);
+    console.error('=======================================================');
+    console.error('=== SEND-ORDER-EMAIL ERROR ===');
+    console.error('=======================================================');
+    console.error("Error type:", error?.constructor?.name);
+    console.error("Error message:", error?.message);
+    console.error("Error stack:", error?.stack);
+    console.error('=======================================================');
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
