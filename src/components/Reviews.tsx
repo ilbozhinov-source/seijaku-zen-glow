@@ -88,17 +88,24 @@ const Reviews = () => {
 
     setSubmitting(true);
     try {
+      const reviewData = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        occupation: formData.occupation.trim() || null,
+        rating: formData.rating,
+        text: formData.text.trim()
+      };
+
       const { error } = await supabase
         .from('reviews')
-        .insert({
-          name: formData.name.trim(),
-          email: formData.email.trim(),
-          occupation: formData.occupation.trim() || null,
-          rating: formData.rating,
-          text: formData.text.trim()
-        });
+        .insert(reviewData);
 
       if (error) throw error;
+
+      // Send notification email (fire and forget - don't block on failure)
+      supabase.functions.invoke('send-review-notification', {
+        body: reviewData
+      }).catch(err => console.error('Failed to send review notification:', err));
 
       toast({
         title: t('reviews.successTitle'),
