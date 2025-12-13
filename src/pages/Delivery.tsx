@@ -79,21 +79,21 @@ const Delivery = () => {
                     <Building2 className="w-4 h-4 text-primary" />
                     <span>{t("delivery.econtOfficeNew")}</span>
                   </div>
-                  <span className="font-semibold text-primary">6,00 лв.</span>
+                  <span className="font-semibold text-primary">7,99 лв.</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Home className="w-4 h-4 text-primary" />
                     <span>{t("delivery.econtAddress")}</span>
                   </div>
-                  <span className="font-semibold text-primary">7,00 лв.</span>
+                  <span className="font-semibold text-primary">6,99 лв.</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Truck className="w-4 h-4 text-primary" />
                     <span>{t("delivery.mdaAutomat")}</span>
                   </div>
-                  <span className="font-semibold text-primary">4,50 лв.</span>
+                  <span className="font-semibold text-primary">4,99 лв.</span>
                 </div>
               </div>
             </div>

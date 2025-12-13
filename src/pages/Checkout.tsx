@@ -86,9 +86,9 @@ const RO_SHIPPING_RON = Math.round(4.00 * EUR_TO_RON_RATE * 100) / 100;
 // Shipping methods configuration by country
 const SHIPPING_METHODS: Record<string, ShippingMethod[]> = {
   BG: [
-    { id: 'econt_office', name: 'Еконт — до офис', price: 7.00, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'ECONT', courierName: 'Econt', type: 'office' },
-    { id: 'econt_address', name: 'Еконт — до адрес', price: 6.00, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'ECONT', courierName: 'Econt', type: 'address' },
-    { id: 'sameday_easybox', name: 'Sameday easybox', price: 4.50, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'SAMEDAY', courierName: 'Sameday', type: 'easybox' },
+    { id: 'econt_office', name: 'Еконт — до офис', price: 7.99, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'ECONT', courierName: 'Econt', type: 'office' },
+    { id: 'econt_address', name: 'Еконт — до адрес', price: 6.99, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'ECONT', courierName: 'Econt', type: 'address' },
+    { id: 'sameday_easybox', name: 'Sameday easybox', price: 4.99, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'SAMEDAY', courierName: 'Sameday', type: 'easybox' },
   ],
   GR: [
     { id: 'speedex', name: 'Speedex', price: 4.00, currency: 'EUR', currencyLabel: '€', courierCode: 'SPEEDX', courierName: 'SpeedX', type: 'address' },
@@ -272,7 +272,7 @@ const Checkout = () => {
     shippingCountry: '',
     shippingOffice: '',
     shippingMethodId: '', // Selected shipping method ID
-    paymentMethod: 'cod',
+    paymentMethod: 'card',
   });
 
   // Phone validation error
