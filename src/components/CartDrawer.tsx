@@ -16,10 +16,10 @@ import { useTranslation } from 'react-i18next';
 import { Progress } from "@/components/ui/progress";
 import { 
   formatPriceWithCurrency, 
-  FREE_SHIPPING_THRESHOLD_BG, 
   EUR_PRICE_GR,
   RON_PRICE_RO
 } from "@/lib/pricing";
+import { FREE_SHIPPING_THRESHOLD_BG } from "@/lib/shipping";
 
 export const CartDrawer = () => {
   const { t } = useTranslation();
