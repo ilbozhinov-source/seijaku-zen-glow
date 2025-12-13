@@ -116,10 +116,10 @@ const Contact = () => {
               <Phone className="w-8 h-8 mx-auto mb-4 text-primary" />
               <h3 className="font-semibold mb-2">{t("contact.phone")}</h3>
               <a 
-                href="tel:+359896690088" 
+                href="tel:+359879419584" 
                 className="text-muted-foreground hover:text-primary transition-colors block"
               >
-                +359 896 690 088
+                +359 879 419 584
               </a>
               <div className="flex items-center justify-center gap-1 mt-2 text-sm text-muted-foreground">
                 <Clock className="w-3 h-3" />
