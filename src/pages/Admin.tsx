@@ -12,11 +12,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Loader2, Users, Shield, Package, LayoutDashboard, Settings, TrendingUp, ShoppingCart, UserCheck, Eye, Download, X, Box, Truck, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Users, Shield, Package, LayoutDashboard, Settings, TrendingUp, ShoppingCart, UserCheck, Eye, Download, X, Box, Truck, ChevronLeft, ChevronRight, Trash2, MessageSquare } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ProductsManager from '@/components/admin/ProductsManager';
+import ReviewsManager from '@/components/admin/ReviewsManager';
 
 interface Profile {
   id: string;
@@ -295,7 +296,7 @@ const Admin = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-flex">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -307,6 +308,10 @@ const Admin = () => {
             <TabsTrigger value="products" className="flex items-center gap-2">
               <Box className="h-4 w-4" />
               <span className="hidden sm:inline">Продукти</span>
+            </TabsTrigger>
+            <TabsTrigger value="reviews" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">Отзиви</span>
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -722,6 +727,11 @@ const Admin = () => {
           {/* Products Tab */}
           <TabsContent value="products">
             <ProductsManager />
+          </TabsContent>
+
+          {/* Reviews Tab */}
+          <TabsContent value="reviews">
+            <ReviewsManager />
           </TabsContent>
 
           {/* Users Tab */}
