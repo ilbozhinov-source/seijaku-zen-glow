@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Truck, CreditCard, Clock, MapPin, Building2, Home } from "lucide-react";
+import { BG_SHIPPING_PRICES, GR_SHIPPING_PRICES, FREE_SHIPPING_THRESHOLD_BG } from "@/lib/shipping";
 
 const Delivery = () => {
   const { t } = useTranslation();
@@ -79,21 +80,21 @@ const Delivery = () => {
                     <Building2 className="w-4 h-4 text-primary" />
                     <span>{t("delivery.econtOfficeNew")}</span>
                   </div>
-                  <span className="font-semibold text-primary">7,99 лв.</span>
+                  <span className="font-semibold text-primary">{BG_SHIPPING_PRICES.ECONT_OFFICE.toFixed(2).replace('.', ',')} лв.</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Home className="w-4 h-4 text-primary" />
                     <span>{t("delivery.econtAddress")}</span>
                   </div>
-                  <span className="font-semibold text-primary">6,99 лв.</span>
+                  <span className="font-semibold text-primary">{BG_SHIPPING_PRICES.ECONT_ADDRESS.toFixed(2).replace('.', ',')} лв.</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Truck className="w-4 h-4 text-primary" />
                     <span>{t("delivery.mdaAutomat")}</span>
                   </div>
-                  <span className="font-semibold text-primary">4,99 лв.</span>
+                  <span className="font-semibold text-primary">{BG_SHIPPING_PRICES.SAMEDAY_EASYBOX.toFixed(2).replace('.', ',')} лв.</span>
                 </div>
               </div>
             </div>
@@ -107,11 +108,11 @@ const Delivery = () => {
               <div className="space-y-3 pl-7">
                 <div className="flex items-center justify-between">
                   <span>{t("delivery.greece")}</span>
-                  <span className="font-semibold text-primary">4,00 €</span>
+                  <span className="font-semibold text-primary">{GR_SHIPPING_PRICES.SPEEDEX.toFixed(2).replace('.', ',')} €</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>{t("delivery.romania")}</span>
-                  <span className="font-semibold text-primary">4,00 €</span>
+                  <span className="font-semibold text-primary">{GR_SHIPPING_PRICES.SPEEDEX.toFixed(2).replace('.', ',')} €</span>
                 </div>
               </div>
             </div>
