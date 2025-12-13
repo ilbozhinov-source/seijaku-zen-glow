@@ -19,6 +19,7 @@ import Footer from '@/components/Footer';
 import { CityAutocomplete } from '@/components/CityAutocomplete';
 import { SamedayBoxSelector } from '@/components/SamedayBoxSelector';
 import { EUR_PRICE_GR, RON_PRICE_RO, EUR_PRICE_RO, EUR_TO_RON_RATE } from '@/lib/pricing';
+import { SHIPPING_METHODS, FREE_SHIPPING_THRESHOLD_BG, type ShippingMethod } from '@/lib/shipping';
 
 // Supported shipping countries - only these three
 const SUPPORTED_SHIPPING_COUNTRIES = [
@@ -62,40 +63,6 @@ const PHONE_CONFIG: Record<string, { code: string; minLength: number; maxLength:
   BG: { code: '+359', minLength: 9, maxLength: 9, placeholder: '888123456' },
   GR: { code: '+30', minLength: 10, maxLength: 10, placeholder: '6912345678' },
   RO: { code: '+40', minLength: 9, maxLength: 10, placeholder: '712345678' },
-};
-
-// ============================================
-// SHIPPING METHOD CONFIGURATION
-// Easy to add new countries and methods
-// ============================================
-
-interface ShippingMethod {
-  id: string;
-  name: string;
-  price: number;
-  currency: 'BGN' | 'EUR' | 'RON';
-  currencyLabel: string;
-  courierCode: string;
-  courierName: string;
-  type: 'office' | 'address' | 'easybox';
-}
-
-// RON shipping price (4.00 EUR * 4.97 = ~19.88 RON)
-const RO_SHIPPING_RON = Math.round(4.00 * EUR_TO_RON_RATE * 100) / 100;
-
-// Shipping methods configuration by country
-const SHIPPING_METHODS: Record<string, ShippingMethod[]> = {
-  BG: [
-    { id: 'econt_office', name: 'Еконт — до офис', price: 7.99, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'ECONT', courierName: 'Econt', type: 'office' },
-    { id: 'econt_address', name: 'Еконт — до адрес', price: 6.99, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'ECONT', courierName: 'Econt', type: 'address' },
-    { id: 'sameday_easybox', name: 'Sameday easybox', price: 4.99, currency: 'BGN', currencyLabel: 'лв.', courierCode: 'SAMEDAY', courierName: 'Sameday', type: 'easybox' },
-  ],
-  GR: [
-    { id: 'speedex', name: 'Speedex', price: 4.00, currency: 'EUR', currencyLabel: '€', courierCode: 'SPEEDX', courierName: 'SpeedX', type: 'address' },
-  ],
-  RO: [
-    { id: 'fan', name: 'FAN Courier', price: RO_SHIPPING_RON, currency: 'RON', currencyLabel: 'lei', courierCode: 'FAN', courierName: 'FAN', type: 'address' },
-  ],
 };
 
 // Placeholder for future easybox selection
