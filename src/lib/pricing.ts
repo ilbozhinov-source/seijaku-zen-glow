@@ -1,11 +1,13 @@
 // Pricing utilities for country-specific pricing
 
+// Re-export FREE_SHIPPING_THRESHOLD_BG from shipping.ts for backwards compatibility
+export { FREE_SHIPPING_THRESHOLD_BG } from './shipping';
+
 export const BGN_TO_EUR_RATE = 1.95583;
 export const EUR_TO_RON_RATE = 4.97; // 1 EUR = 4.97 RON
 export const EUR_PRICE_GR = 14.99; // Fixed EUR price for Greece
 export const EUR_PRICE_RO = 14.99; // Fixed EUR price for Romania (base for RON conversion)
 export const RON_PRICE_RO = Math.round(EUR_PRICE_RO * EUR_TO_RON_RATE * 100) / 100; // ~74.50 RON
-export const FREE_SHIPPING_THRESHOLD_BG = 79; // BGN
 
 // Legacy export for backwards compatibility
 export const EUR_PRICE_GR_RO = EUR_PRICE_GR;
