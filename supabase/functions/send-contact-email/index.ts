@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +10,36 @@ interface ContactEmailRequest {
   email: string;
   phone?: string;
   message: string;
+}
+
+// HTML escape function to prevent injection
+const escapeHtml = (text: string): string => {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m]);
+};
+
+// Send email using Resend API
+async function sendWithResend(apiKey: string, from: string, to: string[], subject: string, html: string) {
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ from, to, subject, html }),
+  });
+  
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Failed to send email');
+  }
+  return data;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -35,13 +64,9 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const smtpHost = Deno.env.get("SMTP_HOST");
-    const smtpPort = parseInt(Deno.env.get("SMTP_PORT") || "465");
-    const smtpUser = Deno.env.get("SMTP_USER");
-    const smtpPassword = Deno.env.get("SMTP_PASSWORD");
-
-    if (!smtpHost || !smtpUser || !smtpPassword) {
-      console.error("Missing SMTP configuration");
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      console.error("Missing RESEND_API_KEY");
       return new Response(
         JSON.stringify({ error: "Server configuration error" }),
         {
@@ -51,41 +76,19 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("Connecting to SMTP server:", smtpHost, "port:", smtpPort);
+    // Escape user inputs for HTML
+    const safeName = escapeHtml(name);
+    const safeEmail = escapeHtml(email);
+    const safePhone = phone ? escapeHtml(phone) : "Не е посочен";
+    const safeMessage = escapeHtml(message).replace(/\n/g, "<br>");
 
-    const client = new SMTPClient({
-      connection: {
-        hostname: smtpHost,
-        port: smtpPort,
-        tls: true,
-        auth: {
-          username: smtpUser,
-          password: smtpPassword,
-        },
-      },
-    });
-
-    const fromEmail = "info@gomatcha.bg";
-    
     // Send email to the business
-    await client.send({
-      from: fromEmail,
-      to: "info@gomatcha.bg",
-      subject: `Ново запитване от ${name}`,
-      content: `
-Ново запитване от контактната форма на SEIJAKU:
-
-Име: ${name}
-Имейл: ${email}
-Телефон: ${phone || "Не е посочен"}
-
-Съобщение:
-${message}
-      `,
-      html: `
+    console.log("Sending email to business...");
+    const businessEmailHtml = `
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -103,44 +106,40 @@ ${message}
     </div>
     <div class="content">
       <div class="field">
-        <span class="label">Име:</span> ${name}
+        <span class="label">Име:</span> ${safeName}
       </div>
       <div class="field">
-        <span class="label">Имейл:</span> <a href="mailto:${email}">${email}</a>
+        <span class="label">Имейл:</span> <a href="mailto:${safeEmail}">${safeEmail}</a>
       </div>
       <div class="field">
-        <span class="label">Телефон:</span> ${phone || "Не е посочен"}
+        <span class="label">Телефон:</span> ${safePhone}
       </div>
       <div class="message">
         <span class="label">Съобщение:</span>
-        <p>${message.replace(/\n/g, "<br>")}</p>
+        <p>${safeMessage}</p>
       </div>
     </div>
   </div>
 </body>
 </html>
-      `,
-    });
+    `;
+
+    await sendWithResend(
+      resendApiKey,
+      'SEIJAKU Matcha <info@gomatcha.bg>',
+      ['info@gomatcha.bg'],
+      `Ново запитване от ${safeName}`,
+      businessEmailHtml
+    );
+    console.log("Business email sent successfully");
 
     // Send confirmation to the customer
-    await client.send({
-      from: fromEmail,
-      to: email,
-      subject: "Получихме вашето запитване - SEIJAKU",
-      content: `
-Здравейте ${name},
-
-Благодарим ви, че се свързахте с нас!
-
-Получихме вашето съобщение и ще ви отговорим възможно най-скоро.
-
-С уважение,
-Екипът на SEIJAKU
-      `,
-      html: `
+    console.log("Sending confirmation to customer:", email);
+    const customerEmailHtml = `
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -156,7 +155,7 @@ ${message}
       <h1>SEIJAKU 静寂</h1>
     </div>
     <div class="content">
-      <p>Здравейте ${name},</p>
+      <p>Здравейте ${safeName},</p>
       <p>Благодарим ви, че се свързахте с нас!</p>
       <p>Получихме вашето съобщение и ще ви отговорим възможно най-скоро.</p>
       <p>С уважение,<br><strong>Екипът на SEIJAKU</strong></p>
@@ -167,12 +166,16 @@ ${message}
   </div>
 </body>
 </html>
-      `,
-    });
+    `;
 
-    await client.close();
-
-    console.log("Emails sent successfully");
+    await sendWithResend(
+      resendApiKey,
+      'SEIJAKU Matcha <info@gomatcha.bg>',
+      [email],
+      'Получихме вашето запитване - SEIJAKU',
+      customerEmailHtml
+    );
+    console.log("Customer confirmation email sent successfully");
 
     return new Response(
       JSON.stringify({ success: true, message: "Email sent successfully" }),
